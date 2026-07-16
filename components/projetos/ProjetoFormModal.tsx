@@ -1,0 +1,161 @@
+'use client'
+
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
+import { ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
+
+export function ProjetoFormModal({
+  projeto,
+  onFechar,
+  onSalvo,
+}: {
+  projeto?: Projeto
+  onFechar: () => void
+  onSalvo: (projeto: Projeto) => void
+}) {
+  const supabase = createClient()
+  const [nome, setNome] = useState(projeto?.nome ?? '')
+  const [etapa, setEtapa] = useState<Etapa>(projeto?.etapa ?? 'DNN')
+  const [status, setStatus] = useState<StatusProjeto>(projeto?.status ?? 'A Fazer')
+  const [entrega, setEntrega] = useState(projeto?.entrega ?? '')
+  const [responsavel, setResponsavel] = useState(projeto?.responsavel ?? '')
+  const [projetista, setProjetista] = useState(projeto?.projetista ?? '')
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSalvando(true)
+    setErro('')
+
+    const payload = {
+      nome,
+      etapa,
+      status,
+      entrega: entrega || null,
+      responsavel: responsavel || null,
+      projetista: projetista || null,
+    }
+
+    const query = projeto
+      ? supabase.from('projetos').update(payload).eq('id', projeto.id).select().single()
+      : supabase.from('projetos').insert(payload).select().single()
+
+    const { data, error } = await query
+
+    setSalvando(false)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    onSalvo(data as Projeto)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          {projeto ? 'Editar Projeto' : 'Novo Projeto'}
+        </h2>
+
+        {erro && (
+          <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {erro}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Nome</label>
+            <input
+              required
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Etapa</label>
+              <select
+                value={etapa}
+                onChange={(e) => setEtapa(e.target.value as Etapa)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                {ETAPAS.map((e) => (
+                  <option key={e} value={e}>
+                    {e}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as StatusProjeto)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                {STATUS_PROJETO.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Data de entrega</label>
+            <input
+              type="date"
+              value={entrega ?? ''}
+              onChange={(e) => setEntrega(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Responsável</label>
+            <input
+              value={responsavel ?? ''}
+              onChange={(e) => setResponsavel(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Projetista acústico</label>
+            <input
+              value={projetista ?? ''}
+              onChange={(e) => setProjetista(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onFechar}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={salvando}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {salvando ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
