@@ -6,6 +6,15 @@ import type { Anexo } from '@/lib/types/database'
 
 const BUCKET = 'anexos-projetos'
 
+const MARCA_DIACRITICA_INICIO = String.fromCharCode(0x0300)
+const MARCA_DIACRITICA_FIM = String.fromCharCode(0x036f)
+const MARCAS_DIACRITICAS = new RegExp(`[${MARCA_DIACRITICA_INICIO}-${MARCA_DIACRITICA_FIM}]`, 'g')
+
+function sanitizarNomeArquivo(nome: string) {
+  const semAcentos = nome.normalize('NFD').replace(MARCAS_DIACRITICAS, '')
+  return semAcentos.replace(/[^a-zA-Z0-9._-]/g, '_')
+}
+
 function formatarTamanho(bytes: number | null) {
   if (!bytes) return ''
   if (bytes < 1024) return `${bytes} B`
@@ -51,7 +60,7 @@ export function AnexosTab({ projetoId, isEditor }: { projetoId: string; isEditor
     }
 
     setEnviando(true)
-    const caminho = `${projetoId}/${Date.now()}-${arquivo.name}`
+    const caminho = `${projetoId}/${Date.now()}-${sanitizarNomeArquivo(arquivo.name)}`
 
     const { error: erroUpload } = await supabase.storage.from(BUCKET).upload(caminho, arquivo)
 
