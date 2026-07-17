@@ -9,11 +9,13 @@ const BUCKET = 'biblioteca-documentos'
 
 export function BibliotecaDetalheModal({
   item,
+  isEditor,
   onFechar,
   onAtualizado,
   onExcluido,
 }: {
   item: ItemBiblioteca
+  isEditor: boolean
   onFechar: () => void
   onAtualizado: (item: ItemBiblioteca) => void
   onExcluido: (id: string) => void
@@ -98,8 +100,9 @@ export function BibliotecaDetalheModal({
             <label className="text-sm font-medium text-gray-700">Título</label>
             <input
               value={titulo}
+              disabled={!isEditor}
               onChange={(e) => setTitulo(e.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
             />
           </div>
 
@@ -107,14 +110,15 @@ export function BibliotecaDetalheModal({
             <label className="text-sm font-medium text-gray-700">Descrição</label>
             <textarea
               value={descricao}
+              disabled={!isEditor}
               onChange={(e) => setDescricao(e.target.value)}
               rows={4}
               placeholder="Breve descrição do item..."
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
             />
           </div>
 
-          {alterado && (
+          {isEditor && alterado && (
             <button
               onClick={salvar}
               disabled={salvando}
@@ -140,13 +144,15 @@ export function BibliotecaDetalheModal({
             </button>
           </div>
 
-          <button
-            onClick={excluir}
-            disabled={excluindo}
-            className="mt-2 self-start rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
-          >
-            {excluindo ? 'Excluindo...' : 'Excluir item'}
-          </button>
+          {isEditor && (
+            <button
+              onClick={excluir}
+              disabled={excluindo}
+              className="mt-2 self-start rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+            >
+              {excluindo ? 'Excluindo...' : 'Excluir item'}
+            </button>
+          )}
         </div>
       </div>
     </div>

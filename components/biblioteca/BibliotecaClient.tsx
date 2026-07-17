@@ -14,9 +14,11 @@ function iconePara(nomeArquivo: string) {
 export function BibliotecaClient({
   categoria,
   itensIniciais,
+  isEditor,
 }: {
   categoria: CategoriaBiblioteca
   itensIniciais: ItemBiblioteca[]
+  isEditor: boolean
 }) {
   const [itens, setItens] = useState<ItemBiblioteca[]>(itensIniciais)
   const [busca, setBusca] = useState('')
@@ -44,12 +46,14 @@ export function BibliotecaClient({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-gray-900">{CATEGORIAS_BIBLIOTECA[categoria].titulo}</h1>
-        <button
-          onClick={() => setModalNovoAberto(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + Novo Item
-        </button>
+        {isEditor && (
+          <button
+            onClick={() => setModalNovoAberto(true)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + Novo Item
+          </button>
+        )}
       </div>
 
       <input
@@ -86,7 +90,7 @@ export function BibliotecaClient({
         </div>
       )}
 
-      {modalNovoAberto && (
+      {isEditor && modalNovoAberto && (
         <BibliotecaFormModal
           categoria={categoria}
           onFechar={() => setModalNovoAberto(false)}
@@ -97,6 +101,7 @@ export function BibliotecaClient({
       {selecionado && (
         <BibliotecaDetalheModal
           item={selecionado}
+          isEditor={isEditor}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleAtualizado}
           onExcluido={handleExcluido}

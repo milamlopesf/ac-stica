@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { requireEditor } from '@/lib/supabase/require-editor'
+import { getSessionInfo } from '@/lib/supabase/session'
 import { BibliotecaClient } from '@/components/biblioteca/BibliotecaClient'
 
 export default async function NormasPage() {
-  await requireEditor()
   const supabase = await createClient()
+  const session = await getSessionInfo()
 
   const { data, error } = await supabase
     .from('biblioteca')
@@ -20,5 +20,5 @@ export default async function NormasPage() {
     )
   }
 
-  return <BibliotecaClient categoria="normas" itensIniciais={data ?? []} />
+  return <BibliotecaClient categoria="normas" itensIniciais={data ?? []} isEditor={session.isEditor} />
 }

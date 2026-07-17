@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { requireEditor } from '@/lib/supabase/require-editor'
+import { getSessionInfo } from '@/lib/supabase/session'
 import { BibliotecaClient } from '@/components/biblioteca/BibliotecaClient'
 
 export default async function LaudosPage() {
-  await requireEditor()
   const supabase = await createClient()
+  const session = await getSessionInfo()
 
   const { data, error } = await supabase
     .from('biblioteca')
@@ -20,5 +20,5 @@ export default async function LaudosPage() {
     )
   }
 
-  return <BibliotecaClient categoria="laudos" itensIniciais={data ?? []} />
+  return <BibliotecaClient categoria="laudos" itensIniciais={data ?? []} isEditor={session.isEditor} />
 }

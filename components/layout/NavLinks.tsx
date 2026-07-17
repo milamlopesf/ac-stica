@@ -11,9 +11,9 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
     { href: '/projetos', label: 'Projetos', sempreVisivel: true },
     { href: '/atividades', label: 'Atividades', sempreVisivel: false },
     { href: '/calendario', label: 'Calendário', sempreVisivel: false },
-    { href: '/normas', label: 'Normas/Manuais', sempreVisivel: false },
-    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: false },
-    { href: '/laudos', label: 'Laudos/Medições', sempreVisivel: false },
+    { href: '/normas', label: 'Normas/Manuais', sempreVisivel: true },
+    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: true },
+    { href: '/laudos', label: 'Laudos/Medições', sempreVisivel: true },
     { href: '/paineis', label: 'Painéis', sempreVisivel: true },
   ].filter((link) => link.sempreVisivel || isEditor)
 
