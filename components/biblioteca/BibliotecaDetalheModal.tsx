@@ -1,0 +1,154 @@
+'use client'
+
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { ItemBiblioteca } from '@/lib/types/database'
+import { formatarTamanho } from '@/lib/utils/storage'
+
+const BUCKET = 'biblioteca-documentos'
+
+export function BibliotecaDetalheModal({
+  item,
+  onFechar,
+  onAtualizado,
+  onExcluido,
+}: {
+  item: ItemBiblioteca
+  onFechar: () => void
+  onAtualizado: (item: ItemBiblioteca) => void
+  onExcluido: (id: string) => void
+}) {
+  const supabase = createClient()
+  const [titulo, setTitulo] = useState(item.titulo)
+  const [descricao, setDescricao] = useState(item.descricao ?? '')
+  const [salvando, setSalvando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erro, setErro] = useState('')
+
+  const alterado = titulo !== item.titulo || descricao !== (item.descricao ?? '')
+
+  async function salvar() {
+    setSalvando(true)
+    setErro('')
+    const { data, error } = await supabase
+      .from('biblioteca')
+      .update({ titulo, descricao: descricao || null })
+      .eq('id', item.id)
+      .select()
+      .single()
+    setSalvando(false)
+    if (error) {
+      setErro(error.message)
+      return
+    }
+    onAtualizado(data as ItemBiblioteca)
+  }
+
+  async function baixar() {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(item.caminho_storage, 60)
+    if (error || !data) {
+      alert(`Erro ao gerar link de download: ${error?.message ?? ''}`)
+      return
+    }
+    window.open(data.signedUrl, '_blank')
+  }
+
+  async function excluir() {
+    if (!confirm(`Excluir o item "${item.titulo}"? Essa ação não pode ser desfeita.`)) return
+    setExcluindo(true)
+    const { error: erroStorage } = await supabase.storage.from(BUCKET).remove([item.caminho_storage])
+    if (erroStorage) {
+      setExcluindo(false)
+      alert(`Erro ao excluir arquivo: ${erroStorage.message}`)
+      return
+    }
+    const { error: erroDelete } = await supabase.from('biblioteca').delete().eq('id', item.id)
+    setExcluindo(false)
+    if (erroDelete) {
+      alert(`Erro ao excluir registro: ${erroDelete.message}`)
+      return
+    }
+    onExcluido(item.id)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+      onClick={onFechar}
+    >
+      <div
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <h2 className="text-lg font-semibold text-gray-900">Detalhe do item</h2>
+          <button onClick={onFechar} className="text-gray-400 hover:text-gray-600" aria-label="Fechar">
+            ✕
+          </button>
+        </div>
+
+        {erro && (
+          <div className="mb-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {erro}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Título</label>
+            <input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Descrição</label>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              rows={4}
+              placeholder="Breve descrição do item..."
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          {alterado && (
+            <button
+              onClick={salvar}
+              disabled={salvando}
+              className="self-end rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {salvando ? 'Salvando...' : 'Salvar alterações'}
+            </button>
+          )}
+
+          <div className="flex items-center justify-between gap-3 rounded-md border border-gray-200 p-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="text-xl">📎</span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-gray-800">{item.nome_arquivo}</p>
+                <p className="text-xs text-gray-400">{formatarTamanho(item.tamanho_bytes)}</p>
+              </div>
+            </div>
+            <button
+              onClick={baixar}
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Baixar
+            </button>
+          </div>
+
+          <button
+            onClick={excluir}
+            disabled={excluindo}
+            className="mt-2 self-start rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+          >
+            {excluindo ? 'Excluindo...' : 'Excluir item'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

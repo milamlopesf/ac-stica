@@ -11,11 +11,14 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
     { href: '/projetos', label: 'Projetos', sempreVisivel: true },
     { href: '/atividades', label: 'Atividades', sempreVisivel: false },
     { href: '/calendario', label: 'Calendário', sempreVisivel: false },
+    { href: '/normas', label: 'Normas/Manuais', sempreVisivel: false },
+    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: false },
+    { href: '/laudos', label: 'Laudos/Medições', sempreVisivel: false },
     { href: '/paineis', label: 'Painéis', sempreVisivel: true },
   ].filter((link) => link.sempreVisivel || isEditor)
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex flex-wrap items-center gap-1">
       {links.map((link) => {
         const active = pathname?.startsWith(link.href)
         return (

@@ -64,6 +64,19 @@ export type Profile = {
   role: Role
 }
 
+export type CategoriaBiblioteca = 'normas' | 'planilhas' | 'laudos'
+
+export type ItemBiblioteca = {
+  id: string
+  categoria: CategoriaBiblioteca
+  titulo: string
+  descricao: string | null
+  nome_arquivo: string
+  caminho_storage: string
+  tamanho_bytes: number | null
+  created_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -141,6 +154,21 @@ export type Database = {
         Row: Profile
         Insert: Profile
         Update: Partial<Omit<Profile, 'id'>>
+        Relationships: []
+      }
+      biblioteca: {
+        Row: ItemBiblioteca
+        Insert: {
+          id?: string
+          categoria: CategoriaBiblioteca
+          titulo: string
+          descricao?: string | null
+          nome_arquivo: string
+          caminho_storage: string
+          tamanho_bytes?: number | null
+          created_at?: string
+        }
+        Update: Partial<Omit<ItemBiblioteca, 'id' | 'created_at'>>
         Relationships: []
       }
     }
