@@ -12,7 +12,7 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
     { href: '/atividades', label: 'Atividades', sempreVisivel: false },
     { href: '/calendario', label: 'Calendário', sempreVisivel: false },
     { href: '/normas', label: 'Normas/Manuais', sempreVisivel: true },
-    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: true },
+    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: false },
     { href: '/laudos', label: 'Laudos/Medições', sempreVisivel: true },
     { href: '/paineis', label: 'Painéis', sempreVisivel: true },
   ].filter((link) => link.sempreVisivel || isEditor)
