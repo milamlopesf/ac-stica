@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
+import { getSessionInfo } from '@/lib/supabase/session'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, ETAPAS } from '@/lib/utils/cores'
 import { corCategorica } from '@/lib/utils/paleta'
 import { DonutChart, type DonutDatum } from '@/components/paineis/DonutChart'
+import { BackupSection } from '@/components/paineis/BackupSection'
 
 function agruparPorCampo(
   projetos: Projeto[],
@@ -20,6 +22,7 @@ function agruparPorCampo(
 
 export default async function PaineisPage() {
   const supabase = await createClient()
+  const session = await getSessionInfo()
   const { data: projetos, error } = await supabase.from('projetos').select('*')
 
   if (error) {
@@ -55,6 +58,8 @@ export default async function PaineisPage() {
         <DonutChart titulo="Projetos por responsável" dados={porResponsavel} />
         <DonutChart titulo="Projetos por projetista acústico" dados={porProjetista} />
       </div>
+
+      {session.isEditor && <BackupSection />}
     </div>
   )
 }
