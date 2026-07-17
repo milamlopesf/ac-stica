@@ -144,6 +144,7 @@ export function ProjetosClient({
         <ProjetoDetalhePanel
           projeto={selecionado}
           isEditor={isEditor}
+          responsaveisExistentes={responsaveis}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleProjetoAtualizado}
           onExcluido={handleProjetoExcluido}
@@ -151,7 +152,11 @@ export function ProjetosClient({
       )}
 
       {modalNovoAberto && (
-        <ProjetoFormModal onFechar={() => setModalNovoAberto(false)} onSalvo={handleProjetoCriado} />
+        <ProjetoFormModal
+          responsaveisExistentes={responsaveis}
+          onFechar={() => setModalNovoAberto(false)}
+          onSalvo={handleProjetoCriado}
+        />
       )}
     </div>
   )

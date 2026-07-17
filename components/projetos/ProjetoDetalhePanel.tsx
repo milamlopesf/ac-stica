@@ -25,12 +25,14 @@ const ABAS: { id: Aba; label: string }[] = [
 export function ProjetoDetalhePanel({
   projeto,
   isEditor,
+  responsaveisExistentes = [],
   onFechar,
   onAtualizado,
   onExcluido,
 }: {
   projeto: Projeto
   isEditor: boolean
+  responsaveisExistentes?: string[]
   onFechar: () => void
   onAtualizado: (p: Projeto) => void
   onExcluido: (id: string) => void
@@ -136,6 +138,7 @@ export function ProjetoDetalhePanel({
       {editando && (
         <ProjetoFormModal
           projeto={projeto}
+          responsaveisExistentes={responsaveisExistentes}
           onFechar={() => setEditando(false)}
           onSalvo={(p) => {
             onAtualizado(p)

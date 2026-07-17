@@ -39,3 +39,5 @@ export const ETAPAS: Etapa[] = ['DNN', 'EP', 'AP', 'EX', 'OBRA', 'GARANTIA']
 export const STATUS_PROJETO: StatusProjeto[] = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado']
 export const STATUS_ATIVIDADE: StatusAtividade[] = ['pendente', 'andamento', 'concluido']
 export const PRIORIDADES: Prioridade[] = ['Baixa', 'Média', 'Alta', 'Urgente']
+
+export const PROJETISTAS_ACUSTICOS = ['Acústica e Sônica', 'Giner', 'Harmonia', 'Interno']

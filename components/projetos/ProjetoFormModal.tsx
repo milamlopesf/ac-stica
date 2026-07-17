@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
-import { ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
+import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS } from '@/lib/utils/cores'
 
 export function ProjetoFormModal({
   projeto,
+  responsaveisExistentes = [],
   onFechar,
   onSalvo,
 }: {
   projeto?: Projeto
+  responsaveisExistentes?: string[]
   onFechar: () => void
   onSalvo: (projeto: Projeto) => void
 }) {
@@ -125,17 +127,31 @@ export function ProjetoFormModal({
             <input
               value={responsavel ?? ''}
               onChange={(e) => setResponsavel(e.target.value)}
+              list="responsaveis-existentes"
+              placeholder="Digite ou escolha um já usado"
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
             />
+            <datalist id="responsaveis-existentes">
+              {responsaveisExistentes.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Projetista acústico</label>
-            <input
+            <select
               value={projetista ?? ''}
               onChange={(e) => setProjetista(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            />
+            >
+              <option value="">Selecione...</option>
+              {PROJETISTAS_ACUSTICOS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="mt-3 flex justify-end gap-2">
