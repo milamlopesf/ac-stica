@@ -51,7 +51,7 @@ export function CalendarioClient({
   const atividadesDoDiaSelecionado = diaSelecionado ? atividadesNoDia(diaSelecionado) : []
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex h-[calc(100vh-150px)] min-h-[600px] flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Calendário</h1>
         <div className="flex items-center gap-2">
@@ -79,16 +79,19 @@ export function CalendarioClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 overflow-hidden rounded-lg border border-gray-200 bg-white">
-        {DIAS_SEMANA.map((d) => (
-          <div
-            key={d}
-            className="border-b border-gray-200 bg-gray-50 py-2 text-center text-xs font-medium text-gray-500"
-          >
-            {d}
-          </div>
-        ))}
+      <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="grid grid-cols-7">
+          {DIAS_SEMANA.map((d) => (
+            <div
+              key={d}
+              className="border-b border-gray-200 bg-gray-50 py-2 text-center text-xs font-medium text-gray-500"
+            >
+              {d}
+            </div>
+          ))}
+        </div>
 
+        <div className="grid flex-1 grid-cols-7 auto-rows-fr">
         {dias.map((dia) => {
           const noMes = isSameMonth(dia, mesAtual)
           const entregas = projetosNoDia(dia)
@@ -101,7 +104,7 @@ export function CalendarioClient({
               key={dia.toISOString()}
               onClick={() => setDiaSelecionado(dia)}
               className={clsx(
-                'flex min-h-24 flex-col gap-1 border-b border-r border-gray-100 p-1.5 text-left align-top last:border-r-0',
+                'flex min-h-0 flex-col gap-1 overflow-hidden border-b border-r border-gray-100 p-1.5 text-left align-top last:border-r-0',
                 !noMes && 'bg-gray-50/60',
                 totalItens > 0 && 'hover:bg-blue-50'
               )}
@@ -146,6 +149,7 @@ export function CalendarioClient({
             </button>
           )
         })}
+        </div>
       </div>
 
       {diaSelecionado && (
