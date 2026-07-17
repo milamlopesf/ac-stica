@@ -58,8 +58,8 @@ export function ProjetoDetalhePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/40">
-      <div className="flex h-full w-full max-w-2xl flex-col overflow-y-auto bg-white shadow-xl">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-y-auto rounded-lg bg-white shadow-xl">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-semibold text-gray-900">{projeto.nome}</h2>
