@@ -85,7 +85,8 @@ export function BackupSection() {
       { header: 'Etapa', key: 'etapa', width: 12 },
       { header: 'Status', key: 'status', width: 16 },
       { header: 'Entrega', key: 'entrega', width: 14 },
-      { header: 'Responsável', key: 'responsavel', width: 22 },
+      { header: 'Diretor', key: 'diretor', width: 22 },
+      { header: 'Gerente', key: 'gerente', width: 22 },
       { header: 'Projetista Acústico', key: 'projetista', width: 22 },
     ]
     planilha.getRow(1).font = { bold: true }
@@ -96,7 +97,8 @@ export function BackupSection() {
         etapa: p.etapa,
         status: p.status,
         entrega: p.entrega ?? '',
-        responsavel: p.responsavel ?? '',
+        diretor: p.diretor ?? '',
+        gerente: p.gerente ?? '',
         projetista: p.projetista ?? '',
       })
     }

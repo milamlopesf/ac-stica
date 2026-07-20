@@ -14,7 +14,8 @@ export type Projeto = {
   etapa: Etapa
   status: StatusProjeto
   entrega: string | null
-  responsavel: string | null
+  diretor: string | null
+  gerente: string | null
   projetista: string | null
   created_at: string
 }
@@ -28,7 +29,8 @@ export type Atividade = {
   data_vencimento: string | null
   progresso: number
   etapa: Etapa | null
-  responsavel: string | null
+  diretor: string | null
+  gerente: string | null
   projetista: string | null
   created_at: string
 }
@@ -88,7 +90,8 @@ export type Database = {
           etapa: Etapa
           status: StatusProjeto
           entrega?: string | null
-          responsavel?: string | null
+          diretor?: string | null
+          gerente?: string | null
           projetista?: string | null
           created_at?: string
         }
@@ -106,7 +109,8 @@ export type Database = {
           data_vencimento?: string | null
           progresso?: number
           etapa?: Etapa | null
-          responsavel?: string | null
+          diretor?: string | null
+          gerente?: string | null
           projetista?: string | null
           created_at?: string
         }

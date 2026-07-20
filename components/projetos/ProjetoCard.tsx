@@ -27,8 +27,12 @@ export function ProjetoCard({ projeto, onClick }: { projeto: Projeto; onClick: (
           <dd className="font-medium text-gray-700">{formatarData(projeto.entrega)}</dd>
         </div>
         <div className="flex justify-between">
-          <dt>Responsável</dt>
-          <dd className="font-medium text-gray-700">{projeto.responsavel || '—'}</dd>
+          <dt>Diretor</dt>
+          <dd className="font-medium text-gray-700">{projeto.diretor || '—'}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt>Gerente</dt>
+          <dd className="font-medium text-gray-700">{projeto.gerente || '—'}</dd>
         </div>
         <div className="flex justify-between">
           <dt>Projetista acústico</dt>

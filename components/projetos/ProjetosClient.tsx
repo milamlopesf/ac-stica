@@ -23,7 +23,8 @@ export function ProjetosClient({
   const [busca, setBusca] = useState('')
   const [filtroEtapa, setFiltroEtapa] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
-  const [filtroResponsavel, setFiltroResponsavel] = useState('')
+  const [filtroDiretor, setFiltroDiretor] = useState('')
+  const [filtroGerente, setFiltroGerente] = useState('')
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
@@ -38,8 +39,12 @@ export function ProjetosClient({
     localStorage.setItem(CHAVE_VISUALIZACAO, v)
   }
 
-  const responsaveis = useMemo(
-    () => Array.from(new Set(projetos.map((p) => p.responsavel).filter(Boolean))) as string[],
+  const diretores = useMemo(
+    () => Array.from(new Set(projetos.map((p) => p.diretor).filter(Boolean))) as string[],
+    [projetos]
+  )
+  const gerentes = useMemo(
+    () => Array.from(new Set(projetos.map((p) => p.gerente).filter(Boolean))) as string[],
     [projetos]
   )
   const projetistas = useMemo(
@@ -52,11 +57,12 @@ export function ProjetosClient({
       if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false
       if (filtroEtapa && p.etapa !== filtroEtapa) return false
       if (filtroStatus && p.status !== filtroStatus) return false
-      if (filtroResponsavel && p.responsavel !== filtroResponsavel) return false
+      if (filtroDiretor && p.diretor !== filtroDiretor) return false
+      if (filtroGerente && p.gerente !== filtroGerente) return false
       if (filtroProjetista && p.projetista !== filtroProjetista) return false
       return true
     })
-  }, [projetos, busca, filtroEtapa, filtroStatus, filtroResponsavel, filtroProjetista])
+  }, [projetos, busca, filtroEtapa, filtroStatus, filtroDiretor, filtroGerente, filtroProjetista])
 
   function handleProjetoCriado(novo: Projeto) {
     setProjetos((prev) => [...prev, novo])
@@ -142,14 +148,26 @@ export function ProjetosClient({
           ))}
         </select>
         <select
-          value={filtroResponsavel}
-          onChange={(e) => setFiltroResponsavel(e.target.value)}
+          value={filtroDiretor}
+          onChange={(e) => setFiltroDiretor(e.target.value)}
           className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
         >
-          <option value="">Todos os responsáveis</option>
-          {responsaveis.map((r) => (
-            <option key={r} value={r}>
-              {r}
+          <option value="">Todos os diretores</option>
+          {diretores.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filtroGerente}
+          onChange={(e) => setFiltroGerente(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        >
+          <option value="">Todos os gerentes</option>
+          {gerentes.map((g) => (
+            <option key={g} value={g}>
+              {g}
             </option>
           ))}
         </select>
@@ -191,7 +209,8 @@ export function ProjetosClient({
         <ProjetoDetalhePanel
           projeto={selecionado}
           isEditor={isEditor}
-          responsaveisExistentes={responsaveis}
+          diretoresExistentes={diretores}
+          gerentesExistentes={gerentes}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleProjetoAtualizado}
           onExcluido={handleProjetoExcluido}
@@ -200,7 +219,8 @@ export function ProjetosClient({
 
       {modalNovoAberto && (
         <ProjetoFormModal
-          responsaveisExistentes={responsaveis}
+          diretoresExistentes={diretores}
+          gerentesExistentes={gerentes}
           onFechar={() => setModalNovoAberto(false)}
           onSalvo={handleProjetoCriado}
         />

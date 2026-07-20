@@ -26,7 +26,10 @@ export function ProjetoListItem({ projeto, onClick }: { projeto: Projeto; onClic
           Entrega: <span className="font-medium text-gray-700">{formatarData(projeto.entrega)}</span>
         </span>
         <span className="hidden md:inline">
-          Responsável: <span className="font-medium text-gray-700">{projeto.responsavel || '—'}</span>
+          Diretor: <span className="font-medium text-gray-700">{projeto.diretor || '—'}</span>
+        </span>
+        <span className="hidden md:inline">
+          Gerente: <span className="font-medium text-gray-700">{projeto.gerente || '—'}</span>
         </span>
         <span className="hidden lg:inline">
           Projetista: <span className="font-medium text-gray-700">{projeto.projetista || '—'}</span>

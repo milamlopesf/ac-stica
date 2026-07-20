@@ -138,11 +138,20 @@ export function AtividadeRow({
       />
 
       <input
-        value={atividade.responsavel ?? ''}
+        value={atividade.diretor ?? ''}
         disabled={!isEditor}
-        placeholder="Responsável"
-        onChange={(e) => onAtualizada({ ...atividade, responsavel: e.target.value })}
-        onBlur={(e) => atualizarCampo('responsavel', e.target.value || null)}
+        placeholder="Diretor"
+        onChange={(e) => onAtualizada({ ...atividade, diretor: e.target.value })}
+        onBlur={(e) => atualizarCampo('diretor', e.target.value || null)}
+        className="w-28 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
+      />
+
+      <input
+        value={atividade.gerente ?? ''}
+        disabled={!isEditor}
+        placeholder="Gerente"
+        onChange={(e) => onAtualizada({ ...atividade, gerente: e.target.value })}
+        onBlur={(e) => atualizarCampo('gerente', e.target.value || null)}
         className="w-28 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
       />
 

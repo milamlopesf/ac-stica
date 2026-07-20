@@ -7,12 +7,14 @@ import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS } from '@/lib/utils/cores
 
 export function ProjetoFormModal({
   projeto,
-  responsaveisExistentes = [],
+  diretoresExistentes = [],
+  gerentesExistentes = [],
   onFechar,
   onSalvo,
 }: {
   projeto?: Projeto
-  responsaveisExistentes?: string[]
+  diretoresExistentes?: string[]
+  gerentesExistentes?: string[]
   onFechar: () => void
   onSalvo: (projeto: Projeto) => void
 }) {
@@ -21,7 +23,8 @@ export function ProjetoFormModal({
   const [etapa, setEtapa] = useState<Etapa>(projeto?.etapa ?? 'DNN')
   const [status, setStatus] = useState<StatusProjeto>(projeto?.status ?? 'A Fazer')
   const [entrega, setEntrega] = useState(projeto?.entrega ?? '')
-  const [responsavel, setResponsavel] = useState(projeto?.responsavel ?? '')
+  const [diretor, setDiretor] = useState(projeto?.diretor ?? '')
+  const [gerente, setGerente] = useState(projeto?.gerente ?? '')
   const [projetista, setProjetista] = useState(projeto?.projetista ?? '')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -36,7 +39,8 @@ export function ProjetoFormModal({
       etapa,
       status,
       entrega: entrega || null,
-      responsavel: responsavel || null,
+      diretor: diretor || null,
+      gerente: gerente || null,
       projetista: projetista || null,
     }
 
@@ -128,20 +132,38 @@ export function ProjetoFormModal({
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Responsável</label>
-            <input
-              value={responsavel ?? ''}
-              onChange={(e) => setResponsavel(e.target.value)}
-              list="responsaveis-existentes"
-              placeholder="Digite ou escolha um já usado"
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            />
-            <datalist id="responsaveis-existentes">
-              {responsaveisExistentes.map((r) => (
-                <option key={r} value={r} />
-              ))}
-            </datalist>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Diretor</label>
+              <input
+                value={diretor ?? ''}
+                onChange={(e) => setDiretor(e.target.value)}
+                list="diretores-existentes"
+                placeholder="Digite ou escolha"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+              <datalist id="diretores-existentes">
+                {diretoresExistentes.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Gerente</label>
+              <input
+                value={gerente ?? ''}
+                onChange={(e) => setGerente(e.target.value)}
+                list="gerentes-existentes"
+                placeholder="Digite ou escolha"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+              <datalist id="gerentes-existentes">
+                {gerentesExistentes.map((g) => (
+                  <option key={g} value={g} />
+                ))}
+              </datalist>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">

@@ -28,7 +28,8 @@ create table projetos (
   etapa text not null check (etapa in ('DNN','EP','AP','EX','OBRA','GARANTIA')),
   status text not null check (status in ('A Fazer','Em Andamento','Concluído','Atrasado')),
   entrega date,
-  responsavel text,
+  diretor text,
+  gerente text,
   projetista text,
   created_at timestamptz default now()
 );
@@ -42,7 +43,8 @@ create table atividades (
   data_vencimento date,
   progresso int default 0 check (progresso between 0 and 100),
   etapa text,
-  responsavel text,
+  diretor text,
+  gerente text,
   projetista text,
   created_at timestamptz default now()
 );

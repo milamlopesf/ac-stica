@@ -8,7 +8,7 @@ import { BackupSection } from '@/components/paineis/BackupSection'
 
 function agruparPorCampo(
   projetos: Projeto[],
-  campo: 'responsavel' | 'projetista'
+  campo: 'gerente' | 'projetista'
 ): DonutDatum[] {
   const contagem = new Map<string, number>()
   for (const p of projetos) {
@@ -41,7 +41,7 @@ export default async function PaineisPage() {
     cor: CORES_ETAPA[etapa].hex,
   })).filter((d) => d.valor > 0)
 
-  const porResponsavel = agruparPorCampo(lista, 'responsavel')
+  const porGerente = agruparPorCampo(lista, 'gerente')
   const porProjetista = agruparPorCampo(lista, 'projetista')
 
   return (
@@ -55,7 +55,7 @@ export default async function PaineisPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <DonutChart titulo="Projetos por etapa" dados={porEtapa} />
-        <DonutChart titulo="Projetos por responsável" dados={porResponsavel} />
+        <DonutChart titulo="Projetos por gerente" dados={porGerente} />
         <DonutChart titulo="Projetos por projetista acústico" dados={porProjetista} />
       </div>
 

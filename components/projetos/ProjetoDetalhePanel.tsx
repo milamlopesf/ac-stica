@@ -25,14 +25,16 @@ const ABAS: { id: Aba; label: string }[] = [
 export function ProjetoDetalhePanel({
   projeto,
   isEditor,
-  responsaveisExistentes = [],
+  diretoresExistentes = [],
+  gerentesExistentes = [],
   onFechar,
   onAtualizado,
   onExcluido,
 }: {
   projeto: Projeto
   isEditor: boolean
-  responsaveisExistentes?: string[]
+  diretoresExistentes?: string[]
+  gerentesExistentes?: string[]
   onFechar: () => void
   onAtualizado: (p: Projeto) => void
   onExcluido: (id: string) => void
@@ -79,8 +81,12 @@ export function ProjetoDetalhePanel({
                 <dd className="inline font-medium text-gray-700">{formatarData(projeto.entrega)}</dd>
               </div>
               <div>
-                <dt className="inline">Responsável: </dt>
-                <dd className="inline font-medium text-gray-700">{projeto.responsavel || '—'}</dd>
+                <dt className="inline">Diretor: </dt>
+                <dd className="inline font-medium text-gray-700">{projeto.diretor || '—'}</dd>
+              </div>
+              <div>
+                <dt className="inline">Gerente: </dt>
+                <dd className="inline font-medium text-gray-700">{projeto.gerente || '—'}</dd>
               </div>
               <div>
                 <dt className="inline">Projetista: </dt>
@@ -144,7 +150,8 @@ export function ProjetoDetalhePanel({
       {editando && (
         <ProjetoFormModal
           projeto={projeto}
-          responsaveisExistentes={responsaveisExistentes}
+          diretoresExistentes={diretoresExistentes}
+          gerentesExistentes={gerentesExistentes}
           onFechar={() => setEditando(false)}
           onSalvo={(p) => {
             onAtualizado(p)
