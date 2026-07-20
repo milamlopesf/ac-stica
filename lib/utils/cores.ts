@@ -41,3 +41,38 @@ export const STATUS_ATIVIDADE: StatusAtividade[] = ['pendente', 'andamento', 'co
 export const PRIORIDADES: Prioridade[] = ['Baixa', 'Média', 'Alta', 'Urgente']
 
 export const PROJETISTAS_ACUSTICOS = ['Acústica e Sônica', 'Giner', 'Harmonia', 'Interno']
+
+export const DIRETORES = [
+  'Alexandre Costa',
+  'Alexandre Mirandez',
+  'Andre Vergara',
+  'Bruna Murolo',
+  'Camila Masi',
+  'Carlos Levada',
+  'Carolina Fischer',
+  'Daniel Giannella',
+  'Daniel Ingarano',
+  'Felipe Martins',
+  'Fernanda Matos',
+  'Fernando Camargo',
+  'Francisco Vergamini',
+  'Gilberto Gambagorte',
+  'Guedes Alavarse',
+  'Guilherme Titton',
+  'Gustavo Vaughan',
+  'Henrique Fernandes',
+  'Ivan Patricio',
+  'Jose Temperini',
+  'Leonardo Leite',
+  'Maria Cristina Bianchessi',
+  'Maria Regina Ramos',
+  'Marlon Oliveira',
+  'Pamela Mello',
+  'Pedro Coivo',
+  'Rafael Gentil',
+  'Rafael Venturi',
+  'Ricardo Cuminale',
+  'Vinicius Lacerda',
+  'Virginia Nehmi',
+  'Wesley Pereira',
+]

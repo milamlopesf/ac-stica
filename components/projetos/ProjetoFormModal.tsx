@@ -3,17 +3,15 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
-import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS } from '@/lib/utils/cores'
+import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS, DIRETORES } from '@/lib/utils/cores'
 
 export function ProjetoFormModal({
   projeto,
-  diretoresExistentes = [],
   gerentesExistentes = [],
   onFechar,
   onSalvo,
 }: {
   projeto?: Projeto
-  diretoresExistentes?: string[]
   gerentesExistentes?: string[]
   onFechar: () => void
   onSalvo: (projeto: Projeto) => void
@@ -135,18 +133,18 @@ export function ProjetoFormModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Diretor</label>
-              <input
+              <select
                 value={diretor ?? ''}
                 onChange={(e) => setDiretor(e.target.value)}
-                list="diretores-existentes"
-                placeholder="Digite ou escolha"
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-              />
-              <datalist id="diretores-existentes">
-                {diretoresExistentes.map((d) => (
-                  <option key={d} value={d} />
+              >
+                <option value="">Selecione...</option>
+                {DIRETORES.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
                 ))}
-              </datalist>
+              </select>
             </div>
 
             <div className="flex flex-col gap-1">

@@ -209,7 +209,6 @@ export function ProjetosClient({
         <ProjetoDetalhePanel
           projeto={selecionado}
           isEditor={isEditor}
-          diretoresExistentes={diretores}
           gerentesExistentes={gerentes}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleProjetoAtualizado}
@@ -219,7 +218,6 @@ export function ProjetosClient({
 
       {modalNovoAberto && (
         <ProjetoFormModal
-          diretoresExistentes={diretores}
           gerentesExistentes={gerentes}
           onFechar={() => setModalNovoAberto(false)}
           onSalvo={handleProjetoCriado}
