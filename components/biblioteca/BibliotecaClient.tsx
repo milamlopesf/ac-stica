@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
 import { CATEGORIAS_BIBLIOTECA } from '@/lib/utils/biblioteca'
 import { formatarTamanho } from '@/lib/utils/storage'
+import { textoSimples } from '@/lib/utils/texto'
 import { BibliotecaFormModal } from './BibliotecaFormModal'
 import { BibliotecaDetalheModal } from './BibliotecaDetalheModal'
 
@@ -77,8 +78,8 @@ export function BibliotecaClient({
                 <span className="text-xl">{iconePara(item.nome_arquivo)}</span>
                 <div className="min-w-0">
                   <p className="truncate font-medium text-gray-900">{item.titulo}</p>
-                  {item.descricao && (
-                    <p className="truncate text-sm text-gray-500">{item.descricao}</p>
+                  {item.descricao && textoSimples(item.descricao) && (
+                    <p className="truncate text-sm text-gray-500">{textoSimples(item.descricao)}</p>
                   )}
                 </div>
               </div>
