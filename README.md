@@ -30,16 +30,20 @@ Painel de acompanhamento de projetos acústicos, feito em Next.js (App Router) +
 
 ### Banco de dados
 
-O schema (tabelas `projetos`, `atividades`, `notas`, `reunioes`, `anexos`, `profiles`) e as
-políticas de RLS já devem existir no projeto Supabase antes de rodar a aplicação.
+**`supabase/schema.sql` é a fonte da verdade do banco** — tabelas, políticas de RLS e buckets
+de Storage, do jeito que estão hoje em produção. Se o projeto Supabase precisar ser recriado do
+zero (ou se você estiver retomando este projeto sem o histórico da conversa original), rode esse
+arquivo inteiro no SQL Editor de um projeto Supabase novo e ele reconstrói tudo.
+
+Tabelas: `projetos`, `atividades`, `notas`, `reunioes`, `anexos`, `profiles`, `biblioteca`.
 
 ### Storage
 
-O bucket `anexos-projetos` (privado) precisa de políticas de RLS na tabela `storage.objects`
-além das políticas já aplicadas na tabela `anexos` — leitura para qualquer usuário autenticado
-(ou público, conforme a necessidade) e escrita/exclusão apenas para quem tem `role = 'editor'`
-em `profiles`. Sem essas políticas, upload/download de PDFs retornarão erro de permissão mesmo
-com a tabela `anexos` liberada.
+Dois buckets privados, cada um com política de leitura pública e escrita restrita a
+`profiles.role = 'editor'` (ver `supabase/schema.sql`):
+
+- `anexos-projetos` — PDFs anexados a cada projeto (aba "Anexos")
+- `biblioteca-documentos` — PDFs/Excel de Normas/Manuais, Planilhas de Cálculo e Laudos/Medições
 
 ## Estrutura
 
@@ -47,15 +51,22 @@ com a tabela `anexos` liberada.
   atividades, anexos)
 - `app/atividades` — lista de atividades de todos os projetos, agrupada por status (editor)
 - `app/calendario` — visão mensal de entregas de projetos e vencimentos de atividades (editor)
-- `app/paineis` — números e gráficos de rosca para apresentação
-- `lib/supabase` — clientes Supabase (browser, server, middleware/proxy) e helpers de sessão
+- `app/normas`, `app/planilhas`, `app/laudos` — biblioteca de documentos (Normas/Manuais e
+  Laudos/Medições são públicas; Planilhas de Cálculo exige login de editor)
+- `app/paineis` — números, gráficos de rosca e backup de dados (JSON completo / Excel de
+  projetos, visível só para editor)
+- `components/ui/RichTextEditor.tsx` — editor de texto rico (Tiptap), usado em Anotações, Atas
+  de Reunião e na descrição dos itens da biblioteca
+- `lib/supabase` — clientes Supabase (browser, server) e helpers de sessão
 - `lib/types/database.ts` — tipos TypeScript do schema
+- `supabase/schema.sql` — retrato completo do banco (tabelas, RLS, buckets)
 
 ## Controle de acesso
 
-- Visitante não autenticado: acesso de leitura a `/projetos` e `/paineis`.
+- Visitante não autenticado: acesso de leitura a `/projetos`, `/paineis`, `/normas` e `/laudos`.
 - Usuário autenticado com `profiles.role = 'editor'`: acesso completo, incluindo
-  `/atividades`, `/calendario` e os controles de criação/edição/exclusão.
+  `/atividades`, `/calendario`, `/planilhas` e os controles de criação/edição/exclusão em
+  todas as páginas.
 
 ## Deploy
 
