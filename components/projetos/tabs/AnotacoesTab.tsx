@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Nota } from '@/lib/types/database'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { htmlEstaVazio } from '@/lib/utils/texto'
 
 function formatarDataHora(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -35,11 +37,11 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault()
-    if (!texto.trim()) return
+    if (htmlEstaVazio(texto)) return
     setEnviando(true)
     const { data, error } = await supabase
       .from('notas')
-      .insert({ projeto_id: projetoId, texto: texto.trim() })
+      .insert({ projeto_id: projetoId, texto })
       .select()
       .single()
     setEnviando(false)
@@ -67,13 +69,7 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
     <div className="flex flex-col gap-4">
       {isEditor && (
         <form onSubmit={adicionar} className="flex flex-col gap-2">
-          <textarea
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Escrever uma anotação..."
-            rows={3}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
+          <RichTextEditor value={texto} onChange={setTexto} placeholder="Escrever uma anotação..." />
           <button
             type="submit"
             disabled={enviando}
@@ -91,7 +87,9 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
           {notas.map((nota) => (
             <li key={nota.id} className="rounded-md border border-gray-200 p-3">
               <div className="flex items-start justify-between gap-2">
-                <p className="whitespace-pre-wrap text-sm text-gray-800">{nota.texto}</p>
+                <div className="min-w-0 flex-1">
+                  <RichTextEditor value={nota.texto} editable={false} />
+                </div>
                 {isEditor && (
                   <button
                     onClick={() => excluir(nota.id)}

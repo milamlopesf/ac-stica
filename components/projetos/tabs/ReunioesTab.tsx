@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Reuniao } from '@/lib/types/database'
 import { formatarData } from '@/lib/utils/data'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { htmlEstaVazio } from '@/lib/utils/texto'
 
 export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
   const supabase = createClient()
@@ -39,7 +41,12 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     setEnviando(true)
     const { data: nova, error } = await supabase
       .from('reunioes')
-      .insert({ projeto_id: projetoId, titulo: titulo.trim(), data, conteudo: conteudo || null })
+      .insert({
+        projeto_id: projetoId,
+        titulo: titulo.trim(),
+        data,
+        conteudo: htmlEstaVazio(conteudo) ? null : conteudo,
+      })
       .select()
       .single()
     setEnviando(false)
@@ -93,13 +100,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
             required
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
           />
-          <textarea
-            value={conteudo}
-            onChange={(e) => setConteudo(e.target.value)}
-            placeholder="Conteúdo da ata..."
-            rows={4}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          />
+          <RichTextEditor value={conteudo} onChange={setConteudo} placeholder="Conteúdo da ata..." />
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -140,8 +141,10 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
                   </button>
                 )}
               </div>
-              {reuniao.conteudo && (
-                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{reuniao.conteudo}</p>
+              {reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo) && (
+                <div className="mt-2">
+                  <RichTextEditor value={reuniao.conteudo} editable={false} />
+                </div>
               )}
             </li>
           ))}

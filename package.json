@@ -11,6 +11,12 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "@tiptap/extension-placeholder": "^3.28.0",
+    "@tiptap/extension-text-align": "^3.28.0",
+    "@tiptap/extension-underline": "^3.28.0",
+    "@tiptap/pm": "^3.28.0",
+    "@tiptap/react": "^3.28.0",
+    "@tiptap/starter-kit": "^3.28.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",
@@ -21,6 +27,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

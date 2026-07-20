@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
 import { TIPOS_ARQUIVO_ACEITOS, extensaoValida } from '@/lib/utils/biblioteca'
 import { sanitizarNomeArquivo } from '@/lib/utils/storage'
+import { RichTextEditor } from '@/components/ui/RichTextEditor'
+import { htmlEstaVazio } from '@/lib/utils/texto'
 
 const BUCKET = 'biblioteca-documentos'
 
@@ -53,7 +55,7 @@ export function BibliotecaFormModal({
       .insert({
         categoria,
         titulo,
-        descricao: descricao || null,
+        descricao: htmlEstaVazio(descricao) ? null : descricao,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -101,13 +103,7 @@ export function BibliotecaFormModal({
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Descrição</label>
-            <textarea
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              rows={3}
-              placeholder="Breve descrição do item..."
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            />
+            <RichTextEditor value={descricao} onChange={setDescricao} placeholder="Breve descrição do item..." />
           </div>
 
           <div className="flex flex-col gap-1">
