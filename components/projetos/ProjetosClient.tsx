@@ -89,15 +89,22 @@ export function ProjetosClient({
   )
 
   const projetosFiltrados = useMemo(() => {
-    return projetos.filter((p) => {
-      if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false
-      if (filtroEtapa && p.etapa !== filtroEtapa) return false
-      if (filtroStatus && p.status !== filtroStatus) return false
-      if (filtroDiretor && p.diretor !== filtroDiretor) return false
-      if (filtroGerente && p.gerente !== filtroGerente) return false
-      if (filtroProjetista && p.projetista !== filtroProjetista) return false
-      return true
-    })
+    return projetos
+      .filter((p) => {
+        if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false
+        if (filtroEtapa && p.etapa !== filtroEtapa) return false
+        if (filtroStatus && p.status !== filtroStatus) return false
+        if (filtroDiretor && p.diretor !== filtroDiretor) return false
+        if (filtroGerente && p.gerente !== filtroGerente) return false
+        if (filtroProjetista && p.projetista !== filtroProjetista) return false
+        return true
+      })
+      .sort((a, b) => {
+        if (!a.entrega && !b.entrega) return 0
+        if (!a.entrega) return 1
+        if (!b.entrega) return -1
+        return b.entrega.localeCompare(a.entrega)
+      })
   }, [projetos, busca, filtroEtapa, filtroStatus, filtroDiretor, filtroGerente, filtroProjetista])
 
   function handleProjetoCriado(novo: Projeto) {

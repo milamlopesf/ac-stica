@@ -9,7 +9,7 @@ export default async function ProjetosPage() {
   const { data: projetos, error } = await supabase
     .from('projetos')
     .select('*')
-    .order('entrega', { ascending: true, nullsFirst: false })
+    .order('entrega', { ascending: false, nullsFirst: false })
 
   if (error) {
     return (
