@@ -1,11 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import clsx from 'clsx'
 import type { Projeto } from '@/lib/types/database'
 import { ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { ProjetoCard } from './ProjetoCard'
+import { ProjetoListItem } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
 import { ProjetoFormModal } from './ProjetoFormModal'
+
+type Visualizacao = 'lista' | 'grade'
+const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
 
 export function ProjetosClient({
   projetosIniciais,
@@ -22,6 +27,16 @@ export function ProjetosClient({
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
+  const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
+    if (typeof window === 'undefined') return 'lista'
+    const salva = localStorage.getItem(CHAVE_VISUALIZACAO)
+    return salva === 'lista' || salva === 'grade' ? salva : 'lista'
+  })
+
+  function mudarVisualizacao(v: Visualizacao) {
+    setVisualizacao(v)
+    localStorage.setItem(CHAVE_VISUALIZACAO, v)
+  }
 
   const responsaveis = useMemo(
     () => Array.from(new Set(projetos.map((p) => p.responsavel).filter(Boolean))) as string[],
@@ -63,14 +78,36 @@ export function ProjetosClient({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-gray-900">Projetos</h1>
-        {isEditor && (
-          <button
-            onClick={() => setModalNovoAberto(true)}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + Novo Projeto
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-md border border-gray-300 p-0.5">
+            <button
+              onClick={() => mudarVisualizacao('lista')}
+              className={clsx(
+                'rounded px-3 py-1 text-sm font-medium',
+                visualizacao === 'lista' ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              )}
+            >
+              Lista
+            </button>
+            <button
+              onClick={() => mudarVisualizacao('grade')}
+              className={clsx(
+                'rounded px-3 py-1 text-sm font-medium',
+                visualizacao === 'grade' ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:text-gray-700'
+              )}
+            >
+              Grade
+            </button>
+          </div>
+          {isEditor && (
+            <button
+              onClick={() => setModalNovoAberto(true)}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + Novo Projeto
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -132,6 +169,16 @@ export function ProjetosClient({
 
       {projetosFiltrados.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">Nenhum projeto encontrado.</p>
+      ) : visualizacao === 'lista' ? (
+        <div className="flex flex-col gap-2">
+          {projetosFiltrados.map((projeto) => (
+            <ProjetoListItem
+              key={projeto.id}
+              projeto={projeto}
+              onClick={() => setSelecionadoId(projeto.id)}
+            />
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {projetosFiltrados.map((projeto) => (
