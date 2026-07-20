@@ -123,21 +123,6 @@ export function AtividadeRow({
         className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
       />
 
-      <div className="flex w-32 shrink-0 items-center gap-2">
-        <input
-          type="range"
-          min={0}
-          max={100}
-          value={atividade.progresso}
-          disabled={!isEditor}
-          onChange={(e) => onAtualizada({ ...atividade, progresso: Number(e.target.value) })}
-          onMouseUp={(e) => atualizarCampo('progresso', Number((e.target as HTMLInputElement).value))}
-          onTouchEnd={(e) => atualizarCampo('progresso', Number((e.target as HTMLInputElement).value))}
-          className="w-full"
-        />
-        <span className="w-9 text-right text-xs text-gray-500">{atividade.progresso}%</span>
-      </div>
-
       {isEditor && (
         <button
           onClick={excluir}
