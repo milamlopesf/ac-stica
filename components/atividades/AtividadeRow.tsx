@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Atividade, Etapa, Prioridade, StatusAtividade, Projeto } from '@/lib/types/database'
-import { ETAPAS, PRIORIDADES, STATUS_ATIVIDADE, CORES_PRIORIDADE } from '@/lib/utils/cores'
+import type { Atividade, Prioridade, StatusAtividade, Projeto } from '@/lib/types/database'
+import { PRIORIDADES, STATUS_ATIVIDADE, CORES_PRIORIDADE } from '@/lib/utils/cores'
 
 export function AtividadeRow({
   atividade,
@@ -101,20 +101,6 @@ export function AtividadeRow({
       )}
 
       <select
-        value={atividade.etapa ?? ''}
-        disabled={!isEditor}
-        onChange={(e) => atualizarCampo('etapa', (e.target.value || null) as Etapa | null)}
-        className="w-24 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
-      >
-        <option value="">Etapa</option>
-        {ETAPAS.map((e) => (
-          <option key={e} value={e}>
-            {e}
-          </option>
-        ))}
-      </select>
-
-      <select
         value={atividade.prioridade ?? ''}
         disabled={!isEditor}
         onChange={(e) => atualizarCampo('prioridade', (e.target.value || null) as Prioridade | null)}
@@ -135,33 +121,6 @@ export function AtividadeRow({
         disabled={!isEditor}
         onChange={(e) => atualizarCampo('data_vencimento', e.target.value || null)}
         className="w-36 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
-      />
-
-      <input
-        value={atividade.diretor ?? ''}
-        disabled={!isEditor}
-        placeholder="Diretor"
-        onChange={(e) => onAtualizada({ ...atividade, diretor: e.target.value })}
-        onBlur={(e) => atualizarCampo('diretor', e.target.value || null)}
-        className="w-28 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
-      />
-
-      <input
-        value={atividade.gerente ?? ''}
-        disabled={!isEditor}
-        placeholder="Gerente"
-        onChange={(e) => onAtualizada({ ...atividade, gerente: e.target.value })}
-        onBlur={(e) => atualizarCampo('gerente', e.target.value || null)}
-        className="w-28 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
-      />
-
-      <input
-        value={atividade.projetista ?? ''}
-        disabled={!isEditor}
-        placeholder="Projetista"
-        onChange={(e) => onAtualizada({ ...atividade, projetista: e.target.value })}
-        onBlur={(e) => atualizarCampo('projetista', e.target.value || null)}
-        className="w-28 shrink-0 rounded-md border border-gray-200 px-2 py-1 text-xs disabled:border-transparent disabled:bg-transparent"
       />
 
       <div className="flex w-32 shrink-0 items-center gap-2">
