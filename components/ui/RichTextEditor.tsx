@@ -147,13 +147,17 @@ function Barra({ editor }: { editor: Editor }) {
 export function RichTextEditor({
   value,
   onChange,
+  onBlur,
   editable = true,
+  mostrarBarra = editable,
   placeholder,
   className,
 }: {
   value: string
   onChange?: (html: string) => void
+  onBlur?: (html: string) => void
   editable?: boolean
+  mostrarBarra?: boolean
   placeholder?: string
   className?: string
 }) {
@@ -168,11 +172,12 @@ export function RichTextEditor({
     editable,
     immediatelyRender: false,
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
+    onBlur: ({ editor }) => onBlur?.(editor.getHTML()),
     editorProps: {
       attributes: {
         class: clsx(
           'rich-text-content prose prose-sm max-w-none focus:outline-none',
-          editable ? 'px-3 py-2' : ''
+          mostrarBarra ? 'px-3 py-2' : 'py-0.5'
         ),
       },
     },
@@ -193,8 +198,14 @@ export function RichTextEditor({
   if (!editor) return null
 
   return (
-    <div className={clsx('overflow-hidden rounded-md border border-gray-300 bg-white', className)}>
-      {editable && <Barra editor={editor} />}
+    <div
+      className={clsx(
+        'overflow-hidden',
+        mostrarBarra && 'rounded-md border border-gray-300 bg-white',
+        className
+      )}
+    >
+      {mostrarBarra && <Barra editor={editor} />}
       <EditorContent editor={editor} />
     </div>
   )

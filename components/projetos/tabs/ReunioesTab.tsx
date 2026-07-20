@@ -71,6 +71,15 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     setReunioes((prev) => prev.filter((r) => r.id !== id))
   }
 
+  async function atualizarConteudo(id: string, novoConteudo: string) {
+    const reuniao = reunioes.find((r) => r.id === id)
+    const valor = htmlEstaVazio(novoConteudo) ? null : novoConteudo
+    if (!reuniao || reuniao.conteudo === valor) return
+    setReunioes((prev) => prev.map((r) => (r.id === id ? { ...r, conteudo: valor } : r)))
+    const { error } = await supabase.from('reunioes').update({ conteudo: valor }).eq('id', id)
+    if (error) alert(`Erro ao salvar ata: ${error.message}`)
+  }
+
   if (carregando) return <p className="text-sm text-gray-500">Carregando...</p>
 
   return (
@@ -125,8 +134,8 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
       ) : (
         <ul className="flex flex-col gap-3">
           {reunioes.map((reuniao) => (
-            <li key={reuniao.id} className="rounded-md border border-gray-200 p-3">
-              <div className="flex items-start justify-between gap-2">
+            <li key={reuniao.id} className="pb-3">
+              <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-1.5">
                 <div>
                   <p className="font-medium text-gray-900">{reuniao.titulo}</p>
                   <p className="text-xs text-gray-400">{formatarData(reuniao.data)}</p>
@@ -141,9 +150,15 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
                   </button>
                 )}
               </div>
-              {reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo) && (
+              {(isEditor || (reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo))) && (
                 <div className="mt-2">
-                  <RichTextEditor value={reuniao.conteudo} editable={false} />
+                  <RichTextEditor
+                    value={reuniao.conteudo ?? ''}
+                    editable={isEditor}
+                    mostrarBarra={false}
+                    placeholder={isEditor ? 'Conteúdo da ata...' : undefined}
+                    onBlur={(html) => atualizarConteudo(reuniao.id, html)}
+                  />
                 </div>
               )}
             </li>

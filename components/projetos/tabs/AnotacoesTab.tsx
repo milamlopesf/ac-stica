@@ -63,6 +63,14 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
     setNotas((prev) => prev.filter((n) => n.id !== id))
   }
 
+  async function atualizarNota(id: string, novoTexto: string) {
+    const nota = notas.find((n) => n.id === id)
+    if (!nota || nota.texto === novoTexto) return
+    setNotas((prev) => prev.map((n) => (n.id === id ? { ...n, texto: novoTexto } : n)))
+    const { error } = await supabase.from('notas').update({ texto: novoTexto }).eq('id', id)
+    if (error) alert(`Erro ao salvar anotação: ${error.message}`)
+  }
+
   if (carregando) return <p className="text-sm text-gray-500">Carregando...</p>
 
   return (
@@ -85,10 +93,15 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
       ) : (
         <ul className="flex flex-col gap-3">
           {notas.map((nota) => (
-            <li key={nota.id} className="rounded-md border border-gray-200 p-3">
+            <li key={nota.id} className="pb-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <RichTextEditor value={nota.texto} editable={false} />
+                  <RichTextEditor
+                    value={nota.texto}
+                    editable={isEditor}
+                    mostrarBarra={false}
+                    onBlur={(html) => atualizarNota(nota.id, html)}
+                  />
                 </div>
                 {isEditor && (
                   <button
@@ -100,7 +113,9 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-xs text-gray-400">{formatarDataHora(nota.created_at)}</p>
+              <p className="mt-1 border-t border-gray-100 pt-1.5 text-xs text-gray-400">
+                {formatarDataHora(nota.created_at)}
+              </p>
             </li>
           ))}
         </ul>

@@ -47,6 +47,7 @@ export function ProjetoDetalhePanel({
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
+  const abas = isEditor ? ABAS : ABAS.filter((a) => a.id !== 'atividades')
 
   async function handleExcluir() {
     if (!confirm(`Excluir o projeto "${projeto.nome}"? Essa ação não pode ser desfeita.`)) return
@@ -127,7 +128,7 @@ export function ProjetoDetalhePanel({
         )}
 
         <div className="flex gap-1 border-b border-gray-200 px-5">
-          {ABAS.map((t) => (
+          {abas.map((t) => (
             <button
               key={t.id}
               onClick={() => setAba(t.id)}
@@ -146,7 +147,7 @@ export function ProjetoDetalhePanel({
         <div className="flex-1 p-5">
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'atividades' && (
+          {aba === 'atividades' && isEditor && (
             <AtividadesTab projetoId={projeto.id} projetoEntrega={projeto.entrega} isEditor={isEditor} />
           )}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
