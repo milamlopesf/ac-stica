@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Atividade, Projeto } from '@/lib/types/database'
-import { CORES_STATUS_ATIVIDADE, STATUS_ATIVIDADE } from '@/lib/utils/cores'
+import { CORES_STATUS_ATIVIDADE, STATUS_ATIVIDADE, ORDEM_PRIORIDADE } from '@/lib/utils/cores'
 import { AtividadeRow } from './AtividadeRow'
+
+type Ordenacao = 'padrao' | 'data' | 'prioridade'
 
 export function AtividadesClient({
   atividadesIniciais,
@@ -18,14 +20,21 @@ export function AtividadesClient({
   const [novoTexto, setNovoTexto] = useState('')
   const [novoProjetoId, setNovoProjetoId] = useState('')
   const [criando, setCriando] = useState(false)
+  const [filtroProjetoId, setFiltroProjetoId] = useState('')
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>('padrao')
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault()
     if (!novoTexto.trim()) return
     setCriando(true)
+    const projetoVinculado = projetos.find((p) => p.id === novoProjetoId)
     const { data, error } = await supabase
       .from('atividades')
-      .insert({ texto: novoTexto.trim(), projeto_id: novoProjetoId || null })
+      .insert({
+        texto: novoTexto.trim(),
+        projeto_id: novoProjetoId || null,
+        data_vencimento: projetoVinculado?.entrega ?? null,
+      })
       .select()
       .single()
     setCriando(false)
@@ -46,10 +55,31 @@ export function AtividadesClient({
     setAtividades((prev) => prev.filter((a) => a.id !== id))
   }
 
-  const grupos = STATUS_ATIVIDADE.map((status) => ({
-    status,
-    itens: atividades.filter((a) => a.status === status),
-  }))
+  const atividadesFiltradas = useMemo(() => {
+    if (!filtroProjetoId) return atividades
+    return atividades.filter((a) => a.projeto_id === filtroProjetoId)
+  }, [atividades, filtroProjetoId])
+
+  const grupos = useMemo(() => {
+    return STATUS_ATIVIDADE.map((status) => {
+      const itens = atividadesFiltradas.filter((a) => a.status === status)
+      const ordenados = [...itens].sort((a, b) => {
+        if (ordenacao === 'data') {
+          if (!a.data_vencimento && !b.data_vencimento) return 0
+          if (!a.data_vencimento) return 1
+          if (!b.data_vencimento) return -1
+          return a.data_vencimento.localeCompare(b.data_vencimento)
+        }
+        if (ordenacao === 'prioridade') {
+          const ordemA = a.prioridade ? ORDEM_PRIORIDADE[a.prioridade] : 99
+          const ordemB = b.prioridade ? ORDEM_PRIORIDADE[b.prioridade] : 99
+          return ordemA - ordemB
+        }
+        return 0
+      })
+      return { status, itens: ordenados }
+    })
+  }, [atividadesFiltradas, ordenacao])
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,6 +112,30 @@ export function AtividadesClient({
           Adicionar
         </button>
       </form>
+
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={filtroProjetoId}
+          onChange={(e) => setFiltroProjetoId(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        >
+          <option value="">Todos os projetos</option>
+          {projetos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nome}
+            </option>
+          ))}
+        </select>
+        <select
+          value={ordenacao}
+          onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        >
+          <option value="padrao">Ordenar por: padrão</option>
+          <option value="data">Ordenar por: data de vencimento</option>
+          <option value="prioridade">Ordenar por: prioridade</option>
+        </select>
+      </div>
 
       <div className="flex flex-col gap-6">
         {grupos.map(({ status, itens }) => {

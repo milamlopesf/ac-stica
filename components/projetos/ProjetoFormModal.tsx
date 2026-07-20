@@ -59,7 +59,11 @@ export function ProjetoFormModal({
 
     if (!projeto && ETAPAS_COM_CHECKLIST_PADRAO.includes(novoProjeto.etapa)) {
       const { error: erroChecklist } = await supabase.from('atividades').insert(
-        CHECKLIST_PADRAO.map((texto) => ({ projeto_id: novoProjeto.id, texto }))
+        CHECKLIST_PADRAO.map((texto) => ({
+          projeto_id: novoProjeto.id,
+          texto,
+          data_vencimento: novoProjeto.entrega,
+        }))
       )
       if (erroChecklist) {
         setSalvando(false)

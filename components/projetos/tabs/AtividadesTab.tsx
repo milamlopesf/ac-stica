@@ -5,7 +5,15 @@ import { createClient } from '@/lib/supabase/client'
 import type { Atividade } from '@/lib/types/database'
 import { AtividadeRow } from '@/components/atividades/AtividadeRow'
 
-export function AtividadesTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
+export function AtividadesTab({
+  projetoId,
+  projetoEntrega,
+  isEditor,
+}: {
+  projetoId: string
+  projetoEntrega: string | null
+  isEditor: boolean
+}) {
   const supabase = createClient()
   const [atividades, setAtividades] = useState<Atividade[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -36,7 +44,7 @@ export function AtividadesTab({ projetoId, isEditor }: { projetoId: string; isEd
     setCriando(true)
     const { data, error } = await supabase
       .from('atividades')
-      .insert({ projeto_id: projetoId, texto: novoTexto.trim() })
+      .insert({ projeto_id: projetoId, texto: novoTexto.trim(), data_vencimento: projetoEntrega })
       .select()
       .single()
     setCriando(false)

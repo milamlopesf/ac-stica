@@ -35,6 +35,13 @@ export const CORES_PRIORIDADE: Record<Prioridade, CorConfig> = {
   Urgente: { label: 'Urgente', badge: 'bg-red-100 text-red-700 border-red-300', hex: '#ef4444' },
 }
 
+export const ORDEM_PRIORIDADE: Record<Prioridade, number> = {
+  Urgente: 0,
+  Alta: 1,
+  Média: 2,
+  Baixa: 3,
+}
+
 export const ETAPAS: Etapa[] = ['DNN', 'EP', 'AP', 'EX', 'OBRA', 'GARANTIA']
 export const STATUS_PROJETO: StatusProjeto[] = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado']
 export const STATUS_ATIVIDADE: StatusAtividade[] = ['pendente', 'andamento', 'concluido']

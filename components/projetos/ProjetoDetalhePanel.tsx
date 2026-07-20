@@ -146,7 +146,9 @@ export function ProjetoDetalhePanel({
         <div className="flex-1 p-5">
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'atividades' && <AtividadesTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'atividades' && (
+            <AtividadesTab projetoId={projeto.id} projetoEntrega={projeto.entrega} isEditor={isEditor} />
+          )}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
         </div>
       </div>
