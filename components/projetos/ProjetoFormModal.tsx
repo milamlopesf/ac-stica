@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
 import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS, DIRETORES } from '@/lib/utils/cores'
+import { ETAPAS_COM_CHECKLIST_PADRAO, CHECKLIST_PADRAO } from '@/lib/utils/checklistPadrao'
 
 export function ProjetoFormModal({
   projeto,
@@ -48,14 +49,29 @@ export function ProjetoFormModal({
 
     const { data, error } = await query
 
-    setSalvando(false)
-
     if (error) {
+      setSalvando(false)
       setErro(error.message)
       return
     }
 
-    onSalvo(data as Projeto)
+    const novoProjeto = data as Projeto
+
+    if (!projeto && ETAPAS_COM_CHECKLIST_PADRAO.includes(novoProjeto.etapa)) {
+      const { error: erroChecklist } = await supabase.from('atividades').insert(
+        CHECKLIST_PADRAO.map((texto) => ({ projeto_id: novoProjeto.id, texto }))
+      )
+      if (erroChecklist) {
+        setSalvando(false)
+        setErro(
+          `Projeto criado, mas houve um erro ao gerar o checklist padrão: ${erroChecklist.message}`
+        )
+        return
+      }
+    }
+
+    setSalvando(false)
+    onSalvo(novoProjeto)
   }
 
   return (
