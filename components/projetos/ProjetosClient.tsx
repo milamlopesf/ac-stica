@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
+import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
 import { ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { ProjetoCard } from './ProjetoCard'
@@ -11,6 +12,8 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
+
+type ProgressoPorProjeto = Record<string, { concluidas: number; total: number }>
 
 export function ProjetosClient({
   projetosIniciais,
@@ -38,6 +41,39 @@ export function ProjetosClient({
     setVisualizacao(v)
     localStorage.setItem(CHAVE_VISUALIZACAO, v)
   }
+
+  const [progressoPorProjeto, setProgressoPorProjeto] = useState<ProgressoPorProjeto>({})
+
+  function calcularProgresso(linhas: { projeto_id: string | null; status: string }[]) {
+    const mapa: ProgressoPorProjeto = {}
+    for (const a of linhas) {
+      if (!a.projeto_id) continue
+      if (!mapa[a.projeto_id]) mapa[a.projeto_id] = { concluidas: 0, total: 0 }
+      mapa[a.projeto_id].total += 1
+      if (a.status === 'concluido') mapa[a.projeto_id].concluidas += 1
+    }
+    return mapa
+  }
+
+  const carregarProgresso = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.from('atividades').select('projeto_id, status')
+    setProgressoPorProjeto(calcularProgresso(data ?? []))
+  }, [])
+
+  useEffect(() => {
+    let ativo = true
+    const supabase = createClient()
+    supabase
+      .from('atividades')
+      .select('projeto_id, status')
+      .then(({ data }) => {
+        if (ativo) setProgressoPorProjeto(calcularProgresso(data ?? []))
+      })
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   const diretores = useMemo(
     () => Array.from(new Set(projetos.map((p) => p.diretor).filter(Boolean))) as string[],
@@ -193,6 +229,7 @@ export function ProjetosClient({
             <ProjetoListItem
               key={projeto.id}
               projeto={projeto}
+              progresso={progressoPorProjeto[projeto.id]}
               onClick={() => setSelecionadoId(projeto.id)}
             />
           ))}
@@ -200,7 +237,12 @@ export function ProjetosClient({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {projetosFiltrados.map((projeto) => (
-            <ProjetoCard key={projeto.id} projeto={projeto} onClick={() => setSelecionadoId(projeto.id)} />
+            <ProjetoCard
+              key={projeto.id}
+              projeto={projeto}
+              progresso={progressoPorProjeto[projeto.id]}
+              onClick={() => setSelecionadoId(projeto.id)}
+            />
           ))}
         </div>
       )}
@@ -210,7 +252,11 @@ export function ProjetosClient({
           projeto={selecionado}
           isEditor={isEditor}
           gerentesExistentes={gerentes}
-          onFechar={() => setSelecionadoId(null)}
+          progresso={progressoPorProjeto[selecionado.id]}
+          onFechar={() => {
+            setSelecionadoId(null)
+            carregarProgresso()
+          }}
           onAtualizado={handleProjetoAtualizado}
           onExcluido={handleProjetoExcluido}
         />

@@ -2,8 +2,17 @@ import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
+import { ProgressoBar } from './ProgressoBar'
 
-export function ProjetoListItem({ projeto, onClick }: { projeto: Projeto; onClick: () => void }) {
+export function ProjetoListItem({
+  projeto,
+  progresso,
+  onClick,
+}: {
+  projeto: Projeto
+  progresso?: { concluidas: number; total: number }
+  onClick: () => void
+}) {
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
 
@@ -20,6 +29,10 @@ export function ProjetoListItem({ projeto, onClick }: { projeto: Projeto; onClic
         <Badge label={corEtapa.label} className={corEtapa.badge} />
         <Badge label={corStatus.label} className={corStatus.badge} />
       </div>
+
+      {progresso && (
+        <ProgressoBar concluidas={progresso.concluidas} total={progresso.total} compacto />
+      )}
 
       <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 sm:w-auto">
         <span>

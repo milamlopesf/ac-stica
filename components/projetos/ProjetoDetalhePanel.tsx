@@ -7,6 +7,7 @@ import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
+import { ProgressoBar } from './ProgressoBar'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
@@ -26,6 +27,7 @@ export function ProjetoDetalhePanel({
   projeto,
   isEditor,
   gerentesExistentes = [],
+  progresso,
   onFechar,
   onAtualizado,
   onExcluido,
@@ -33,6 +35,7 @@ export function ProjetoDetalhePanel({
   projeto: Projeto
   isEditor: boolean
   gerentesExistentes?: string[]
+  progresso?: { concluidas: number; total: number }
   onFechar: () => void
   onAtualizado: (p: Projeto) => void
   onExcluido: (id: string) => void
@@ -73,6 +76,9 @@ export function ProjetoDetalhePanel({
               <Badge label={corEtapa.label} className={corEtapa.badge} />
               <Badge label={corStatus.label} className={corStatus.badge} />
             </div>
+            {progresso && (
+              <ProgressoBar concluidas={progresso.concluidas} total={progresso.total} className="max-w-xs" />
+            )}
             <dl className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-500">
               <div>
                 <dt className="inline">Entrega: </dt>
