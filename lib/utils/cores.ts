@@ -47,7 +47,13 @@ export const STATUS_PROJETO: StatusProjeto[] = ['A Fazer', 'Em Andamento', 'Conc
 export const STATUS_ATIVIDADE: StatusAtividade[] = ['pendente', 'andamento', 'concluido']
 export const PRIORIDADES: Prioridade[] = ['Baixa', 'Média', 'Alta', 'Urgente']
 
-export const PROJETISTAS_ACUSTICOS = ['Acústica e Sônica', 'Giner', 'Harmonia', 'Interno']
+export const PROJETISTAS_ACUSTICOS = [
+  'Acústica e Sônica',
+  'Akkerman & Alcoragi',
+  'Giner',
+  'Harmonia',
+  'Interno',
+]
 
 export const DIRETORES = [
   'Alexandre Costa',
