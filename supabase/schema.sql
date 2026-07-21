@@ -96,6 +96,8 @@ create table biblioteca (
   descricao text,
   fornecedor text,
   rw text,
+  modelo text,
+  subcategoria text,
   nome_arquivo text not null,
   caminho_storage text not null,
   tamanho_bytes int,

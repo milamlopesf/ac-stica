@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ItemBiblioteca } from '@/lib/types/database'
+import { MODELOS_LAUDO, SUBCATEGORIAS_LAUDO } from '@/lib/utils/biblioteca'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
@@ -31,6 +32,8 @@ export function BibliotecaDetalheModal({
   const [descricao, setDescricao] = useState(item.descricao ?? '')
   const [fornecedor, setFornecedor] = useState(item.fornecedor ?? '')
   const [rw, setRw] = useState(item.rw ?? '')
+  const [modelo, setModelo] = useState(item.modelo ?? '')
+  const [subcategoria, setSubcategoria] = useState(item.subcategoria ?? '')
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
@@ -39,7 +42,9 @@ export function BibliotecaDetalheModal({
     titulo !== item.titulo ||
     descricao !== (item.descricao ?? '') ||
     fornecedor !== (item.fornecedor ?? '') ||
-    rw !== (item.rw ?? '')
+    rw !== (item.rw ?? '') ||
+    modelo !== (item.modelo ?? '') ||
+    subcategoria !== (item.subcategoria ?? '')
 
   async function salvar() {
     setSalvando(true)
@@ -51,6 +56,8 @@ export function BibliotecaDetalheModal({
         descricao: htmlEstaVazio(descricao) ? null : descricao,
         fornecedor: fornecedor || null,
         rw: rw || null,
+        modelo: modelo || null,
+        subcategoria: subcategoria || null,
       })
       .eq('id', item.id)
       .select()
@@ -135,7 +142,7 @@ export function BibliotecaDetalheModal({
             </div>
           )}
 
-          {item.categoria === 'laudos' && (isEditor || fornecedor || rw) && (
+          {item.categoria === 'laudos' && (isEditor || fornecedor || rw || modelo || subcategoria) && (
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Fornecedor</label>
@@ -169,6 +176,40 @@ export function BibliotecaDetalheModal({
                     <option key={r} value={r} />
                   ))}
                 </datalist>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Modelo</label>
+                <select
+                  value={modelo}
+                  disabled={!isEditor}
+                  onChange={(e) => setModelo(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                >
+                  <option value="">Selecione...</option>
+                  {MODELOS_LAUDO.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Subcategoria</label>
+                <select
+                  value={subcategoria}
+                  disabled={!isEditor}
+                  onChange={(e) => setSubcategoria(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                >
+                  <option value="">Selecione...</option>
+                  {SUBCATEGORIAS_LAUDO.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           )}

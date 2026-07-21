@@ -3,7 +3,12 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
-import { TIPOS_ARQUIVO_ACEITOS, extensaoValida } from '@/lib/utils/biblioteca'
+import {
+  TIPOS_ARQUIVO_ACEITOS,
+  extensaoValida,
+  MODELOS_LAUDO,
+  SUBCATEGORIAS_LAUDO,
+} from '@/lib/utils/biblioteca'
 import { sanitizarNomeArquivo } from '@/lib/utils/storage'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
@@ -28,6 +33,8 @@ export function BibliotecaFormModal({
   const [descricao, setDescricao] = useState('')
   const [fornecedor, setFornecedor] = useState('')
   const [rw, setRw] = useState('')
+  const [modelo, setModelo] = useState('')
+  const [subcategoria, setSubcategoria] = useState('')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -64,6 +71,8 @@ export function BibliotecaFormModal({
         descricao: htmlEstaVazio(descricao) ? null : descricao,
         fornecedor: fornecedor || null,
         rw: rw || null,
+        modelo: modelo || null,
+        subcategoria: subcategoria || null,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -146,6 +155,38 @@ export function BibliotecaFormModal({
                     <option key={r} value={r} />
                   ))}
                 </datalist>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Modelo</label>
+                <select
+                  value={modelo}
+                  onChange={(e) => setModelo(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  {MODELOS_LAUDO.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Subcategoria</label>
+                <select
+                  value={subcategoria}
+                  onChange={(e) => setSubcategoria(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  {SUBCATEGORIAS_LAUDO.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           )}

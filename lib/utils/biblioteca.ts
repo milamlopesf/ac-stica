@@ -6,6 +6,10 @@ export const CATEGORIAS_BIBLIOTECA: Record<CategoriaBiblioteca, { titulo: string
   laudos: { titulo: 'Laudos/Medições', rota: '/laudos' },
 }
 
+export const MODELOS_LAUDO = ['DPT fixa', 'DPT retrátil', 'Drywall']
+
+export const SUBCATEGORIAS_LAUDO = ['Vedações', 'Revestimentos', 'HVAC']
+
 export const TIPOS_ARQUIVO_ACEITOS =
   '.pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
