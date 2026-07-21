@@ -5,6 +5,7 @@ import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
 import { CATEGORIAS_BIBLIOTECA, SUBCATEGORIAS_LAUDO } from '@/lib/utils/biblioteca'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { textoSimples } from '@/lib/utils/texto'
+import clsx from 'clsx'
 import { Badge } from '@/components/ui/Badge'
 import { BibliotecaFormModal } from './BibliotecaFormModal'
 import { BibliotecaDetalheModal } from './BibliotecaDetalheModal'
@@ -61,7 +62,29 @@ export function BibliotecaClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900">{CATEGORIAS_BIBLIOTECA[categoria].titulo}</h1>
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-2xl font-semibold text-gray-900">{CATEGORIAS_BIBLIOTECA[categoria].titulo}</h1>
+          {categoria === 'laudos' && (
+            <div className="flex gap-1">
+              {['Todos', ...SUBCATEGORIAS_LAUDO].map((s) => {
+                const valor = s === 'Todos' ? '' : s
+                const ativo = filtroSubcategoria === valor
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setFiltroSubcategoria(valor)}
+                    className={clsx(
+                      'rounded-md px-3 py-1.5 text-sm font-medium',
+                      ativo ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    )}
+                  >
+                    {s}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
         {isEditor && (
           <button
             onClick={() => setModalNovoAberto(true)}
@@ -72,28 +95,12 @@ export function BibliotecaClient({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por título..."
-          className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        {categoria === 'laudos' && (
-          <select
-            value={filtroSubcategoria}
-            onChange={(e) => setFiltroSubcategoria(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
-            <option value="">Todas as subdivisões</option>
-            {SUBCATEGORIAS_LAUDO.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      <input
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+        placeholder="Buscar por título..."
+        className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      />
 
       {itensFiltrados.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">Nenhum item encontrado.</p>
