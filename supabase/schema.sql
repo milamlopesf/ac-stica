@@ -94,6 +94,8 @@ create table biblioteca (
   categoria text not null check (categoria in ('normas', 'planilhas', 'laudos')),
   titulo text not null,
   descricao text,
+  fornecedor text,
+  rw text,
   nome_arquivo text not null,
   caminho_storage text not null,
   tamanho_bytes int,

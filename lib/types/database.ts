@@ -74,6 +74,8 @@ export type ItemBiblioteca = {
   categoria: CategoriaBiblioteca
   titulo: string
   descricao: string | null
+  fornecedor: string | null
+  rw: string | null
   nome_arquivo: string
   caminho_storage: string
   tamanho_bytes: number | null
@@ -169,6 +171,8 @@ export type Database = {
           categoria: CategoriaBiblioteca
           titulo: string
           descricao?: string | null
+          fornecedor?: string | null
+          rw?: string | null
           nome_arquivo: string
           caminho_storage: string
           tamanho_bytes?: number | null

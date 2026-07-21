@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
 import { CATEGORIAS_BIBLIOTECA } from '@/lib/utils/biblioteca'
 import { formatarTamanho } from '@/lib/utils/storage'
@@ -28,6 +28,15 @@ export function BibliotecaClient({
 
   const itensFiltrados = itens.filter((i) => i.titulo.toLowerCase().includes(busca.toLowerCase()))
   const selecionado = itens.find((i) => i.id === selecionadoId) ?? null
+
+  const fornecedoresExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.fornecedor).filter(Boolean))) as string[],
+    [itens]
+  )
+  const rwsExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.rw).filter(Boolean))) as string[],
+    [itens]
+  )
 
   function handleCriado(novo: ItemBiblioteca) {
     setItens((prev) => [...prev, novo].sort((a, b) => a.titulo.localeCompare(b.titulo)))
@@ -81,6 +90,13 @@ export function BibliotecaClient({
                   {item.descricao && textoSimples(item.descricao) && (
                     <p className="truncate text-sm text-gray-500">{textoSimples(item.descricao)}</p>
                   )}
+                  {categoria === 'laudos' && (item.fornecedor || item.rw) && (
+                    <p className="truncate text-xs text-gray-400">
+                      {item.fornecedor && <span>Fornecedor: {item.fornecedor}</span>}
+                      {item.fornecedor && item.rw && <span> · </span>}
+                      {item.rw && <span>RW: {item.rw}</span>}
+                    </p>
+                  )}
                 </div>
               </div>
               <span className="shrink-0 text-xs text-gray-400">
@@ -94,6 +110,8 @@ export function BibliotecaClient({
       {isEditor && modalNovoAberto && (
         <BibliotecaFormModal
           categoria={categoria}
+          fornecedoresExistentes={fornecedoresExistentes}
+          rwsExistentes={rwsExistentes}
           onFechar={() => setModalNovoAberto(false)}
           onSalvo={handleCriado}
         />
@@ -103,6 +121,8 @@ export function BibliotecaClient({
         <BibliotecaDetalheModal
           item={selecionado}
           isEditor={isEditor}
+          fornecedoresExistentes={fornecedoresExistentes}
+          rwsExistentes={rwsExistentes}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleAtualizado}
           onExcluido={handleExcluido}

@@ -12,16 +12,22 @@ const BUCKET = 'biblioteca-documentos'
 
 export function BibliotecaFormModal({
   categoria,
+  fornecedoresExistentes = [],
+  rwsExistentes = [],
   onFechar,
   onSalvo,
 }: {
   categoria: CategoriaBiblioteca
+  fornecedoresExistentes?: string[]
+  rwsExistentes?: string[]
   onFechar: () => void
   onSalvo: (item: ItemBiblioteca) => void
 }) {
   const supabase = createClient()
   const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [fornecedor, setFornecedor] = useState('')
+  const [rw, setRw] = useState('')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -56,6 +62,8 @@ export function BibliotecaFormModal({
         categoria,
         titulo,
         descricao: htmlEstaVazio(descricao) ? null : descricao,
+        fornecedor: fornecedor || null,
+        rw: rw || null,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -105,6 +113,42 @@ export function BibliotecaFormModal({
             <label className="text-sm font-medium text-gray-700">Descrição</label>
             <RichTextEditor value={descricao} onChange={setDescricao} placeholder="Breve descrição do item..." />
           </div>
+
+          {categoria === 'laudos' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Fornecedor</label>
+                <input
+                  value={fornecedor}
+                  onChange={(e) => setFornecedor(e.target.value)}
+                  list="fornecedores-existentes-novo"
+                  placeholder="Digite ou escolha"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                />
+                <datalist id="fornecedores-existentes-novo">
+                  {fornecedoresExistentes.map((f) => (
+                    <option key={f} value={f} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">RW</label>
+                <input
+                  value={rw}
+                  onChange={(e) => setRw(e.target.value)}
+                  list="rws-existentes-novo"
+                  placeholder="Digite ou escolha"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                />
+                <datalist id="rws-existentes-novo">
+                  {rwsExistentes.map((r) => (
+                    <option key={r} value={r} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Arquivo (PDF ou Excel)</label>

@@ -12,12 +12,16 @@ const BUCKET = 'biblioteca-documentos'
 export function BibliotecaDetalheModal({
   item,
   isEditor,
+  fornecedoresExistentes = [],
+  rwsExistentes = [],
   onFechar,
   onAtualizado,
   onExcluido,
 }: {
   item: ItemBiblioteca
   isEditor: boolean
+  fornecedoresExistentes?: string[]
+  rwsExistentes?: string[]
   onFechar: () => void
   onAtualizado: (item: ItemBiblioteca) => void
   onExcluido: (id: string) => void
@@ -25,18 +29,29 @@ export function BibliotecaDetalheModal({
   const supabase = createClient()
   const [titulo, setTitulo] = useState(item.titulo)
   const [descricao, setDescricao] = useState(item.descricao ?? '')
+  const [fornecedor, setFornecedor] = useState(item.fornecedor ?? '')
+  const [rw, setRw] = useState(item.rw ?? '')
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
 
-  const alterado = titulo !== item.titulo || descricao !== (item.descricao ?? '')
+  const alterado =
+    titulo !== item.titulo ||
+    descricao !== (item.descricao ?? '') ||
+    fornecedor !== (item.fornecedor ?? '') ||
+    rw !== (item.rw ?? '')
 
   async function salvar() {
     setSalvando(true)
     setErro('')
     const { data, error } = await supabase
       .from('biblioteca')
-      .update({ titulo, descricao: htmlEstaVazio(descricao) ? null : descricao })
+      .update({
+        titulo,
+        descricao: htmlEstaVazio(descricao) ? null : descricao,
+        fornecedor: fornecedor || null,
+        rw: rw || null,
+      })
       .eq('id', item.id)
       .select()
       .single()
@@ -117,6 +132,44 @@ export function BibliotecaDetalheModal({
                 onChange={setDescricao}
                 placeholder="Breve descrição do item..."
               />
+            </div>
+          )}
+
+          {item.categoria === 'laudos' && (isEditor || fornecedor || rw) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Fornecedor</label>
+                <input
+                  value={fornecedor}
+                  disabled={!isEditor}
+                  onChange={(e) => setFornecedor(e.target.value)}
+                  list="fornecedores-existentes-detalhe"
+                  placeholder="Digite ou escolha"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                />
+                <datalist id="fornecedores-existentes-detalhe">
+                  {fornecedoresExistentes.map((f) => (
+                    <option key={f} value={f} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">RW</label>
+                <input
+                  value={rw}
+                  disabled={!isEditor}
+                  onChange={(e) => setRw(e.target.value)}
+                  list="rws-existentes-detalhe"
+                  placeholder="Digite ou escolha"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                />
+                <datalist id="rws-existentes-detalhe">
+                  {rwsExistentes.map((r) => (
+                    <option key={r} value={r} />
+                  ))}
+                </datalist>
+              </div>
             </div>
           )}
 
