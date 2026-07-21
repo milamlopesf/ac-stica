@@ -31,8 +31,12 @@ create table projetos (
   diretor text,
   gerente text,
   projetista text,
+  projeto_vinculado_id uuid references projetos(id) on delete set null
+    constraint projetos_vinculado_nao_self check (projeto_vinculado_id is distinct from id),
   created_at timestamptz default now()
 );
+
+create index idx_projetos_vinculado on projetos(projeto_vinculado_id);
 
 create table atividades (
   id uuid primary key default gen_random_uuid(),

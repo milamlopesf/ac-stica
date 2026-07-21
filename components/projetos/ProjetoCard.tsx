@@ -2,14 +2,17 @@ import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
+import { IconVinculo } from '@/components/ui/IconVinculo'
 import { ProgressoBar } from './ProgressoBar'
 
 export function ProjetoCard({
   projeto,
+  nomeVinculado,
   progresso,
   onClick,
 }: {
   projeto: Projeto
+  nomeVinculado?: string
   progresso?: { concluidas: number; total: number }
   onClick: () => void
 }) {
@@ -28,6 +31,15 @@ export function ProjetoCard({
       <div className="flex flex-wrap gap-2">
         <Badge label={corEtapa.label} className={corEtapa.badge} />
         <Badge label={corStatus.label} className={corStatus.badge} />
+        {projeto.projeto_vinculado_id && (
+          <span
+            title={nomeVinculado ? `Vinculado a ${nomeVinculado}` : undefined}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700"
+          >
+            <IconVinculo className="h-3 w-3" />
+            Vinculado
+          </span>
+        )}
       </div>
 
       {progresso && (

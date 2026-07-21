@@ -7,6 +7,7 @@ import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
+import { IconVinculo } from '@/components/ui/IconVinculo'
 import { ProgressoBar } from './ProgressoBar'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
@@ -27,18 +28,24 @@ export function ProjetoDetalhePanel({
   projeto,
   isEditor,
   gerentesExistentes = [],
+  outrosProjetos = [],
+  projetoVinculado,
   progresso,
   onFechar,
   onAtualizado,
   onExcluido,
+  onAbrirVinculado,
 }: {
   projeto: Projeto
   isEditor: boolean
   gerentesExistentes?: string[]
+  outrosProjetos?: Projeto[]
+  projetoVinculado?: Projeto
   progresso?: { concluidas: number; total: number }
   onFechar: () => void
   onAtualizado: (p: Projeto) => void
   onExcluido: (id: string) => void
+  onAbrirVinculado?: (id: string) => void
 }) {
   const supabase = createClient()
   const [aba, setAba] = useState<Aba>('anotacoes')
@@ -79,6 +86,18 @@ export function ProjetoDetalhePanel({
             </div>
             {progresso && (
               <ProgressoBar concluidas={progresso.concluidas} total={progresso.total} className="max-w-xs" />
+            )}
+            {projetoVinculado && (
+              <button
+                onClick={() => onAbrirVinculado?.(projetoVinculado.id)}
+                className="flex w-fit items-center gap-2 rounded-md border border-dashed border-blue-300 bg-blue-50 px-2.5 py-1 text-left hover:border-blue-400"
+              >
+                <IconVinculo className="h-3.5 w-3.5 shrink-0 text-blue-700" />
+                <span className="text-xs font-semibold text-blue-700">Vinculado:</span>
+                <span className="text-xs font-medium text-gray-800 underline decoration-gray-300 underline-offset-2">
+                  {projetoVinculado.nome}
+                </span>
+              </button>
             )}
             <dl className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-500">
               <div>
@@ -157,6 +176,7 @@ export function ProjetoDetalhePanel({
       {editando && (
         <ProjetoFormModal
           projeto={projeto}
+          outrosProjetos={outrosProjetos}
           gerentesExistentes={gerentesExistentes}
           onFechar={() => setEditando(false)}
           onSalvo={(p) => {

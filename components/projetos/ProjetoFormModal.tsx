@@ -6,13 +6,52 @@ import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
 import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS, DIRETORES } from '@/lib/utils/cores'
 import { ETAPAS_COM_CHECKLIST_PADRAO, CHECKLIST_PADRAO } from '@/lib/utils/checklistPadrao'
 
+async function romperVinculo(
+  supabase: ReturnType<typeof createClient>,
+  id: string,
+  seAindaApontarPara: string
+) {
+  await supabase
+    .from('projetos')
+    .update({ projeto_vinculado_id: null })
+    .eq('id', id)
+    .eq('projeto_vinculado_id', seAindaApontarPara)
+}
+
+async function sincronizarVinculo(
+  supabase: ReturnType<typeof createClient>,
+  projetoId: string,
+  vinculadoAnteriorId: string | null,
+  novoVinculadoId: string | null
+) {
+  if (vinculadoAnteriorId && vinculadoAnteriorId !== novoVinculadoId) {
+    await romperVinculo(supabase, vinculadoAnteriorId, projetoId)
+  }
+  if (novoVinculadoId && novoVinculadoId !== vinculadoAnteriorId) {
+    const { data: alvo } = await supabase
+      .from('projetos')
+      .select('projeto_vinculado_id')
+      .eq('id', novoVinculadoId)
+      .single()
+    if (alvo?.projeto_vinculado_id && alvo.projeto_vinculado_id !== projetoId) {
+      await romperVinculo(supabase, alvo.projeto_vinculado_id, novoVinculadoId)
+    }
+    await supabase
+      .from('projetos')
+      .update({ projeto_vinculado_id: projetoId })
+      .eq('id', novoVinculadoId)
+  }
+}
+
 export function ProjetoFormModal({
   projeto,
+  outrosProjetos = [],
   gerentesExistentes = [],
   onFechar,
   onSalvo,
 }: {
   projeto?: Projeto
+  outrosProjetos?: Projeto[]
   gerentesExistentes?: string[]
   onFechar: () => void
   onSalvo: (projeto: Projeto) => void
@@ -25,8 +64,11 @@ export function ProjetoFormModal({
   const [diretor, setDiretor] = useState(projeto?.diretor ?? '')
   const [gerente, setGerente] = useState(projeto?.gerente ?? '')
   const [projetista, setProjetista] = useState(projeto?.projetista ?? '')
+  const [vinculadoId, setVinculadoId] = useState(projeto?.projeto_vinculado_id ?? '')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+
+  const opcoesVinculo = [...outrosProjetos].sort((a, b) => a.nome.localeCompare(b.nome))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,6 +83,7 @@ export function ProjetoFormModal({
       diretor: diretor || null,
       gerente: gerente || null,
       projetista: projetista || null,
+      projeto_vinculado_id: vinculadoId || null,
     }
 
     const query = projeto
@@ -73,6 +116,13 @@ export function ProjetoFormModal({
         return
       }
     }
+
+    await sincronizarVinculo(
+      supabase,
+      novoProjeto.id,
+      projeto?.projeto_vinculado_id ?? null,
+      novoProjeto.projeto_vinculado_id
+    )
 
     setSalvando(false)
     onSalvo(novoProjeto)
@@ -198,6 +248,25 @@ export function ProjetoFormModal({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Projeto vinculado</label>
+            <select
+              value={vinculadoId ?? ''}
+              onChange={(e) => setVinculadoId(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">Nenhum</option>
+              {opcoesVinculo.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400">
+              Ex.: linkar o projeto acústico com a obra dele. O vínculo aparece nos dois lados.
+            </p>
           </div>
 
           <div className="mt-3 flex justify-end gap-2">

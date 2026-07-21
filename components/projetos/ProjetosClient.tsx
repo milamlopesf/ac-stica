@@ -61,6 +61,15 @@ export function ProjetosClient({
     setProgressoPorProjeto(calcularProgresso(data ?? []))
   }, [])
 
+  const recarregarProjetos = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('projetos')
+      .select('*')
+      .order('entrega', { ascending: false, nullsFirst: false })
+    if (data) setProjetos(data as Projeto[])
+  }, [])
+
   useEffect(() => {
     let ativo = true
     const supabase = createClient()
@@ -87,6 +96,7 @@ export function ProjetosClient({
     () => Array.from(new Set(projetos.map((p) => p.projetista).filter(Boolean))) as string[],
     [projetos]
   )
+  const projetosPorId = useMemo(() => new Map(projetos.map((p) => [p.id, p])), [projetos])
 
   const projetosFiltrados = useMemo(() => {
     return projetos
@@ -110,10 +120,12 @@ export function ProjetosClient({
   function handleProjetoCriado(novo: Projeto) {
     setProjetos((prev) => [...prev, novo])
     setModalNovoAberto(false)
+    recarregarProjetos()
   }
 
   function handleProjetoAtualizado(atualizado: Projeto) {
     setProjetos((prev) => prev.map((p) => (p.id === atualizado.id ? atualizado : p)))
+    recarregarProjetos()
   }
 
   function handleProjetoExcluido(id: string) {
@@ -236,6 +248,11 @@ export function ProjetosClient({
             <ProjetoListItem
               key={projeto.id}
               projeto={projeto}
+              nomeVinculado={
+                projeto.projeto_vinculado_id
+                  ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
+                  : undefined
+              }
               progresso={progressoPorProjeto[projeto.id]}
               onClick={() => setSelecionadoId(projeto.id)}
             />
@@ -247,6 +264,11 @@ export function ProjetosClient({
             <ProjetoCard
               key={projeto.id}
               projeto={projeto}
+              nomeVinculado={
+                projeto.projeto_vinculado_id
+                  ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
+                  : undefined
+              }
               progresso={progressoPorProjeto[projeto.id]}
               onClick={() => setSelecionadoId(projeto.id)}
             />
@@ -256,9 +278,16 @@ export function ProjetosClient({
 
       {selecionado && (
         <ProjetoDetalhePanel
+          key={selecionado.id}
           projeto={selecionado}
           isEditor={isEditor}
           gerentesExistentes={gerentes}
+          outrosProjetos={projetos.filter((p) => p.id !== selecionado.id)}
+          projetoVinculado={
+            selecionado.projeto_vinculado_id
+              ? projetosPorId.get(selecionado.projeto_vinculado_id)
+              : undefined
+          }
           progresso={progressoPorProjeto[selecionado.id]}
           onFechar={() => {
             setSelecionadoId(null)
@@ -266,11 +295,13 @@ export function ProjetosClient({
           }}
           onAtualizado={handleProjetoAtualizado}
           onExcluido={handleProjetoExcluido}
+          onAbrirVinculado={(id) => setSelecionadoId(id)}
         />
       )}
 
       {modalNovoAberto && (
         <ProjetoFormModal
+          outrosProjetos={projetos}
           gerentesExistentes={gerentes}
           onFechar={() => setModalNovoAberto(false)}
           onSalvo={handleProjetoCriado}

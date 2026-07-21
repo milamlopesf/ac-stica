@@ -17,6 +17,7 @@ export type Projeto = {
   diretor: string | null
   gerente: string | null
   projetista: string | null
+  projeto_vinculado_id: string | null
   created_at: string
 }
 
@@ -93,6 +94,7 @@ export type Database = {
           diretor?: string | null
           gerente?: string | null
           projetista?: string | null
+          projeto_vinculado_id?: string | null
           created_at?: string
         }
         Update: Partial<Omit<Projeto, 'id' | 'created_at'>>
