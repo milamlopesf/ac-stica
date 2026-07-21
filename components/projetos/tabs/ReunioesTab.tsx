@@ -7,15 +7,44 @@ import { formatarData } from '@/lib/utils/data'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
 
+type RascunhoAta = { titulo: string; data: string; conteudo: string }
+
+function chaveRascunho(projetoId: string) {
+  return `painel-acustica:rascunho-ata:${projetoId}`
+}
+
+function lerRascunho(projetoId: string): RascunhoAta {
+  if (typeof window === 'undefined') return { titulo: '', data: '', conteudo: '' }
+  try {
+    const bruto = localStorage.getItem(chaveRascunho(projetoId))
+    if (!bruto) return { titulo: '', data: '', conteudo: '' }
+    return { titulo: '', data: '', conteudo: '', ...JSON.parse(bruto) }
+  } catch {
+    return { titulo: '', data: '', conteudo: '' }
+  }
+}
+
 export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
   const supabase = createClient()
   const [reunioes, setReunioes] = useState<Reuniao[]>([])
   const [carregando, setCarregando] = useState(true)
-  const [mostrarForm, setMostrarForm] = useState(false)
-  const [titulo, setTitulo] = useState('')
-  const [data, setData] = useState('')
-  const [conteudo, setConteudo] = useState('')
+  const [mostrarForm, setMostrarForm] = useState(() => {
+    const r = lerRascunho(projetoId)
+    return Boolean(r.titulo || r.data || !htmlEstaVazio(r.conteudo))
+  })
+  const [titulo, setTitulo] = useState(() => lerRascunho(projetoId).titulo)
+  const [data, setData] = useState(() => lerRascunho(projetoId).data)
+  const [conteudo, setConteudo] = useState(() => lerRascunho(projetoId).conteudo)
   const [enviando, setEnviando] = useState(false)
+
+  useEffect(() => {
+    const vazio = !titulo && !data && htmlEstaVazio(conteudo)
+    if (vazio) {
+      localStorage.removeItem(chaveRascunho(projetoId))
+    } else {
+      localStorage.setItem(chaveRascunho(projetoId), JSON.stringify({ titulo, data, conteudo }))
+    }
+  }, [projetoId, titulo, data, conteudo])
 
   useEffect(() => {
     let ativo = true
@@ -59,6 +88,15 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     setData('')
     setConteudo('')
     setMostrarForm(false)
+    localStorage.removeItem(chaveRascunho(projetoId))
+  }
+
+  function cancelar() {
+    setTitulo('')
+    setData('')
+    setConteudo('')
+    setMostrarForm(false)
+    localStorage.removeItem(chaveRascunho(projetoId))
   }
 
   async function excluir(id: string) {
@@ -113,7 +151,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              onClick={() => setMostrarForm(false)}
+              onClick={cancelar}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancelar

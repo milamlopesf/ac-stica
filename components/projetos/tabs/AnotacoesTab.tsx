@@ -10,12 +10,28 @@ function formatarDataHora(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+function chaveRascunho(projetoId: string) {
+  return `painel-acustica:rascunho-nota:${projetoId}`
+}
+
 export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
   const supabase = createClient()
   const [notas, setNotas] = useState<Nota[]>([])
   const [carregando, setCarregando] = useState(true)
-  const [texto, setTexto] = useState('')
+  const [texto, setTexto] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem(chaveRascunho(projetoId)) ?? ''
+  })
   const [enviando, setEnviando] = useState(false)
+
+  function mudarTexto(html: string) {
+    setTexto(html)
+    if (htmlEstaVazio(html)) {
+      localStorage.removeItem(chaveRascunho(projetoId))
+    } else {
+      localStorage.setItem(chaveRascunho(projetoId), html)
+    }
+  }
 
   useEffect(() => {
     let ativo = true
@@ -51,6 +67,7 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
     }
     setNotas((prev) => [data as Nota, ...prev])
     setTexto('')
+    localStorage.removeItem(chaveRascunho(projetoId))
   }
 
   async function excluir(id: string) {
@@ -77,7 +94,7 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
     <div className="flex flex-col gap-4">
       {isEditor && (
         <form onSubmit={adicionar} className="flex flex-col gap-2">
-          <RichTextEditor value={texto} onChange={setTexto} placeholder="Escrever uma anotação..." />
+          <RichTextEditor value={texto} onChange={mudarTexto} placeholder="Escrever uma anotação..." />
           <button
             type="submit"
             disabled={enviando}

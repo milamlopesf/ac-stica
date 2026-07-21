@@ -9,6 +9,11 @@
   pointer-events: none;
 }
 
+.rich-text-content {
+  --tw-prose-bullets: #2563eb;
+  --tw-prose-counters: #111827;
+}
+
 .app-background {
   background-color: #ecfeff;
   background-image:
