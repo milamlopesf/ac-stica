@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { getSessionInfo } from '@/lib/supabase/session'
+import { requireLogin } from '@/lib/supabase/require-login'
 import { BibliotecaClient } from '@/components/biblioteca/BibliotecaClient'
 
 export default async function LaudosPage() {
   const supabase = await createClient()
-  const session = await getSessionInfo()
+  const session = await requireLogin()
 
   const { data, error } = await supabase
     .from('biblioteca')

@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { getSessionInfo } from '@/lib/supabase/session'
+import { requireLogin } from '@/lib/supabase/require-login'
 import { ProjetosClient } from '@/components/projetos/ProjetosClient'
 
 export default async function ProjetosPage() {
   const supabase = await createClient()
-  const session = await getSessionInfo()
+  const session = await requireLogin()
 
   const { data: projetos, error } = await supabase
     .from('projetos')

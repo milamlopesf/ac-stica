@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getSessionInfo } from '@/lib/supabase/session'
+import { requireLogin } from '@/lib/supabase/require-login'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, ETAPAS } from '@/lib/utils/cores'
 import { corCategorica } from '@/lib/utils/paleta'
@@ -22,7 +22,7 @@ function agruparPorCampo(
 
 export default async function PaineisPage() {
   const supabase = await createClient()
-  const session = await getSessionInfo()
+  const session = await requireLogin()
   const { data: projetos, error } = await supabase.from('projetos').select('*')
 
   if (error) {

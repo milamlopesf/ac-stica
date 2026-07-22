@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { requireEditor } from '@/lib/supabase/require-editor'
+import { requireLogin } from '@/lib/supabase/require-login'
 import { BibliotecaClient } from '@/components/biblioteca/BibliotecaClient'
 
 export default async function PlanilhasPage() {
-  const session = await requireEditor()
+  const session = await requireLogin()
   const supabase = await createClient()
 
   const { data, error } = await supabase

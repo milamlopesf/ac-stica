@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { requireEditor } from '@/lib/supabase/require-editor'
+import { requireLogin } from '@/lib/supabase/require-login'
 import { CalendarioClient } from '@/components/calendario/CalendarioClient'
 
 export default async function CalendarioPage() {
-  await requireEditor()
+  await requireLogin()
   const supabase = await createClient()
 
   const [{ data: projetos, error: erroProjetos }, { data: atividades, error: erroAtividades }] =

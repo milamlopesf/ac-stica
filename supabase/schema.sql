@@ -123,7 +123,8 @@ alter table biblioteca enable row level security;
 -- ============================================================================
 
 -- projetos
-create policy "leitura publica" on projetos for select using (true);
+create policy "leitura autenticada" on projetos for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on projetos for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on projetos for update
@@ -132,7 +133,8 @@ create policy "editor apaga" on projetos for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- atividades
-create policy "leitura publica" on atividades for select using (true);
+create policy "leitura autenticada" on atividades for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on atividades for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on atividades for update
@@ -141,7 +143,8 @@ create policy "editor apaga" on atividades for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- notas
-create policy "leitura publica" on notas for select using (true);
+create policy "leitura autenticada" on notas for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on notas for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on notas for update
@@ -150,7 +153,8 @@ create policy "editor apaga" on notas for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- reunioes
-create policy "leitura publica" on reunioes for select using (true);
+create policy "leitura autenticada" on reunioes for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on reunioes for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on reunioes for update
@@ -159,7 +163,8 @@ create policy "editor apaga" on reunioes for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- anexos
-create policy "leitura publica" on anexos for select using (true);
+create policy "leitura autenticada" on anexos for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on anexos for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on anexos for update
@@ -168,7 +173,8 @@ create policy "editor apaga" on anexos for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- biblioteca
-create policy "leitura publica" on biblioteca for select using (true);
+create policy "leitura autenticada" on biblioteca for select
+  using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on biblioteca for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor atualiza" on biblioteca for update
@@ -176,11 +182,11 @@ create policy "editor atualiza" on biblioteca for update
 create policy "editor apaga" on biblioteca for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
--- profiles: qualquer pessoa pode ler (necessário para o app checar se alguém é
--- editor). Não existe tela no app para criar/editar/apagar profiles — isso é
--- feito manualmente via SQL Editor (que roda como owner do banco e ignora RLS),
--- então não há políticas de insert/update/delete aqui de propósito.
-create policy "leitura publica" on profiles for select using (true);
+-- profiles: qualquer pessoa LOGADA pode ler (necessário para o app checar se
+-- alguém é editor). Não existe tela no app para criar/editar/apagar profiles
+-- diretamente — isso é feito pelo gatilho on_auth_user_created (seção 6) ou
+-- manualmente via SQL Editor (que roda como owner do banco e ignora RLS).
+create policy "leitura autenticada" on profiles for select using (auth.uid() is not null);
 
 
 -- ============================================================================
@@ -190,9 +196,9 @@ create policy "leitura publica" on profiles for select using (true);
 -- Bucket "anexos-projetos": PDFs anexados a cada projeto (aba Anexos)
 insert into storage.buckets (id, name, public) values ('anexos-projetos', 'anexos-projetos', false);
 
-create policy "Leitura publica anexos-projetos"
+create policy "Leitura autenticada anexos-projetos"
 on storage.objects for select
-using (bucket_id = 'anexos-projetos');
+using (bucket_id = 'anexos-projetos' and exists (select 1 from profiles where id = auth.uid()));
 
 create policy "Editores gerenciam anexos-projetos"
 on storage.objects for all
@@ -208,9 +214,9 @@ with check (
 -- Bucket "biblioteca-documentos": PDFs/Excel de Normas, Planilhas e Laudos
 insert into storage.buckets (id, name, public) values ('biblioteca-documentos', 'biblioteca-documentos', false);
 
-create policy "Leitura publica biblioteca-documentos"
+create policy "Leitura autenticada biblioteca-documentos"
 on storage.objects for select
-using (bucket_id = 'biblioteca-documentos');
+using (bucket_id = 'biblioteca-documentos' and exists (select 1 from profiles where id = auth.uid()));
 
 create policy "Editores gerenciam biblioteca-documentos"
 on storage.objects for all
@@ -225,15 +231,41 @@ with check (
 
 
 -- ============================================================================
--- 6. Como promover um usuário a editor
+-- 6. Acesso restrito ao domínio @awnet.com.br
 -- ============================================================================
 --
--- 1. Crie o usuário em Authentication > Users (marque "Auto Confirm User")
--- 2. Rode, trocando o e-mail:
+-- Só quem faz login com e-mail @awnet.com.br tem acesso a alguma informação
+-- do site (todas as tabelas exigem "exists (select 1 from profiles where
+-- id = auth.uid())" para leitura — sem login, sem linha em profiles, zero
+-- acesso). O gatilho abaixo cria automaticamente a linha em profiles como
+-- "viewer" sempre que uma conta @awnet.com.br é criada em Authentication >
+-- Users, e já marca milena.lopes@awnet.com.br como "editor".
 --
--- insert into profiles (id, email, role)
--- select id, email, 'editor'
--- from auth.users
--- where email = 'email-da-pessoa@exemplo.com'
--- on conflict (id) do update set role = 'editor';
+-- create or replace function public.handle_new_user()
+-- returns trigger
+-- language plpgsql
+-- security definer set search_path = public
+-- as $$
+-- begin
+--   if new.email ilike '%@awnet.com.br' then
+--     insert into public.profiles (id, email, role)
+--     values (
+--       new.id,
+--       new.email,
+--       case when lower(new.email) = 'milena.lopes@awnet.com.br' then 'editor' else 'viewer' end
+--     )
+--     on conflict (id) do update set email = excluded.email;
+--   end if;
+--   return new;
+-- end;
+-- $$;
+--
+-- drop trigger if exists on_auth_user_created on auth.users;
+-- create trigger on_auth_user_created
+--   after insert on auth.users
+--   for each row execute function public.handle_new_user();
+--
+-- Pra promover alguém a editor manualmente (fora do padrão acima):
+--
+-- update profiles set role = 'editor' where email = 'email-da-pessoa@awnet.com.br';
 -- ============================================================================

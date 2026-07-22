@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { getSessionInfo } from '@/lib/supabase/session'
 
-export async function requireEditor() {
+export async function requireLogin() {
   const session = await getSessionInfo()
-  if (!session.isEditor) {
-    redirect('/projetos')
+  if (!session.userId) {
+    redirect('/login')
   }
   return session
 }

@@ -4,18 +4,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
-export function NavLinks({ isEditor }: { isEditor: boolean }) {
+export function NavLinks() {
   const pathname = usePathname()
 
   const links = [
-    { href: '/projetos', label: 'Projetos', sempreVisivel: true },
-    { href: '/atividades', label: 'Atividades', sempreVisivel: false },
-    { href: '/calendario', label: 'Calendário', sempreVisivel: false },
-    { href: '/normas', label: 'Normas/Manuais', sempreVisivel: true },
-    { href: '/planilhas', label: 'Planilhas de Cálculo', sempreVisivel: false },
-    { href: '/laudos', label: 'Laudos/Medições', sempreVisivel: true },
-    { href: '/paineis', label: 'Painéis', sempreVisivel: true },
-  ].filter((link) => link.sempreVisivel || isEditor)
+    { href: '/projetos', label: 'Projetos' },
+    { href: '/atividades', label: 'Atividades' },
+    { href: '/calendario', label: 'Calendário' },
+    { href: '/normas', label: 'Normas/Manuais' },
+    { href: '/planilhas', label: 'Planilhas de Cálculo' },
+    { href: '/laudos', label: 'Laudos/Medições' },
+    { href: '/paineis', label: 'Painéis' },
+  ]
 
   return (
     <nav className="flex flex-wrap items-center gap-1">

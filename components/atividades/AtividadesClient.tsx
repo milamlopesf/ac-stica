@@ -11,9 +11,11 @@ type Ordenacao = 'padrao' | 'data' | 'prioridade'
 export function AtividadesClient({
   atividadesIniciais,
   projetos,
+  isEditor,
 }: {
   atividadesIniciais: Atividade[]
   projetos: Projeto[]
+  isEditor: boolean
 }) {
   const supabase = createClient()
   const [atividades, setAtividades] = useState<Atividade[]>(atividadesIniciais)
@@ -85,33 +87,35 @@ export function AtividadesClient({
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold text-gray-900">Atividades</h1>
 
-      <form onSubmit={adicionar} className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-white p-3">
-        <input
-          value={novoTexto}
-          onChange={(e) => setNovoTexto(e.target.value)}
-          placeholder="Nova atividade..."
-          className="min-w-[200px] flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        />
-        <select
-          value={novoProjetoId}
-          onChange={(e) => setNovoProjetoId(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        >
-          <option value="">Sem projeto</option>
-          {projetos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nome}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          disabled={criando}
-          className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-        >
-          Adicionar
-        </button>
-      </form>
+      {isEditor && (
+        <form onSubmit={adicionar} className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-white p-3">
+          <input
+            value={novoTexto}
+            onChange={(e) => setNovoTexto(e.target.value)}
+            placeholder="Nova atividade..."
+            className="min-w-[200px] flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          />
+          <select
+            value={novoProjetoId}
+            onChange={(e) => setNovoProjetoId(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            <option value="">Sem projeto</option>
+            {projetos.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            disabled={criando}
+            className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+          >
+            Adicionar
+          </button>
+        </form>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <select
@@ -155,7 +159,7 @@ export function AtividadesClient({
                     <AtividadeRow
                       key={atividade.id}
                       atividade={atividade}
-                      isEditor
+                      isEditor={isEditor}
                       projetos={projetos}
                       onAtualizada={atualizar}
                       onExcluida={excluir}

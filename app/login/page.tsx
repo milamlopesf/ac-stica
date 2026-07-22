@@ -11,7 +11,7 @@ export default async function LoginPage({
     <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center">
       <h1 className="mb-1 text-2xl font-semibold text-gray-900">Entrar</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Acesse com sua conta de editor para gerenciar os projetos.
+        Acesse com sua conta @awnet.com.br para ver o painel.
       </p>
 
       {erro && (
