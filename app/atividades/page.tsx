@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { requireLogin } from '@/lib/supabase/require-login'
+import { requireEditor } from '@/lib/supabase/require-editor'
 import { AtividadesClient } from '@/components/atividades/AtividadesClient'
 
 export default async function AtividadesPage() {
-  const session = await requireLogin()
+  const session = await requireEditor()
   const supabase = await createClient()
 
   const [{ data: atividades, error: erroAtividades }, { data: projetos, error: erroProjetos }] =

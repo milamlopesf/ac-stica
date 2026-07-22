@@ -11,7 +11,7 @@ export function Header({ session }: { session: SessionInfo }) {
           <Link href="/projetos" className="text-lg font-semibold text-gray-900">
             Painel Acústica
           </Link>
-          {session.userId && <NavLinks />}
+          {session.userId && <NavLinks isEditor={session.isEditor} />}
         </div>
 
         <div className="flex items-center gap-3">
