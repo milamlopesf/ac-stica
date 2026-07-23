@@ -9,7 +9,6 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
 
   const links = [
     { href: '/projetos', label: 'Projetos', apenasEditor: false },
-    { href: '/atividades', label: 'Atividades', apenasEditor: true },
     { href: '/calendario', label: 'Calendário', apenasEditor: true },
     { href: '/normas', label: 'Normas/Manuais', apenasEditor: false },
     { href: '/planilhas', label: 'Planilhas de Cálculo', apenasEditor: true },

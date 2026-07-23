@@ -8,19 +8,16 @@ import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
-import { ProgressoBar } from './ProgressoBar'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
-import { AtividadesTab } from './tabs/AtividadesTab'
 import { AnexosTab } from './tabs/AnexosTab'
 
-type Aba = 'anotacoes' | 'reunioes' | 'atividades' | 'anexos'
+type Aba = 'anotacoes' | 'reunioes' | 'anexos'
 
 const ABAS: { id: Aba; label: string }[] = [
   { id: 'anotacoes', label: 'Anotações' },
   { id: 'reunioes', label: 'Atas de Reunião' },
-  { id: 'atividades', label: 'Atividades' },
   { id: 'anexos', label: 'Anexos' },
 ]
 
@@ -30,7 +27,6 @@ export function ProjetoDetalhePanel({
   gerentesExistentes = [],
   outrosProjetos = [],
   projetoVinculado,
-  progresso,
   onFechar,
   onAtualizado,
   onExcluido,
@@ -41,7 +37,6 @@ export function ProjetoDetalhePanel({
   gerentesExistentes?: string[]
   outrosProjetos?: Projeto[]
   projetoVinculado?: Projeto
-  progresso?: { concluidas: number; total: number }
   onFechar: () => void
   onAtualizado: (p: Projeto) => void
   onExcluido: (id: string) => void
@@ -54,7 +49,6 @@ export function ProjetoDetalhePanel({
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
-  const abas = isEditor ? ABAS : ABAS.filter((a) => a.id !== 'atividades')
 
   async function handleExcluir() {
     if (!confirm(`Excluir o projeto "${projeto.nome}"? Essa ação não pode ser desfeita.`)) return
@@ -84,9 +78,6 @@ export function ProjetoDetalhePanel({
               <Badge label={corEtapa.label} className={corEtapa.badge} />
               <Badge label={corStatus.label} className={corStatus.badge} />
             </div>
-            {progresso && (
-              <ProgressoBar concluidas={progresso.concluidas} total={progresso.total} className="max-w-xs" />
-            )}
             {projetoVinculado && (
               <button
                 onClick={() => onAbrirVinculado?.(projetoVinculado.id)}
@@ -147,7 +138,7 @@ export function ProjetoDetalhePanel({
         )}
 
         <div className="flex gap-1 border-b border-gray-200 px-5">
-          {abas.map((t) => (
+          {ABAS.map((t) => (
             <button
               key={t.id}
               onClick={() => setAba(t.id)}
@@ -166,9 +157,6 @@ export function ProjetoDetalhePanel({
         <div className="flex-1 p-5">
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'atividades' && isEditor && (
-            <AtividadesTab projetoId={projeto.id} projetoEntrega={projeto.entrega} isEditor={isEditor} />
-          )}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
         </div>
       </div>

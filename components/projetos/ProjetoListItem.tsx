@@ -3,17 +3,14 @@ import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
-import { ProgressoBar } from './ProgressoBar'
 
 export function ProjetoListItem({
   projeto,
   nomeVinculado,
-  progresso,
   onClick,
 }: {
   projeto: Projeto
   nomeVinculado?: string
-  progresso?: { concluidas: number; total: number }
   onClick: () => void
 }) {
   const corEtapa = CORES_ETAPA[projeto.etapa]
@@ -41,10 +38,6 @@ export function ProjetoListItem({
           </span>
         )}
       </div>
-
-      {progresso && (
-        <ProgressoBar concluidas={progresso.concluidas} total={progresso.total} compacto />
-      )}
 
       <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 sm:w-auto">
         <span>

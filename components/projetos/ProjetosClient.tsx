@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
@@ -12,8 +12,6 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
-
-type ProgressoPorProjeto = Record<string, { concluidas: number; total: number }>
 
 export function ProjetosClient({
   projetosIniciais,
@@ -42,25 +40,6 @@ export function ProjetosClient({
     localStorage.setItem(CHAVE_VISUALIZACAO, v)
   }
 
-  const [progressoPorProjeto, setProgressoPorProjeto] = useState<ProgressoPorProjeto>({})
-
-  function calcularProgresso(linhas: { projeto_id: string | null; status: string }[]) {
-    const mapa: ProgressoPorProjeto = {}
-    for (const a of linhas) {
-      if (!a.projeto_id) continue
-      if (!mapa[a.projeto_id]) mapa[a.projeto_id] = { concluidas: 0, total: 0 }
-      mapa[a.projeto_id].total += 1
-      if (a.status === 'concluido') mapa[a.projeto_id].concluidas += 1
-    }
-    return mapa
-  }
-
-  const carregarProgresso = useCallback(async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('atividades').select('projeto_id, status')
-    setProgressoPorProjeto(calcularProgresso(data ?? []))
-  }, [])
-
   const recarregarProjetos = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase
@@ -68,20 +47,6 @@ export function ProjetosClient({
       .select('*')
       .order('entrega', { ascending: false, nullsFirst: false })
     if (data) setProjetos(data as Projeto[])
-  }, [])
-
-  useEffect(() => {
-    let ativo = true
-    const supabase = createClient()
-    supabase
-      .from('atividades')
-      .select('projeto_id, status')
-      .then(({ data }) => {
-        if (ativo) setProgressoPorProjeto(calcularProgresso(data ?? []))
-      })
-    return () => {
-      ativo = false
-    }
   }, [])
 
   const diretores = useMemo(
@@ -253,7 +218,6 @@ export function ProjetosClient({
                   ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                   : undefined
               }
-              progresso={progressoPorProjeto[projeto.id]}
               onClick={() => setSelecionadoId(projeto.id)}
             />
           ))}
@@ -269,7 +233,6 @@ export function ProjetosClient({
                   ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                   : undefined
               }
-              progresso={progressoPorProjeto[projeto.id]}
               onClick={() => setSelecionadoId(projeto.id)}
             />
           ))}
@@ -288,11 +251,7 @@ export function ProjetosClient({
               ? projetosPorId.get(selecionado.projeto_vinculado_id)
               : undefined
           }
-          progresso={progressoPorProjeto[selecionado.id]}
-          onFechar={() => {
-            setSelecionadoId(null)
-            carregarProgresso()
-          }}
+          onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleProjetoAtualizado}
           onExcluido={handleProjetoExcluido}
           onAbrirVinculado={(id) => setSelecionadoId(id)}
