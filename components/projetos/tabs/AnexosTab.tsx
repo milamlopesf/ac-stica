@@ -14,6 +14,7 @@ export function AnexosTab({ projetoId, isEditor }: { projetoId: string; isEditor
   const [carregando, setCarregando] = useState(true)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
+  const [visualizando, setVisualizando] = useState<{ url: string; nome: string } | null>(null)
 
   useEffect(() => {
     let ativo = true
@@ -77,10 +78,21 @@ export function AnexosTab({ projetoId, isEditor }: { projetoId: string; isEditor
     if (inputRef.current) inputRef.current.value = ''
   }
 
+  async function visualizar(anexo: Anexo) {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(anexo.caminho_storage, 300)
+    if (error || !data) {
+      alert(`Erro ao abrir o arquivo: ${error?.message ?? ''}`)
+      return
+    }
+    setVisualizando({ url: data.signedUrl, nome: anexo.nome_arquivo })
+  }
+
   async function baixar(anexo: Anexo) {
     const { data, error } = await supabase.storage
       .from(BUCKET)
-      .createSignedUrl(anexo.caminho_storage, 60)
+      .createSignedUrl(anexo.caminho_storage, 60, { download: anexo.nome_arquivo })
     if (error || !data) {
       alert(`Erro ao gerar link de download: ${error?.message ?? ''}`)
       return
@@ -133,7 +145,7 @@ export function AnexosTab({ projetoId, isEditor }: { projetoId: string; isEditor
               <div className="flex min-w-0 items-center gap-2">
                 <span className="shrink-0 text-red-500">📄</span>
                 <button
-                  onClick={() => baixar(anexo)}
+                  onClick={() => visualizar(anexo)}
                   className="truncate text-sm font-medium text-blue-700 hover:underline"
                   title={anexo.nome_arquivo}
                 >
@@ -143,18 +155,63 @@ export function AnexosTab({ projetoId, isEditor }: { projetoId: string; isEditor
                   {formatarTamanho(anexo.tamanho_bytes)}
                 </span>
               </div>
-              {isEditor && (
+              <div className="flex shrink-0 items-center gap-3">
                 <button
-                  onClick={() => excluir(anexo)}
-                  className="shrink-0 text-gray-400 hover:text-red-600"
-                  aria-label="Excluir anexo"
+                  onClick={() => baixar(anexo)}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Baixar anexo"
+                  title="Baixar"
                 >
-                  ✕
+                  ⬇
                 </button>
-              )}
+                {isEditor && (
+                  <button
+                    onClick={() => excluir(anexo)}
+                    className="text-gray-400 hover:text-red-600"
+                    aria-label="Excluir anexo"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {visualizando && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setVisualizando(null)}
+        >
+          <div
+            className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-2.5">
+              <p className="min-w-0 truncate text-sm font-medium text-gray-800" title={visualizando.nome}>
+                {visualizando.nome}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={visualizando.url}
+                  download={visualizando.nome}
+                  className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Baixar
+                </a>
+                <button
+                  onClick={() => setVisualizando(null)}
+                  className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  aria-label="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <iframe src={visualizando.url} title={visualizando.nome} className="flex-1" />
+          </div>
+        </div>
       )}
     </div>
   )
