@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto, Etapa, StatusProjeto } from '@/lib/types/database'
 import { ETAPAS, STATUS_PROJETO, PROJETISTAS_ACUSTICOS, DIRETORES } from '@/lib/utils/cores'
+import { hojeISO } from '@/lib/utils/data'
 
 async function romperVinculo(
   supabase: ReturnType<typeof createClient>,
@@ -59,7 +60,7 @@ export function ProjetoFormModal({
   const [nome, setNome] = useState(projeto?.nome ?? '')
   const [etapa, setEtapa] = useState<Etapa>(projeto?.etapa ?? 'DNN')
   const [status, setStatus] = useState<StatusProjeto>(projeto?.status ?? 'A Fazer')
-  const [entrega, setEntrega] = useState(projeto?.entrega ?? '')
+  const [entrega, setEntrega] = useState(() => (projeto ? (projeto.entrega ?? '') : hojeISO()))
   const [diretor, setDiretor] = useState(projeto?.diretor ?? '')
   const [gerente, setGerente] = useState(projeto?.gerente ?? '')
   const [projetista, setProjetista] = useState(projeto?.projetista ?? '')

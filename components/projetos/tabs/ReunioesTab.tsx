@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Reuniao } from '@/lib/types/database'
-import { formatarData } from '@/lib/utils/data'
+import { formatarData, hojeISO } from '@/lib/utils/data'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
 
@@ -30,15 +30,15 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
   const [carregando, setCarregando] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(() => {
     const r = lerRascunho(projetoId)
-    return Boolean(r.titulo || r.data || !htmlEstaVazio(r.conteudo))
+    return Boolean(r.titulo || !htmlEstaVazio(r.conteudo))
   })
   const [titulo, setTitulo] = useState(() => lerRascunho(projetoId).titulo)
-  const [data, setData] = useState(() => lerRascunho(projetoId).data)
+  const [data, setData] = useState(() => lerRascunho(projetoId).data || hojeISO())
   const [conteudo, setConteudo] = useState(() => lerRascunho(projetoId).conteudo)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    const vazio = !titulo && !data && htmlEstaVazio(conteudo)
+    const vazio = !titulo.trim() && htmlEstaVazio(conteudo)
     if (vazio) {
       localStorage.removeItem(chaveRascunho(projetoId))
     } else {
@@ -85,7 +85,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     }
     setReunioes((prev) => [nova as Reuniao, ...prev])
     setTitulo('')
-    setData('')
+    setData(hojeISO())
     setConteudo('')
     setMostrarForm(false)
     localStorage.removeItem(chaveRascunho(projetoId))
@@ -93,7 +93,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
 
   function cancelar() {
     setTitulo('')
-    setData('')
+    setData(hojeISO())
     setConteudo('')
     setMostrarForm(false)
     localStorage.removeItem(chaveRascunho(projetoId))
