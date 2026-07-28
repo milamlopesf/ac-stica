@@ -37,6 +37,9 @@ export function BibliotecaDetalheModal({
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
+  const [visualizando, setVisualizando] = useState<string | null>(null)
+
+  const ehPdf = /\.pdf$/i.test(item.nome_arquivo)
 
   const alterado =
     titulo !== item.titulo ||
@@ -70,8 +73,21 @@ export function BibliotecaDetalheModal({
     onAtualizado(data as ItemBiblioteca)
   }
 
+  async function visualizar() {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(item.caminho_storage, 300)
+    if (error || !data) {
+      alert(`Erro ao abrir o arquivo: ${error?.message ?? ''}`)
+      return
+    }
+    setVisualizando(data.signedUrl)
+  }
+
   async function baixar() {
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(item.caminho_storage, 60)
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(item.caminho_storage, 60, { download: item.nome_arquivo })
     if (error || !data) {
       alert(`Erro ao gerar link de download: ${error?.message ?? ''}`)
       return
@@ -98,6 +114,7 @@ export function BibliotecaDetalheModal({
   }
 
   return (
+    <>
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
       onClick={onFechar}
@@ -228,7 +245,17 @@ export function BibliotecaDetalheModal({
             <div className="flex min-w-0 items-center gap-2">
               <span className="text-xl">📎</span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-800">{item.nome_arquivo}</p>
+                {ehPdf ? (
+                  <button
+                    onClick={visualizar}
+                    className="truncate text-sm font-medium text-blue-700 hover:underline"
+                    title={item.nome_arquivo}
+                  >
+                    {item.nome_arquivo}
+                  </button>
+                ) : (
+                  <p className="truncate text-sm font-medium text-gray-800">{item.nome_arquivo}</p>
+                )}
                 <p className="text-xs text-gray-400">{formatarTamanho(item.tamanho_bytes)}</p>
               </div>
             </div>
@@ -252,5 +279,41 @@ export function BibliotecaDetalheModal({
         </div>
       </div>
     </div>
+
+    {visualizando && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setVisualizando(null)}
+      >
+        <div
+          className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-2.5">
+            <p className="min-w-0 truncate text-sm font-medium text-gray-800" title={item.nome_arquivo}>
+              {item.nome_arquivo}
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <a
+                href={visualizando}
+                download={item.nome_arquivo}
+                className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Baixar
+              </a>
+              <button
+                onClick={() => setVisualizando(null)}
+                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Fechar"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <iframe src={visualizando} title={item.nome_arquivo} className="flex-1" />
+        </div>
+      </div>
+    )}
+    </>
   )
 }
