@@ -5,15 +5,13 @@ import { NavLinks } from './NavLinks'
 
 export function Header({ session }: { session: SessionInfo }) {
   return (
-    <header className="bg-gradient-to-r from-teal-950 via-teal-900 to-emerald-800 shadow-sm">
+    <header className="bg-cyan-50 border-b border-teal-900/10">
       <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/projetos" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-400/90 text-sm font-bold text-teal-950">
-            PA
-          </span>
+          <span className="text-xl font-bold tracking-tight text-teal-700">AW</span>
           <span className="flex flex-col leading-tight">
-            <span className="text-base font-semibold text-white">Painel Acústica</span>
-            <span className="hidden text-xs text-teal-100/70 sm:inline">
+            <span className="text-base font-semibold text-gray-900">Painel Acústica</span>
+            <span className="hidden text-xs text-gray-500 sm:inline">
               Acompanhamento de projetos acústicos
             </span>
           </span>
@@ -22,13 +20,13 @@ export function Header({ session }: { session: SessionInfo }) {
         <div className="flex items-center gap-3">
           {session.userId ? (
             <>
-              <span className="hidden text-sm text-teal-100/80 sm:inline">
+              <span className="hidden text-sm text-gray-500 sm:inline">
                 {session.email} · {session.isEditor ? 'editor' : 'viewer'}
               </span>
               <form action={logout}>
                 <button
                   type="submit"
-                  className="rounded-md border border-white/20 bg-white/5 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/10"
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Sair
                 </button>
@@ -37,7 +35,7 @@ export function Header({ session }: { session: SessionInfo }) {
           ) : (
             <Link
               href="/login"
-              className="rounded-md bg-teal-400 px-3 py-1.5 text-sm font-medium text-teal-950 hover:bg-teal-300"
+              className="rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800"
             >
               Entrar
             </Link>
@@ -46,7 +44,7 @@ export function Header({ session }: { session: SessionInfo }) {
       </div>
 
       {session.userId && (
-        <div className="border-t border-white/10 bg-white">
+        <div className="border-t border-teal-900/10 bg-white">
           <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8">
             <NavLinks isEditor={session.isEditor} />
           </div>
