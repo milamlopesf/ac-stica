@@ -1,8 +1,10 @@
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
+import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
+import { IconRelatorio } from '@/components/ui/IconRelatorio'
 
 export function ProjetoListItem({
   projeto,
@@ -17,9 +19,17 @@ export function ProjetoListItem({
   const corStatus = CORES_STATUS[projeto.status]
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-teal-300 hover:shadow-sm sm:flex-nowrap"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      className="flex cursor-pointer flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-teal-300 hover:shadow-sm sm:flex-nowrap"
     >
       <span
         className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -60,6 +70,18 @@ export function ProjetoListItem({
         </span>
       </div>
 
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          emitirRelatorioProjeto(projeto)
+        }}
+        className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-teal-700"
+        title="Emitir relatório"
+        aria-label="Emitir relatório"
+      >
+        <IconRelatorio className="h-4 w-4" />
+      </button>
+
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -69,6 +91,6 @@ export function ProjetoListItem({
       >
         <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-    </button>
+    </div>
   )
 }

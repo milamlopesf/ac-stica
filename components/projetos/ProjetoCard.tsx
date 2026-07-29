@@ -1,8 +1,10 @@
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
+import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
+import { IconRelatorio } from '@/components/ui/IconRelatorio'
 
 export function ProjetoCard({
   projeto,
@@ -17,12 +19,31 @@ export function ProjetoCard({
   const corStatus = CORES_STATUS[projeto.status]
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      className="flex cursor-pointer flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 font-medium text-gray-900">{projeto.nome}</h3>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            emitirRelatorioProjeto(projeto)
+          }}
+          className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-teal-700"
+          title="Emitir relatório"
+          aria-label="Emitir relatório"
+        >
+          <IconRelatorio className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -57,6 +78,6 @@ export function ProjetoCard({
           <dd className="font-medium text-gray-700">{projeto.projetista || '—'}</dd>
         </div>
       </dl>
-    </button>
+    </div>
   )
 }

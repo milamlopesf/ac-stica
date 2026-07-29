@@ -5,6 +5,7 @@ import { CORES_ETAPA, ETAPAS } from '@/lib/utils/cores'
 import { corCategorica } from '@/lib/utils/paleta'
 import { DonutChart, type DonutDatum } from '@/components/paineis/DonutChart'
 import { BackupSection } from '@/components/paineis/BackupSection'
+import { RelatorioProjetoSection } from '@/components/paineis/RelatorioProjetoSection'
 
 function agruparPorCampo(
   projetos: Projeto[],
@@ -58,6 +59,8 @@ export default async function PaineisPage() {
         <DonutChart titulo="Projetos por gerente" dados={porGerente} />
         <DonutChart titulo="Projetos por projetista acústico" dados={porProjetista} />
       </div>
+
+      <RelatorioProjetoSection projetos={lista} />
 
       {session.isEditor && <BackupSection />}
     </div>

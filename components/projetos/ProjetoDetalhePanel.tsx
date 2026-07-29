@@ -6,8 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
+import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
+import { IconRelatorio } from '@/components/ui/IconRelatorio'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
@@ -119,23 +121,32 @@ export function ProjetoDetalhePanel({
           </button>
         </div>
 
-        {isEditor && (
-          <div className="flex gap-2 border-b border-gray-200 px-5 py-3">
-            <button
-              onClick={() => setEditando(true)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Editar Projeto
-            </button>
-            <button
-              onClick={handleExcluir}
-              disabled={excluindo}
-              className="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
-            >
-              {excluindo ? 'Excluindo...' : 'Excluir Projeto'}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2 border-b border-gray-200 px-5 py-3">
+          <button
+            onClick={() => emitirRelatorioProjeto(projeto)}
+            className="flex items-center gap-1.5 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <IconRelatorio className="h-4 w-4" />
+            Emitir Relatório
+          </button>
+          {isEditor && (
+            <>
+              <button
+                onClick={() => setEditando(true)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Editar Projeto
+              </button>
+              <button
+                onClick={handleExcluir}
+                disabled={excluindo}
+                className="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+              >
+                {excluindo ? 'Excluindo...' : 'Excluir Projeto'}
+              </button>
+            </>
+          )}
+        </div>
 
         <div className="flex gap-1 border-b border-gray-200 px-5">
           {ABAS.map((t) => (
