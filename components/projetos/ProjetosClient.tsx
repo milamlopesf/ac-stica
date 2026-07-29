@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
+import { hojeISO } from '@/lib/utils/data'
 import { ProjetoCard } from './ProjetoCard'
 import { ProjetoListItem } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
@@ -12,6 +13,10 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
+
+function estaAtrasado(projeto: Projeto, hoje: string) {
+  return Boolean(projeto.entrega) && projeto.entrega! < hoje && projeto.status !== 'Concluído'
+}
 
 export function ProjetosClient({
   projetosIniciais,
@@ -27,6 +32,7 @@ export function ProjetosClient({
   const [filtroDiretor, setFiltroDiretor] = useState('')
   const [filtroGerente, setFiltroGerente] = useState('')
   const [filtroProjetista, setFiltroProjetista] = useState('')
+  const [filtroAtrasado, setFiltroAtrasado] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
@@ -63,11 +69,18 @@ export function ProjetosClient({
   )
   const projetosPorId = useMemo(() => new Map(projetos.map((p) => [p.id, p])), [projetos])
 
+  const hoje = hojeISO()
+
   const contagemPorStatus = useMemo(() => {
     const mapa: Record<string, number> = {}
     for (const p of projetos) mapa[p.status] = (mapa[p.status] ?? 0) + 1
     return mapa
   }, [projetos])
+
+  const contagemAtrasados = useMemo(
+    () => projetos.filter((p) => estaAtrasado(p, hoje)).length,
+    [projetos, hoje]
+  )
 
   const projetosFiltrados = useMemo(() => {
     return projetos
@@ -75,6 +88,7 @@ export function ProjetosClient({
         if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false
         if (filtroEtapa && p.etapa !== filtroEtapa) return false
         if (filtroStatus && p.status !== filtroStatus) return false
+        if (filtroAtrasado && !estaAtrasado(p, hoje)) return false
         if (filtroDiretor && p.diretor !== filtroDiretor) return false
         if (filtroGerente && p.gerente !== filtroGerente) return false
         if (filtroProjetista && p.projetista !== filtroProjetista) return false
@@ -86,7 +100,17 @@ export function ProjetosClient({
         if (!b.entrega) return -1
         return b.entrega.localeCompare(a.entrega)
       })
-  }, [projetos, busca, filtroEtapa, filtroStatus, filtroDiretor, filtroGerente, filtroProjetista])
+  }, [
+    projetos,
+    busca,
+    filtroEtapa,
+    filtroStatus,
+    filtroAtrasado,
+    hoje,
+    filtroDiretor,
+    filtroGerente,
+    filtroProjetista,
+  ])
 
   function handleProjetoCriado(novo: Projeto) {
     setProjetos((prev) => [...prev, novo])
@@ -145,6 +169,27 @@ export function ProjetosClient({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {STATUS_PROJETO.map((status) => {
           const cor = CORES_STATUS[status]
+
+          if (status === 'Atrasado') {
+            const ativo = filtroAtrasado
+            return (
+              <button
+                key={status}
+                onClick={() => setFiltroAtrasado(!ativo)}
+                title="Projetos com entrega vencida e que não estão concluídos"
+                className={clsx(
+                  'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
+                  ativo ? 'border-blue-400 ring-1 ring-blue-400' : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <span className="text-xs font-medium text-gray-500">{cor.label}</span>
+                <span className="text-2xl font-semibold" style={{ color: cor.hex }}>
+                  {contagemAtrasados}
+                </span>
+              </button>
+            )
+          }
+
           const ativo = filtroStatus === status
           return (
             <button
