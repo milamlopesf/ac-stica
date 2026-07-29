@@ -167,7 +167,23 @@ export function ProjetosClient({
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {STATUS_PROJETO.map((status) => {
+        <button
+          onClick={() => {
+            setFiltroStatus('')
+            setFiltroAtrasado(false)
+          }}
+          className={clsx(
+            'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
+            !filtroStatus && !filtroAtrasado
+              ? 'border-blue-400 ring-1 ring-blue-400'
+              : 'border-gray-200 hover:border-gray-300'
+          )}
+        >
+          <span className="text-xs font-medium text-gray-500">Total de projetos</span>
+          <span className="text-2xl font-semibold text-gray-900">{projetos.length}</span>
+        </button>
+
+        {STATUS_PROJETO.filter((status) => status !== 'A Fazer').map((status) => {
           const cor = CORES_STATUS[status]
 
           if (status === 'Atrasado') {
