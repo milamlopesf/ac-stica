@@ -3,7 +3,7 @@ import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { formatarTamanho } from '@/lib/utils/storage'
-import { textoSimples } from '@/lib/utils/texto'
+import { textoComQuebras } from '@/lib/utils/texto'
 
 function escapeHtml(valor: string) {
   return valor
@@ -12,6 +12,13 @@ function escapeHtml(valor: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function paraHtmlComQuebras(texto: string) {
+  return texto
+    .split('\n')
+    .map((linha) => escapeHtml(linha))
+    .join('<br>')
 }
 
 function formatarDataHora(iso: string) {
@@ -68,25 +75,27 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
 
   const listaNotas = (notas ?? []).length
     ? (notas ?? [])
-        .map(
-          (n) => `
+        .map((n) => {
+          const texto = textoComQuebras(n.texto)
+          return `
         <li>
           <p class="item-data">${formatarDataHora(n.created_at)}</p>
-          <p>${escapeHtml(textoSimples(n.texto)) || '—'}</p>
+          <p class="texto-conteudo">${texto ? paraHtmlComQuebras(texto) : '—'}</p>
         </li>`
-        )
+        })
         .join('')
     : '<li class="vazio">Nenhuma anotação registrada.</li>'
 
   const listaReunioes = (reunioes ?? []).length
     ? (reunioes ?? [])
-        .map(
-          (r) => `
+        .map((r) => {
+          const conteudo = r.conteudo ? textoComQuebras(r.conteudo) : ''
+          return `
         <li>
           <p class="item-titulo">${escapeHtml(r.titulo)} <span class="item-data">— ${formatarData(r.data)}</span></p>
-          ${r.conteudo && textoSimples(r.conteudo) ? `<p>${escapeHtml(textoSimples(r.conteudo))}</p>` : ''}
+          ${conteudo ? `<p class="texto-conteudo">${paraHtmlComQuebras(conteudo)}</p>` : ''}
         </li>`
-        )
+        })
         .join('')
     : '<li class="vazio">Nenhuma ata registrada.</li>'
 
@@ -156,6 +165,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
   ul { list-style: none; margin: 0; padding: 0; }
   li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
   li p { margin: 0 0 2px; }
+  .texto-conteudo { line-height: 1.6; }
   .item-titulo { font-weight: 600; }
   .item-data { color: #9ca3af; font-size: 12px; }
   .vazio { color: #9ca3af; font-style: italic; }
