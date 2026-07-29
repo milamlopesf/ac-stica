@@ -19,8 +19,14 @@ export function ProjetoListItem({
   return (
     <button
       onClick={onClick}
-      className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md sm:flex-nowrap"
+      className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-teal-300 hover:shadow-sm sm:flex-nowrap"
     >
+      <span
+        className="h-2.5 w-2.5 shrink-0 rounded-full"
+        style={{ backgroundColor: corStatus.hex }}
+        title={corStatus.label}
+      />
+
       <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900" title={projeto.nome}>
         {projeto.nome}
       </h3>
@@ -53,6 +59,16 @@ export function ProjetoListItem({
           Projetista: <span className="font-medium text-gray-700">{projeto.projetista || '—'}</span>
         </span>
       </div>
+
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        className="hidden h-4 w-4 shrink-0 text-gray-300 sm:block"
+      >
+        <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </button>
   )
 }

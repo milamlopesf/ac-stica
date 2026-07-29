@@ -158,7 +158,7 @@ export function ProjetosClient({
           {isEditor && (
             <button
               onClick={() => setModalNovoAberto(true)}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-md bg-teal-900 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
             >
               + Novo Projeto
             </button>
@@ -173,14 +173,16 @@ export function ProjetosClient({
             setFiltroAtrasado(false)
           }}
           className={clsx(
-            'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
+            'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
             !filtroStatus && !filtroAtrasado
-              ? 'border-blue-400 ring-1 ring-blue-400'
+              ? 'border-teal-400 ring-1 ring-teal-400'
               : 'border-gray-200 hover:border-gray-300'
           )}
         >
-          <span className="text-xs font-medium text-gray-500">Total de projetos</span>
-          <span className="text-2xl font-semibold text-gray-900">{projetos.length}</span>
+          <span className="text-3xl font-bold text-gray-900">{projetos.length}</span>
+          <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">
+            Total de projetos
+          </span>
         </button>
 
         {STATUS_PROJETO.filter((status) => status !== 'A Fazer').map((status) => {
@@ -194,13 +196,15 @@ export function ProjetosClient({
                 onClick={() => setFiltroAtrasado(!ativo)}
                 title="Projetos com entrega vencida e que não estão concluídos"
                 className={clsx(
-                  'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
-                  ativo ? 'border-blue-400 ring-1 ring-blue-400' : 'border-gray-200 hover:border-gray-300'
+                  'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
+                  ativo ? 'border-teal-400 ring-1 ring-teal-400' : 'border-gray-200 hover:border-gray-300'
                 )}
               >
-                <span className="text-xs font-medium text-gray-500">{cor.label}</span>
-                <span className="text-2xl font-semibold" style={{ color: cor.hex }}>
+                <span className="text-3xl font-bold" style={{ color: cor.hex }}>
                   {contagemAtrasados}
+                </span>
+                <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">
+                  {cor.label}
                 </span>
               </button>
             )
@@ -212,13 +216,15 @@ export function ProjetosClient({
               key={status}
               onClick={() => setFiltroStatus(ativo ? '' : status)}
               className={clsx(
-                'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
-                ativo ? 'border-blue-400 ring-1 ring-blue-400' : 'border-gray-200 hover:border-gray-300'
+                'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
+                ativo ? 'border-teal-400 ring-1 ring-teal-400' : 'border-gray-200 hover:border-gray-300'
               )}
             >
-              <span className="text-xs font-medium text-gray-500">{cor.label}</span>
-              <span className="text-2xl font-semibold" style={{ color: cor.hex }}>
+              <span className="text-3xl font-bold" style={{ color: cor.hex }}>
                 {contagemPorStatus[status] ?? 0}
+              </span>
+              <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">
+                {cor.label}
               </span>
             </button>
           )
@@ -226,16 +232,28 @@ export function ProjetosClient({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por nome..."
-          className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        <div className="relative w-full max-w-xs">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+          </svg>
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome..."
+            className="w-full rounded-full border border-gray-300 bg-white py-1.5 pr-3 pl-9 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
+          />
+        </div>
         <select
           value={filtroEtapa}
           onChange={(e) => setFiltroEtapa(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
         >
           <option value="">Todas as etapas</option>
           {ETAPAS.map((e) => (
@@ -247,7 +265,7 @@ export function ProjetosClient({
         <select
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
         >
           <option value="">Todos os status</option>
           {STATUS_PROJETO.map((s) => (
@@ -259,7 +277,7 @@ export function ProjetosClient({
         <select
           value={filtroDiretor}
           onChange={(e) => setFiltroDiretor(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
         >
           <option value="">Todos os diretores</option>
           {diretores.map((d) => (
@@ -271,7 +289,7 @@ export function ProjetosClient({
         <select
           value={filtroGerente}
           onChange={(e) => setFiltroGerente(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
         >
           <option value="">Todos os gerentes</option>
           {gerentes.map((g) => (
@@ -283,7 +301,7 @@ export function ProjetosClient({
         <select
           value={filtroProjetista}
           onChange={(e) => setFiltroProjetista(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
         >
           <option value="">Todos os projetistas</option>
           {projetistas.map((p) => (
