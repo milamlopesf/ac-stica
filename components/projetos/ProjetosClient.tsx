@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
-import { ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
+import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { ProjetoCard } from './ProjetoCard'
 import { ProjetoListItem } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
@@ -62,6 +62,12 @@ export function ProjetosClient({
     [projetos]
   )
   const projetosPorId = useMemo(() => new Map(projetos.map((p) => [p.id, p])), [projetos])
+
+  const contagemPorStatus = useMemo(() => {
+    const mapa: Record<string, number> = {}
+    for (const p of projetos) mapa[p.status] = (mapa[p.status] ?? 0) + 1
+    return mapa
+  }, [projetos])
 
   const projetosFiltrados = useMemo(() => {
     return projetos
@@ -134,6 +140,28 @@ export function ProjetosClient({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {STATUS_PROJETO.map((status) => {
+          const cor = CORES_STATUS[status]
+          const ativo = filtroStatus === status
+          return (
+            <button
+              key={status}
+              onClick={() => setFiltroStatus(ativo ? '' : status)}
+              className={clsx(
+                'flex flex-col items-start gap-0.5 rounded-lg border bg-white p-3 text-left transition',
+                ativo ? 'border-blue-400 ring-1 ring-blue-400' : 'border-gray-200 hover:border-gray-300'
+              )}
+            >
+              <span className="text-xs font-medium text-gray-500">{cor.label}</span>
+              <span className="text-2xl font-semibold" style={{ color: cor.hex }}>
+                {contagemPorStatus[status] ?? 0}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="flex flex-wrap gap-3">
