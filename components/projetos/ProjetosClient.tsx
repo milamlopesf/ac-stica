@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { hojeISO } from '@/lib/utils/data'
+import { estaAtrasado } from '@/lib/utils/projetos'
 import { ProjetoCard } from './ProjetoCard'
 import { ProjetoListItem } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
@@ -13,10 +14,6 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
-
-function estaAtrasado(projeto: Projeto, hoje: string) {
-  return Boolean(projeto.entrega) && projeto.entrega! < hoje && projeto.status !== 'Concluído'
-}
 
 export function ProjetosClient({
   projetosIniciais,

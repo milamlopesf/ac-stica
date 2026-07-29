@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
-import { formatarData } from '@/lib/utils/data'
+import { formatarData, hojeISO } from '@/lib/utils/data'
+import { estaAtrasado } from '@/lib/utils/projetos'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { textoComQuebras } from '@/lib/utils/texto'
 
@@ -24,6 +25,98 @@ function paraHtmlComQuebras(texto: string) {
 function formatarDataHora(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
+
+const ESTILO_RELATORIO = `
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #111827;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 32px 64px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #0f766e;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  header .marca { font-size: 13px; color: #0f766e; font-weight: 700; letter-spacing: 0.02em; }
+  h1 { font-size: 22px; margin: 4px 0 0; }
+  .subtitulo { color: #6b7280; font-size: 13px; margin: 4px 0 0; }
+  .badges { margin: 8px 0 20px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-right: 6px;
+    color: #fff;
+  }
+  table.info { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+  table.info th, table.info td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+  }
+  table.info th { width: 200px; color: #6b7280; font-weight: 600; }
+  section { margin-bottom: 24px; }
+  section h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #0f766e;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  li p { margin: 0 0 2px; }
+  .texto-conteudo { line-height: 1.6; }
+  .item-titulo { font-weight: 600; }
+  .item-data { color: #9ca3af; font-size: 12px; }
+  .vazio { color: #9ca3af; font-style: italic; }
+  footer { margin-top: 40px; font-size: 11px; color: #9ca3af; text-align: right; }
+  .acoes { margin-bottom: 24px; }
+  .acoes button {
+    background: #0f766e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .stat-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+  .stat-card {
+    flex: 1;
+    min-width: 110px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat-card .valor { font-size: 24px; font-weight: 700; }
+  .stat-card .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+  table.grupos { width: 100%; border-collapse: collapse; }
+  table.grupos th, table.grupos td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+  }
+  table.grupos th { color: #6b7280; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  table.grupos td.numero, table.grupos th.numero { text-align: right; }
+  @media print {
+    .acoes { display: none; }
+    body { padding: 0; }
+  }
+`
 
 export async function emitirRelatorioProjeto(projeto: Projeto) {
   const janela = window.open('', '_blank')
@@ -115,77 +208,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
 <head>
 <meta charset="utf-8" />
 <title>Relatório · ${escapeHtml(projeto.nome)}</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    color: #111827;
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 40px 32px 64px;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid #0f766e;
-    padding-bottom: 12px;
-    margin-bottom: 24px;
-  }
-  header .marca { font-size: 13px; color: #0f766e; font-weight: 700; letter-spacing: 0.02em; }
-  h1 { font-size: 22px; margin: 4px 0 0; }
-  .badges { margin: 8px 0 20px; }
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 999px;
-    margin-right: 6px;
-    color: #fff;
-  }
-  table.info { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-  table.info th, table.info td {
-    text-align: left;
-    padding: 7px 10px;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 13px;
-  }
-  table.info th { width: 200px; color: #6b7280; font-weight: 600; }
-  section { margin-bottom: 24px; }
-  section h2 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #0f766e;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-  }
-  ul { list-style: none; margin: 0; padding: 0; }
-  li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
-  li p { margin: 0 0 2px; }
-  .texto-conteudo { line-height: 1.6; }
-  .item-titulo { font-weight: 600; }
-  .item-data { color: #9ca3af; font-size: 12px; }
-  .vazio { color: #9ca3af; font-style: italic; }
-  footer { margin-top: 40px; font-size: 11px; color: #9ca3af; text-align: right; }
-  .acoes { margin-bottom: 24px; }
-  .acoes button {
-    background: #0f766e;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  @media print {
-    .acoes { display: none; }
-    body { padding: 0; }
-  }
-</style>
+<style>${ESTILO_RELATORIO}</style>
 </head>
 <body>
   <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
@@ -215,6 +238,120 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     <h2>Anexos (${(anexos ?? []).length})</h2>
     <ul>${listaAnexos}</ul>
   </section>
+
+  <footer>Painel Acústica</footer>
+</body>
+</html>`
+
+  janela.document.open()
+  janela.document.write(html)
+  janela.document.close()
+}
+
+export type CampoAgrupamento = 'etapa' | 'status' | 'diretor' | 'gerente' | 'projetista'
+
+const LABEL_CAMPO: Record<CampoAgrupamento, string> = {
+  etapa: 'Etapa',
+  status: 'Status',
+  diretor: 'Diretor',
+  gerente: 'Gerente',
+  projetista: 'Projetista acústico',
+}
+
+function calcularStats(lista: Projeto[], hoje: string) {
+  return {
+    total: lista.length,
+    aFazer: lista.filter((p) => p.status === 'A Fazer').length,
+    emAndamento: lista.filter((p) => p.status === 'Em Andamento').length,
+    concluido: lista.filter((p) => p.status === 'Concluído').length,
+    atrasado: lista.filter((p) => estaAtrasado(p, hoje)).length,
+  }
+}
+
+export function emitirRelatorioGeral(
+  projetos: Projeto[],
+  agruparPor: CampoAgrupamento | null
+) {
+  const janela = window.open('', '_blank')
+  if (!janela) {
+    alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
+    return
+  }
+
+  const hoje = hojeISO()
+  const geral = calcularStats(projetos, hoje)
+
+  let tabelaGrupos = ''
+  if (agruparPor) {
+    const grupos = new Map<string, Projeto[]>()
+    for (const p of projetos) {
+      const valorBruto = p[agruparPor]
+      const chave = (valorBruto && String(valorBruto).trim()) || 'Não atribuído'
+      if (!grupos.has(chave)) grupos.set(chave, [])
+      grupos.get(chave)!.push(p)
+    }
+
+    const linhas = Array.from(grupos.entries())
+      .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+      .map(([nome, lista]) => {
+        const s = calcularStats(lista, hoje)
+        return `<tr>
+          <td>${escapeHtml(nome)}</td>
+          <td class="numero">${s.total}</td>
+          <td class="numero">${s.emAndamento}</td>
+          <td class="numero">${s.concluido}</td>
+          <td class="numero">${s.atrasado}</td>
+        </tr>`
+      })
+      .join('')
+
+    tabelaGrupos = `
+    <section>
+      <h2>Por ${escapeHtml(LABEL_CAMPO[agruparPor])}</h2>
+      <table class="grupos">
+        <thead>
+          <tr>
+            <th>${escapeHtml(LABEL_CAMPO[agruparPor])}</th>
+            <th class="numero">Total</th>
+            <th class="numero">Em andamento</th>
+            <th class="numero">Concluído</th>
+            <th class="numero">Atrasado</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+    </section>`
+  }
+
+  const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+  const subtitulo = agruparPor ? `Agrupado por ${LABEL_CAMPO[agruparPor]}` : 'Visão geral'
+
+  const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Relatório Geral · Painel Acústica</title>
+<style>${ESTILO_RELATORIO}</style>
+</head>
+<body>
+  <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
+  <header>
+    <span class="marca">PAINEL ACÚSTICA · RELATÓRIO GERAL</span>
+    <span class="item-data">Gerado em ${geradoEm}</span>
+  </header>
+  <h1>Números gerais</h1>
+  <p class="subtitulo">${escapeHtml(subtitulo)}</p>
+
+  <section>
+    <div class="stat-cards" style="margin-top: 16px;">
+      <div class="stat-card"><div class="valor">${geral.total}</div><div class="rotulo">Total de projetos</div></div>
+      <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Em Andamento'].hex}">${geral.emAndamento}</div><div class="rotulo">Em andamento</div></div>
+      <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Concluído'].hex}">${geral.concluido}</div><div class="rotulo">Concluído</div></div>
+      <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Atrasado'].hex}">${geral.atrasado}</div><div class="rotulo">Atrasado</div></div>
+    </div>
+  </section>
+
+  ${tabelaGrupos}
 
   <footer>Painel Acústica</footer>
 </body>
