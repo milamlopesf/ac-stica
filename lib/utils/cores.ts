@@ -84,6 +84,7 @@ export const DIRETORES = [
   'Pedro Coivo',
   'Rafael Gentil',
   'Rafael Venturi',
+  'Regina Kitakawa',
   'Ricardo Cuminale',
   'Vinicius Lacerda',
   'Virginia Nehmi',
