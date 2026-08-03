@@ -78,6 +78,17 @@ create table anexos (
   created_at timestamptz default now()
 );
 
+-- Histórico de mudanças de etapa (aba "Histórico" do projeto). Preenchida
+-- automaticamente pelo gatilho on_projeto_etapa_mudou (seção 7) — não é
+-- inserida diretamente pelo app.
+create table projeto_historico_etapa (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid references projetos(id) on delete cascade,
+  etapa_anterior text,
+  etapa_nova text not null,
+  created_at timestamptz default now()
+);
+
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -114,6 +125,7 @@ alter table atividades enable row level security;
 alter table notas enable row level security;
 alter table reunioes enable row level security;
 alter table anexos enable row level security;
+alter table projeto_historico_etapa enable row level security;
 alter table profiles enable row level security;
 alter table biblioteca enable row level security;
 
@@ -171,6 +183,13 @@ create policy "editor atualiza" on anexos for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on anexos for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- projeto_historico_etapa (log de auditoria: só leitura + insert, sem
+-- update/delete — o próprio gatilho insere, o app nunca edita/apaga)
+create policy "leitura autenticada" on projeto_historico_etapa for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on projeto_historico_etapa for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- biblioteca
 create policy "leitura autenticada" on biblioteca for select
@@ -268,4 +287,32 @@ with check (
 -- Pra promover alguém a editor manualmente (fora do padrão acima):
 --
 -- update profiles set role = 'editor' where email = 'email-da-pessoa@awnet.com.br';
+-- ============================================================================
+
+
+-- ============================================================================
+-- 7. Histórico de etapa (aba "Histórico" do projeto)
+-- ============================================================================
+--
+-- Sempre que a etapa de um projeto muda, o gatilho abaixo registra a
+-- transição em projeto_historico_etapa automaticamente — não depende de
+-- nenhuma tela do app lembrar de gravar isso.
+
+create or replace function public.registrar_mudanca_etapa()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.etapa is distinct from old.etapa then
+    insert into public.projeto_historico_etapa (projeto_id, etapa_anterior, etapa_nova)
+    values (new.id, old.etapa, new.etapa);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_projeto_etapa_mudou on projetos;
+create trigger on_projeto_etapa_mudou
+  after update on projetos
+  for each row execute function public.registrar_mudanca_etapa();
 -- ============================================================================

@@ -61,6 +61,14 @@ export type Anexo = {
   created_at: string
 }
 
+export type HistoricoEtapa = {
+  id: string
+  projeto_id: string | null
+  etapa_anterior: Etapa | null
+  etapa_nova: Etapa
+  created_at: string
+}
+
 export type Profile = {
   id: string
   email: string | null
@@ -158,6 +166,18 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<Anexo, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      projeto_historico_etapa: {
+        Row: HistoricoEtapa
+        Insert: {
+          id?: string
+          projeto_id?: string | null
+          etapa_anterior?: Etapa | null
+          etapa_nova: Etapa
+          created_at?: string
+        }
+        Update: Partial<Omit<HistoricoEtapa, 'id' | 'created_at'>>
         Relationships: []
       }
       profiles: {

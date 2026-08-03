@@ -14,13 +14,15 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
 import { AnexosTab } from './tabs/AnexosTab'
+import { HistoricoTab } from './tabs/HistoricoTab'
 
-type Aba = 'anotacoes' | 'reunioes' | 'anexos'
+type Aba = 'anotacoes' | 'reunioes' | 'anexos' | 'historico'
 
 const ABAS: { id: Aba; label: string }[] = [
   { id: 'anotacoes', label: 'Anotações' },
   { id: 'reunioes', label: 'Atas de Reunião' },
   { id: 'anexos', label: 'Anexos' },
+  { id: 'historico', label: 'Histórico' },
 ]
 
 export function ProjetoDetalhePanel({
@@ -169,6 +171,7 @@ export function ProjetoDetalhePanel({
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'historico' && <HistoricoTab projetoId={projeto.id} />}
         </div>
       </div>
 
