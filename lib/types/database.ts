@@ -61,11 +61,14 @@ export type Anexo = {
   created_at: string
 }
 
-export type HistoricoEtapa = {
+export type CampoHistorico = 'etapa' | 'status'
+
+export type HistoricoProjeto = {
   id: string
   projeto_id: string | null
-  etapa_anterior: Etapa | null
-  etapa_nova: Etapa
+  campo: CampoHistorico
+  valor_anterior: string | null
+  valor_novo: string
   created_at: string
 }
 
@@ -168,16 +171,17 @@ export type Database = {
         Update: Partial<Omit<Anexo, 'id' | 'created_at'>>
         Relationships: []
       }
-      projeto_historico_etapa: {
-        Row: HistoricoEtapa
+      projeto_historico: {
+        Row: HistoricoProjeto
         Insert: {
           id?: string
           projeto_id?: string | null
-          etapa_anterior?: Etapa | null
-          etapa_nova: Etapa
+          campo: CampoHistorico
+          valor_anterior?: string | null
+          valor_novo: string
           created_at?: string
         }
-        Update: Partial<Omit<HistoricoEtapa, 'id' | 'created_at'>>
+        Update: Partial<Omit<HistoricoProjeto, 'id' | 'created_at'>>
         Relationships: []
       }
       profiles: {

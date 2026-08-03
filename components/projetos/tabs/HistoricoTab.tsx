@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Etapa } from '@/lib/types/database'
-import { CORES_ETAPA } from '@/lib/utils/cores'
+import type { Etapa, StatusProjeto } from '@/lib/types/database'
+import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
 import { textoSimples } from '@/lib/utils/texto'
 
 type EventoHistorico =
-  | { tipo: 'etapa'; data: string; etapaAnterior: Etapa | null; etapaNova: Etapa }
+  | { tipo: 'etapa'; data: string; anterior: Etapa | null; novo: Etapa }
+  | { tipo: 'status'; data: string; anterior: StatusProjeto | null; novo: StatusProjeto }
   | { tipo: 'anotacao'; data: string; texto: string }
   | { tipo: 'ata'; data: string; titulo: string }
 
@@ -17,6 +18,10 @@ function formatarDataHora(iso: string) {
 
 function labelEtapa(etapa: Etapa) {
   return CORES_ETAPA[etapa]?.label ?? etapa
+}
+
+function labelStatus(status: StatusProjeto) {
+  return CORES_STATUS[status]?.label ?? status
 }
 
 export function HistoricoTab({ projetoId }: { projetoId: string }) {
@@ -30,7 +35,7 @@ export function HistoricoTab({ projetoId }: { projetoId: string }) {
       const [{ data: notas }, { data: reunioes }, { data: historico }] = await Promise.all([
         supabase.from('notas').select('*').eq('projeto_id', projetoId),
         supabase.from('reunioes').select('*').eq('projeto_id', projetoId),
-        supabase.from('projeto_historico_etapa').select('*').eq('projeto_id', projetoId),
+        supabase.from('projeto_historico').select('*').eq('projeto_id', projetoId),
       ])
       if (!ativo) return
 
@@ -44,14 +49,23 @@ export function HistoricoTab({ projetoId }: { projetoId: string }) {
         data: r.created_at,
         titulo: r.titulo,
       }))
-      const eventosEtapa: EventoHistorico[] = (historico ?? []).map((h) => ({
-        tipo: 'etapa',
-        data: h.created_at,
-        etapaAnterior: h.etapa_anterior,
-        etapaNova: h.etapa_nova,
-      }))
+      const eventosHistorico: EventoHistorico[] = (historico ?? []).map((h) =>
+        h.campo === 'etapa'
+          ? {
+              tipo: 'etapa',
+              data: h.created_at,
+              anterior: (h.valor_anterior as Etapa) || null,
+              novo: h.valor_novo as Etapa,
+            }
+          : {
+              tipo: 'status',
+              data: h.created_at,
+              anterior: (h.valor_anterior as StatusProjeto) || null,
+              novo: h.valor_novo as StatusProjeto,
+            }
+      )
 
-      const todos = [...eventosAnotacoes, ...eventosAtas, ...eventosEtapa].sort((a, b) =>
+      const todos = [...eventosAnotacoes, ...eventosAtas, ...eventosHistorico].sort((a, b) =>
         b.data.localeCompare(a.data)
       )
 
@@ -79,18 +93,27 @@ export function HistoricoTab({ projetoId }: { projetoId: string }) {
             style={{
               backgroundColor:
                 evento.tipo === 'etapa'
-                  ? CORES_ETAPA[evento.etapaNova]?.hex
-                  : evento.tipo === 'anotacao'
-                    ? '#3b82f6'
-                    : '#8b5cf6',
+                  ? CORES_ETAPA[evento.novo]?.hex
+                  : evento.tipo === 'status'
+                    ? CORES_STATUS[evento.novo]?.hex
+                    : evento.tipo === 'anotacao'
+                      ? '#3b82f6'
+                      : '#8b5cf6',
             }}
           />
           <div className="min-w-0 flex-1">
             {evento.tipo === 'etapa' && (
               <p className="text-sm text-gray-800">
                 <span className="font-medium">Etapa alterada</span>
-                {evento.etapaAnterior ? ` de ${labelEtapa(evento.etapaAnterior)}` : ''} para{' '}
-                <span className="font-medium">{labelEtapa(evento.etapaNova)}</span>
+                {evento.anterior ? ` de ${labelEtapa(evento.anterior)}` : ''} para{' '}
+                <span className="font-medium">{labelEtapa(evento.novo)}</span>
+              </p>
+            )}
+            {evento.tipo === 'status' && (
+              <p className="text-sm text-gray-800">
+                <span className="font-medium">Status alterado</span>
+                {evento.anterior ? ` de ${labelStatus(evento.anterior)}` : ''} para{' '}
+                <span className="font-medium">{labelStatus(evento.novo)}</span>
               </p>
             )}
             {evento.tipo === 'anotacao' && (
