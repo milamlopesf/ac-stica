@@ -120,7 +120,7 @@ export function BibliotecaDetalheModal({
       onClick={onFechar}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
