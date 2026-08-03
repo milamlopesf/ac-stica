@@ -117,8 +117,9 @@ export function HistoricoTab({ projetoId }: { projetoId: string }) {
               </p>
             )}
             {evento.tipo === 'anotacao' && (
-              <p className="line-clamp-2 text-sm text-gray-800">
-                <span className="font-medium">Anotação:</span> {evento.texto || '—'}
+              <p className="line-clamp-2 text-sm">
+                <span className="font-medium text-gray-800">Anotação:</span>{' '}
+                <span className="text-gray-400">{evento.texto || '—'}</span>
               </p>
             )}
             {evento.tipo === 'ata' && (
