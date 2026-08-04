@@ -1,6 +1,11 @@
 export type Etapa = 'DNN' | 'EP' | 'AP' | 'EX' | 'OBRA' | 'GARANTIA'
 
-export type StatusProjeto = 'A Fazer' | 'Em Andamento' | 'Concluído' | 'Atrasado'
+export type StatusProjeto =
+  | 'A Fazer'
+  | 'Em Andamento'
+  | 'Aguardando Terceiros'
+  | 'Concluído'
+  | 'Atrasado'
 
 export type StatusAtividade = 'pendente' | 'andamento' | 'concluido'
 

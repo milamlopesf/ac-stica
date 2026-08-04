@@ -18,6 +18,11 @@ export const CORES_ETAPA: Record<Etapa, CorConfig> = {
 export const CORES_STATUS: Record<StatusProjeto, CorConfig> = {
   'A Fazer': { label: 'A Fazer', badge: 'bg-gray-100 text-gray-700 border-gray-300', hex: '#6b7280' },
   'Em Andamento': { label: 'Em Andamento', badge: 'bg-amber-100 text-amber-700 border-amber-300', hex: '#f59e0b' },
+  'Aguardando Terceiros': {
+    label: 'Aguardando Terceiros',
+    badge: 'bg-indigo-100 text-indigo-700 border-indigo-300',
+    hex: '#6366f1',
+  },
   'Concluído': { label: 'Concluído', badge: 'bg-green-100 text-green-700 border-green-300', hex: '#22c55e' },
   'Atrasado': { label: 'Atrasado', badge: 'bg-red-100 text-red-700 border-red-300', hex: '#ef4444' },
 }
@@ -43,7 +48,13 @@ export const ORDEM_PRIORIDADE: Record<Prioridade, number> = {
 }
 
 export const ETAPAS: Etapa[] = ['DNN', 'EP', 'AP', 'EX', 'OBRA', 'GARANTIA']
-export const STATUS_PROJETO: StatusProjeto[] = ['A Fazer', 'Em Andamento', 'Concluído', 'Atrasado']
+export const STATUS_PROJETO: StatusProjeto[] = [
+  'A Fazer',
+  'Em Andamento',
+  'Aguardando Terceiros',
+  'Concluído',
+  'Atrasado',
+]
 export const STATUS_ATIVIDADE: StatusAtividade[] = ['pendente', 'andamento', 'concluido']
 export const PRIORIDADES: Prioridade[] = ['Baixa', 'Média', 'Alta', 'Urgente']
 

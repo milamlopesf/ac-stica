@@ -26,7 +26,7 @@ create table projetos (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   etapa text not null check (etapa in ('DNN','EP','AP','EX','OBRA','GARANTIA')),
-  status text not null check (status in ('A Fazer','Em Andamento','Concluído','Atrasado')),
+  status text not null check (status in ('A Fazer','Em Andamento','Aguardando Terceiros','Concluído','Atrasado')),
   entrega date,
   diretor text,
   gerente text,

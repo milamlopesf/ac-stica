@@ -263,6 +263,7 @@ function calcularStats(lista: Projeto[], hoje: string) {
     total: lista.length,
     aFazer: lista.filter((p) => p.status === 'A Fazer').length,
     emAndamento: lista.filter((p) => p.status === 'Em Andamento').length,
+    aguardandoTerceiros: lista.filter((p) => p.status === 'Aguardando Terceiros').length,
     concluido: lista.filter((p) => p.status === 'Concluído').length,
     atrasado: lista.filter((p) => estaAtrasado(p, hoje)).length,
   }
@@ -299,6 +300,7 @@ export function emitirRelatorioGeral(
           <td>${escapeHtml(nome)}</td>
           <td class="numero">${s.total}</td>
           <td class="numero">${s.emAndamento}</td>
+          <td class="numero">${s.aguardandoTerceiros}</td>
           <td class="numero">${s.concluido}</td>
           <td class="numero">${s.atrasado}</td>
         </tr>`
@@ -314,6 +316,7 @@ export function emitirRelatorioGeral(
             <th>${escapeHtml(LABEL_CAMPO[agruparPor])}</th>
             <th class="numero">Total</th>
             <th class="numero">Em andamento</th>
+            <th class="numero">Aguardando terceiros</th>
             <th class="numero">Concluído</th>
             <th class="numero">Atrasado</th>
           </tr>
@@ -346,6 +349,7 @@ export function emitirRelatorioGeral(
     <div class="stat-cards" style="margin-top: 16px;">
       <div class="stat-card"><div class="valor">${geral.total}</div><div class="rotulo">Total de projetos</div></div>
       <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Em Andamento'].hex}">${geral.emAndamento}</div><div class="rotulo">Em andamento</div></div>
+      <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Aguardando Terceiros'].hex}">${geral.aguardandoTerceiros}</div><div class="rotulo">Aguardando terceiros</div></div>
       <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Concluído'].hex}">${geral.concluido}</div><div class="rotulo">Concluído</div></div>
       <div class="stat-card"><div class="valor" style="color:${CORES_STATUS['Atrasado'].hex}">${geral.atrasado}</div><div class="rotulo">Atrasado</div></div>
     </div>
