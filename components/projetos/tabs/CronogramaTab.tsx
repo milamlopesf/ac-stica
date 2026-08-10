@@ -53,6 +53,31 @@ function calcularBarra(etapa: CronogramaEtapa, hoje: string) {
   return { inicio, fim: fim < inicio ? inicio : fim, status }
 }
 
+function IconeStatus({ status }: { status: StatusBarra }) {
+  if (status === 'planejado') {
+    return <span className="block h-1.5 w-1.5 rounded-full bg-gray-300" />
+  }
+  if (status === 'atrasado') {
+    return (
+      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold leading-none text-red-500">
+        !
+      </span>
+    )
+  }
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" style={{ color: COR_STATUS[status] }}>
+      <circle cx="10" cy="10" r="9" fill="currentColor" fillOpacity="0.15" />
+      <path
+        d="M6 10.2l2.4 2.4L14 7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function mesesEntre(inicioIso: string, fimIso: string) {
   const meses: { iso: string; label: string }[] = []
   const [anoI, mesI] = inicioIso.split('-').map(Number)
@@ -143,6 +168,11 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
 
   const meses = mesesEntre(limiteInicio, limiteFim)
   const pctHoje = pct(hoje)
+  const faixasMes = meses.map((m, i) => ({
+    ...m,
+    inicioPct: pct(m.iso),
+    fimPct: i + 1 < meses.length ? pct(meses[i + 1].iso) : 100,
+  }))
 
   return (
     <div className="flex flex-col gap-6">
@@ -153,6 +183,10 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
             {LABEL_STATUS[s]}
           </span>
         ))}
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-px bg-teal-400" />
+          Hoje ({formatarData(hoje)})
+        </span>
       </div>
 
       {fases.map(([nomeFase, etapasFase]) => (
@@ -162,41 +196,71 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
           )}
 
           <div className="relative">
-            <div className="relative mb-1 ml-28 h-4 border-b border-gray-200 text-[10px] text-gray-400">
-              {meses.map((m) => (
+            {/* grade vertical de meses, cobrindo cabeçalho + linhas */}
+            <div className="pointer-events-none absolute inset-0 ml-28 mr-6">
+              {faixasMes.map((m, i) => (
+                <div
+                  key={m.iso}
+                  className={`absolute inset-y-0 border-l border-gray-100 ${i % 2 === 1 ? 'bg-gray-50/60' : ''}`}
+                  style={{ left: `${m.inicioPct}%`, width: `${Math.max(m.fimPct - m.inicioPct, 0)}%` }}
+                />
+              ))}
+            </div>
+
+            <div className="relative mb-2 ml-28 mr-6 flex h-6 items-center rounded-sm bg-slate-100 text-[11px] font-medium text-slate-500">
+              {faixasMes.map((m) => (
                 <span
                   key={m.iso}
-                  className="absolute -translate-x-1/2"
-                  style={{ left: `${pct(m.iso)}%` }}
+                  className="absolute -translate-x-1/2 capitalize"
+                  style={{ left: `${(m.inicioPct + m.fimPct) / 2}%` }}
                 >
                   {m.label}
                 </span>
               ))}
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="relative flex flex-col gap-3">
               {etapasFase.map((e) => {
                 const barra = calcularBarra(e, hoje)
+                const meio = barra ? (pct(barra.inicio) + pct(barra.fim)) / 2 : 0
                 return (
                   <div key={e.id} className="flex items-center gap-2">
                     <span className="w-28 shrink-0 truncate text-xs font-medium text-gray-600" title={e.etapa}>
                       {e.etapa}
                     </span>
-                    <div className="relative h-5 flex-1 rounded bg-gray-100">
-                      {pctHoje >= 0 && pctHoje <= 100 && (
-                        <div
-                          className="absolute top-0 h-5 w-px bg-teal-400"
-                          style={{ left: `${pctHoje}%` }}
-                        />
-                      )}
+                    <div className="flex-1">
+                      <div className="relative h-4">
+                        {pctHoje >= 0 && pctHoje <= 100 && (
+                          <div
+                            className="absolute -top-1 -bottom-1 w-px bg-teal-400"
+                            style={{ left: `${pctHoje}%` }}
+                          />
+                        )}
+                        {barra && (
+                          <>
+                            <div
+                              className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full"
+                              style={{
+                                left: `${pct(barra.inicio)}%`,
+                                width: `${Math.max(pct(barra.fim) - pct(barra.inicio), 0.5)}%`,
+                                backgroundColor: COR_STATUS[barra.status],
+                              }}
+                            />
+                            <div
+                              className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm"
+                              style={{ left: `${pct(barra.inicio)}%`, backgroundColor: COR_STATUS[barra.status] }}
+                            />
+                            <div
+                              className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm"
+                              style={{ left: `${pct(barra.fim)}%`, backgroundColor: COR_STATUS[barra.status] }}
+                            />
+                          </>
+                        )}
+                      </div>
                       {barra && (
                         <div
-                          className="absolute top-0.5 h-4 rounded-sm"
-                          style={{
-                            left: `${pct(barra.inicio)}%`,
-                            width: `${Math.max(pct(barra.fim) - pct(barra.inicio), 1.2)}%`,
-                            backgroundColor: COR_STATUS[barra.status],
-                          }}
+                          className="relative h-3.5 text-[10px] font-medium leading-none"
+                          style={{ color: COR_STATUS[barra.status] }}
                           title={[
                             LABEL_STATUS[barra.status],
                             e.aprovacao_planejado && `Aprovação planejada: ${formatarData(e.aprovacao_planejado)}`,
@@ -206,9 +270,16 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
                           ]
                             .filter(Boolean)
                             .join('\n')}
-                        />
+                        >
+                          <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${meio}%` }}>
+                            {formatarData(barra.inicio)} – {formatarData(barra.fim)}
+                          </span>
+                        </div>
                       )}
                     </div>
+                    <span className="w-4 shrink-0">
+                      {barra && <IconeStatus status={barra.status} />}
+                    </span>
                   </div>
                 )
               })}
