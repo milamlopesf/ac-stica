@@ -15,10 +15,12 @@ import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
 import { AnexosTab } from './tabs/AnexosTab'
 import { HistoricoTab } from './tabs/HistoricoTab'
+import { CronogramaTab } from './tabs/CronogramaTab'
 
-type Aba = 'anotacoes' | 'reunioes' | 'anexos' | 'historico'
+type Aba = 'cronograma' | 'anotacoes' | 'reunioes' | 'anexos' | 'historico'
 
 const ABAS: { id: Aba; label: string }[] = [
+  { id: 'cronograma', label: 'Cronograma' },
   { id: 'anotacoes', label: 'Anotações' },
   { id: 'reunioes', label: 'Atas de Reunião' },
   { id: 'anexos', label: 'Anexos' },
@@ -168,6 +170,7 @@ export function ProjetoDetalhePanel({
         </div>
 
         <div className="flex-1 p-5">
+          {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} />}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}

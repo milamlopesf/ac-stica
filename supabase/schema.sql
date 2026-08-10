@@ -90,6 +90,26 @@ create table projeto_historico (
   created_at timestamptz default now()
 );
 
+-- Cronograma de etapas por projeto (aba "Cronograma" / Gantt). Cada linha é
+-- uma etapa (EV, EP1, EP2, AP, BÁSICO, PRÉ-EX, EX, LIB. OBRA, PROJ. LEGAL,
+-- APROV. COND.) de uma fase do projeto, com datas planejadas/realizadas de
+-- Aprovação e de Publicação/Entrega. Importado em lote do relatório
+-- "Entregas de Arquitetura" — sem tela própria de edição por enquanto.
+create table cronograma_etapas (
+  id uuid primary key default gen_random_uuid(),
+  projeto_id uuid not null references projetos(id) on delete cascade,
+  fase text not null default 'Única',
+  etapa text not null,
+  ordem int not null default 0,
+  aprovacao_planejado date,
+  aprovacao_realizado date,
+  publicacao_planejado date,
+  publicacao_realizado date,
+  created_at timestamptz default now()
+);
+
+create index idx_cronograma_projeto on cronograma_etapas(projeto_id);
+
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -127,6 +147,7 @@ alter table notas enable row level security;
 alter table reunioes enable row level security;
 alter table anexos enable row level security;
 alter table projeto_historico enable row level security;
+alter table cronograma_etapas enable row level security;
 alter table profiles enable row level security;
 alter table biblioteca enable row level security;
 
@@ -191,6 +212,16 @@ create policy "leitura autenticada" on projeto_historico for select
   using (exists (select 1 from profiles where id = auth.uid()));
 create policy "editor insere" on projeto_historico for insert
   with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- cronograma_etapas
+create policy "leitura autenticada" on cronograma_etapas for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on cronograma_etapas for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on cronograma_etapas for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on cronograma_etapas for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- biblioteca
 create policy "leitura autenticada" on biblioteca for select

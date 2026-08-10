@@ -77,6 +77,31 @@ export type HistoricoProjeto = {
   created_at: string
 }
 
+export type EtapaCronograma =
+  | 'EV'
+  | 'EP1'
+  | 'EP2'
+  | 'AP'
+  | 'BÁSICO'
+  | 'PRÉ-EX'
+  | 'EX'
+  | 'LIB. OBRA'
+  | 'PROJ. LEGAL'
+  | 'APROV. COND.'
+
+export type CronogramaEtapa = {
+  id: string
+  projeto_id: string
+  fase: string
+  etapa: EtapaCronograma
+  ordem: number
+  aprovacao_planejado: string | null
+  aprovacao_realizado: string | null
+  publicacao_planejado: string | null
+  publicacao_realizado: string | null
+  created_at: string
+}
+
 export type Profile = {
   id: string
   email: string | null
@@ -187,6 +212,23 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<HistoricoProjeto, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      cronograma_etapas: {
+        Row: CronogramaEtapa
+        Insert: {
+          id?: string
+          projeto_id: string
+          fase?: string
+          etapa: EtapaCronograma
+          ordem?: number
+          aprovacao_planejado?: string | null
+          aprovacao_realizado?: string | null
+          publicacao_planejado?: string | null
+          publicacao_realizado?: string | null
+          created_at?: string
+        }
+        Update: Partial<Omit<CronogramaEtapa, 'id' | 'created_at'>>
         Relationships: []
       }
       profiles: {
