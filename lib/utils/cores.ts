@@ -97,6 +97,7 @@ export const DIRETORES = [
   'Rafael Venturi',
   'Regina Kitakawa',
   'Ricardo Cuminale',
+  'Tais Velleca',
   'Vinicius Lacerda',
   'Virginia Nehmi',
   'Wesley Pereira',
