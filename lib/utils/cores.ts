@@ -93,6 +93,7 @@ export const DIRETORES = [
   'Marlon Oliveira',
   'Pamela Mello',
   'Pedro Coivo',
+  'Priscilla Costa',
   'Rafael Gentil',
   'Rafael Venturi',
   'Regina Kitakawa',
