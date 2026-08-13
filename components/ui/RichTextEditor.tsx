@@ -1,12 +1,62 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useEditor, EditorContent, type Editor } from '@tiptap/react'
+import { useEffect, useRef, useState } from 'react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type Editor, type NodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
+import TiptapImage from '@tiptap/extension-image'
 import clsx from 'clsx'
+import { createClient } from '@/lib/supabase/client'
+import { enviarImagemEditor, urlAssinadaImagemEditor } from '@/lib/utils/imagensEditor'
+
+function ImagemView({ node }: NodeViewProps) {
+  const supabase = createClient()
+  const caminho = node.attrs.caminho as string | null
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    let ativo = true
+    if (!caminho) return
+    urlAssinadaImagemEditor(supabase, caminho)
+      .then((u) => {
+        if (ativo) setUrl(u)
+      })
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caminho])
+
+  return (
+    <NodeViewWrapper as="span" className="inline-block max-w-full align-bottom">
+      {url ? (
+        <img src={url} alt={node.attrs.alt ?? ''} className="max-w-full rounded-md" />
+      ) : (
+        <span className="inline-block h-24 w-32 animate-pulse rounded-md bg-gray-100" />
+      )}
+    </NodeViewWrapper>
+  )
+}
+
+const ImagemComUrlAssinada = TiptapImage.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      src: { default: null },
+      caminho: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('data-caminho'),
+        renderHTML: (attrs) => (attrs.caminho ? { 'data-caminho': attrs.caminho } : {}),
+      },
+    }
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImagemView)
+  },
+})
 
 function BotaoBarra({
   ativo,
@@ -35,7 +85,7 @@ function BotaoBarra({
   )
 }
 
-function Barra({ editor }: { editor: Editor }) {
+function Barra({ editor, onInserirImagem }: { editor: Editor; onInserirImagem?: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 p-1.5">
       <select
@@ -140,6 +190,15 @@ function Barra({ editor }: { editor: Editor }) {
       >
         ≡
       </BotaoBarra>
+
+      {onInserirImagem && (
+        <>
+          <div className="mx-1 h-5 w-px bg-gray-200" />
+          <BotaoBarra titulo="Inserir imagem" ativo={false} onClick={onInserirImagem}>
+            🖼
+          </BotaoBarra>
+        </>
+      )}
     </div>
   )
 }
@@ -152,6 +211,7 @@ export function RichTextEditor({
   mostrarBarra = editable,
   placeholder,
   className,
+  pastaImagens,
 }: {
   value: string
   onChange?: (html: string) => void
@@ -160,13 +220,20 @@ export function RichTextEditor({
   mostrarBarra?: boolean
   placeholder?: string
   className?: string
+  /** Quando definido, habilita colar/soltar/inserir imagens, guardadas nesta pasta do bucket. */
+  pastaImagens?: string
 }) {
+  const supabase = createClient()
+  const inputImagemRef = useRef<HTMLInputElement>(null)
+  const [enviandoImagem, setEnviandoImagem] = useState(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder: placeholder ?? '' }),
+      ImagemComUrlAssinada,
     ],
     content: value,
     editable,
@@ -180,8 +247,41 @@ export function RichTextEditor({
           mostrarBarra ? 'px-3 py-2' : 'py-0.5'
         ),
       },
+      handlePaste: (_view, event) => {
+        if (!pastaImagens) return false
+        const arquivo = Array.from(event.clipboardData?.items ?? [])
+          .find((item) => item.type.startsWith('image/'))
+          ?.getAsFile()
+        if (!arquivo) return false
+        event.preventDefault()
+        inserirImagem(arquivo)
+        return true
+      },
+      handleDrop: (_view, event) => {
+        if (!pastaImagens) return false
+        const arquivo = Array.from(event.dataTransfer?.files ?? []).find((f) =>
+          f.type.startsWith('image/')
+        )
+        if (!arquivo) return false
+        event.preventDefault()
+        inserirImagem(arquivo)
+        return true
+      },
     },
   })
+
+  async function inserirImagem(arquivo: File) {
+    if (!editor || !pastaImagens) return
+    setEnviandoImagem(true)
+    try {
+      const caminho = await enviarImagemEditor(supabase, pastaImagens, arquivo)
+      editor.chain().focus().insertContent({ type: 'image', attrs: { caminho } }).run()
+    } catch (erro) {
+      alert(`Erro ao enviar imagem: ${erro instanceof Error ? erro.message : ''}`)
+    } finally {
+      setEnviandoImagem(false)
+    }
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -205,8 +305,27 @@ export function RichTextEditor({
         className
       )}
     >
-      {mostrarBarra && <Barra editor={editor} />}
+      {mostrarBarra && (
+        <Barra
+          editor={editor}
+          onInserirImagem={pastaImagens ? () => inputImagemRef.current?.click() : undefined}
+        />
+      )}
       <EditorContent editor={editor} />
+      {enviandoImagem && <p className="px-3 pb-2 text-xs text-gray-400">Enviando imagem...</p>}
+      {pastaImagens && (
+        <input
+          ref={inputImagemRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const arquivo = e.target.files?.[0]
+            if (arquivo) inserirImagem(arquivo)
+            e.target.value = ''
+          }}
+          className="hidden"
+        />
+      )}
     </div>
   )
 }

@@ -94,7 +94,12 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
     <div className="flex flex-col gap-4">
       {isEditor && (
         <form onSubmit={adicionar} className="flex flex-col gap-2">
-          <RichTextEditor value={texto} onChange={mudarTexto} placeholder="Escrever uma anotação..." />
+          <RichTextEditor
+            value={texto}
+            onChange={mudarTexto}
+            placeholder="Escrever uma anotação... (dá para colar imagens também)"
+            pastaImagens={projetoId}
+          />
           <button
             type="submit"
             disabled={enviando}
@@ -118,6 +123,7 @@ export function AnotacoesTab({ projetoId, isEditor }: { projetoId: string; isEdi
                     editable={isEditor}
                     mostrarBarra={false}
                     onBlur={(html) => atualizarNota(nota.id, html)}
+                    pastaImagens={isEditor ? projetoId : undefined}
                   />
                 </div>
                 {isEditor && (

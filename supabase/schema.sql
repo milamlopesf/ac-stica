@@ -280,6 +280,25 @@ with check (
   and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
 );
 
+-- Bucket "editor-imagens": imagens coladas/soltas nos editores de texto rico
+-- (anotações, reuniões, etc.)
+insert into storage.buckets (id, name, public) values ('editor-imagens', 'editor-imagens', false);
+
+create policy "Leitura autenticada editor-imagens"
+on storage.objects for select
+using (bucket_id = 'editor-imagens' and exists (select 1 from profiles where id = auth.uid()));
+
+create policy "Editores gerenciam editor-imagens"
+on storage.objects for all
+using (
+  bucket_id = 'editor-imagens'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+)
+with check (
+  bucket_id = 'editor-imagens'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+);
+
 
 -- ============================================================================
 -- 6. Acesso restrito ao domínio @awnet.com.br
