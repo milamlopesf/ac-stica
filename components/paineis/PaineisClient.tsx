@@ -94,11 +94,22 @@ export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
     setFiltroDataFim('')
   }
 
-  const porEtapa: DonutDatum[] = ETAPAS.map((etapa) => ({
-    nome: CORES_ETAPA[etapa].label,
-    valor: projetosFiltrados.filter((p) => p.etapa === etapa).length,
-    cor: CORES_ETAPA[etapa].hex,
-  })).filter((d) => d.valor > 0)
+  const ETAPAS_DESENVOLVIMENTO: Etapa[] = ['EP', 'AP', 'EX']
+
+  const porEtapa: DonutDatum[] = [
+    { nome: CORES_ETAPA.DNN.label, valor: 0, cor: CORES_ETAPA.DNN.hex, etapa: 'DNN' as Etapa },
+    { nome: 'Desenvolvimento/Projetos', valor: 0, cor: CORES_ETAPA.EX.hex, etapa: null },
+    { nome: CORES_ETAPA.OBRA.label, valor: 0, cor: CORES_ETAPA.OBRA.hex, etapa: 'OBRA' as Etapa },
+    { nome: CORES_ETAPA.GARANTIA.label, valor: 0, cor: CORES_ETAPA.GARANTIA.hex, etapa: 'GARANTIA' as Etapa },
+  ]
+    .map((d) => ({
+      nome: d.nome,
+      cor: d.cor,
+      valor: d.etapa
+        ? projetosFiltrados.filter((p) => p.etapa === d.etapa).length
+        : projetosFiltrados.filter((p) => ETAPAS_DESENVOLVIMENTO.includes(p.etapa)).length,
+    }))
+    .filter((d) => d.valor > 0)
 
   const porGerente = agruparPorCampo(projetosFiltrados, 'gerente')
   const porProjetista = agruparPorCampo(projetosFiltrados, 'projetista')
