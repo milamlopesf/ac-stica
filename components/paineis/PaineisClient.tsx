@@ -7,18 +7,21 @@ import { corCategorica } from '@/lib/utils/paleta'
 import { estaAtrasado } from '@/lib/utils/projetos'
 import { hojeISO } from '@/lib/utils/data'
 import { DonutChart, type DonutDatum } from './DonutChart'
+import { GrupoProjetosModal } from './GrupoProjetosModal'
 import { RelatorioGeralSection } from './RelatorioGeralSection'
 import { RelatorioProjetoSection } from './RelatorioProjetoSection'
 
-function agruparPorCampo(projetos: Projeto[], campo: 'diretor' | 'projetista'): DonutDatum[] {
-  const contagem = new Map<string, number>()
+function agruparPorCampo(projetos: Projeto[], campo: 'diretor' | 'projetista') {
+  const grupos = new Map<string, Projeto[]>()
   for (const p of projetos) {
     const chave = p[campo]?.trim() || 'Não atribuído'
-    contagem.set(chave, (contagem.get(chave) ?? 0) + 1)
+    if (!grupos.has(chave)) grupos.set(chave, [])
+    grupos.get(chave)!.push(p)
   }
-  return Array.from(contagem.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([nome, valor], i) => ({ nome, valor, cor: corCategorica(i) }))
+  const dados: DonutDatum[] = Array.from(grupos.entries())
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([nome, lista], i) => ({ nome, valor: lista.length, cor: corCategorica(i) }))
+  return { dados, grupos }
 }
 
 export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
@@ -94,25 +97,36 @@ export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
     setFiltroDataFim('')
   }
 
+  const [modalGrupo, setModalGrupo] = useState<{ titulo: string; projetos: Projeto[] } | null>(null)
+
   const ETAPAS_DESENVOLVIMENTO: Etapa[] = ['EP', 'AP', 'EX']
 
+  const gruposEtapa = new Map<string, Projeto[]>([
+    [CORES_ETAPA.DNN.label, projetosFiltrados.filter((p) => p.etapa === 'DNN')],
+    ['Desenvolvimento/Projetos', projetosFiltrados.filter((p) => ETAPAS_DESENVOLVIMENTO.includes(p.etapa))],
+    [CORES_ETAPA.OBRA.label, projetosFiltrados.filter((p) => p.etapa === 'OBRA')],
+    [CORES_ETAPA.GARANTIA.label, projetosFiltrados.filter((p) => p.etapa === 'GARANTIA')],
+  ])
+
   const porEtapa: DonutDatum[] = [
-    { nome: CORES_ETAPA.DNN.label, valor: 0, cor: CORES_ETAPA.DNN.hex, etapa: 'DNN' as Etapa },
-    { nome: 'Desenvolvimento/Projetos', valor: 0, cor: CORES_ETAPA.EX.hex, etapa: null },
-    { nome: CORES_ETAPA.OBRA.label, valor: 0, cor: CORES_ETAPA.OBRA.hex, etapa: 'OBRA' as Etapa },
-    { nome: CORES_ETAPA.GARANTIA.label, valor: 0, cor: CORES_ETAPA.GARANTIA.hex, etapa: 'GARANTIA' as Etapa },
+    { nome: CORES_ETAPA.DNN.label, cor: CORES_ETAPA.DNN.hex },
+    { nome: 'Desenvolvimento/Projetos', cor: CORES_ETAPA.EX.hex },
+    { nome: CORES_ETAPA.OBRA.label, cor: CORES_ETAPA.OBRA.hex },
+    { nome: CORES_ETAPA.GARANTIA.label, cor: CORES_ETAPA.GARANTIA.hex },
   ]
-    .map((d) => ({
-      nome: d.nome,
-      cor: d.cor,
-      valor: d.etapa
-        ? projetosFiltrados.filter((p) => p.etapa === d.etapa).length
-        : projetosFiltrados.filter((p) => ETAPAS_DESENVOLVIMENTO.includes(p.etapa)).length,
-    }))
+    .map((d) => ({ ...d, valor: gruposEtapa.get(d.nome)?.length ?? 0 }))
     .filter((d) => d.valor > 0)
 
-  const porDiretor = agruparPorCampo(projetosFiltrados, 'diretor')
-  const porProjetista = agruparPorCampo(projetosFiltrados, 'projetista')
+  const { dados: porDiretor, grupos: gruposDiretor } = agruparPorCampo(projetosFiltrados, 'diretor')
+  const { dados: porProjetista, grupos: gruposProjetista } = agruparPorCampo(
+    projetosFiltrados,
+    'projetista'
+  )
+
+  function abrirGrupo(tituloGrafico: string, mapa: Map<string, Projeto[]>) {
+    return (nome: string) =>
+      setModalGrupo({ titulo: `${tituloGrafico} — ${nome}`, projetos: mapa.get(nome) ?? [] })
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -235,14 +249,34 @@ export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <DonutChart titulo="Projetos por etapa" dados={porEtapa} />
-        <DonutChart titulo="Projetos por diretor" dados={porDiretor} />
-        <DonutChart titulo="Projetos por projetista acústico" dados={porProjetista} />
+        <DonutChart
+          titulo="Projetos por etapa"
+          dados={porEtapa}
+          onSelecionar={abrirGrupo('Projetos por etapa', gruposEtapa)}
+        />
+        <DonutChart
+          titulo="Projetos por diretor"
+          dados={porDiretor}
+          onSelecionar={abrirGrupo('Projetos por diretor', gruposDiretor)}
+        />
+        <DonutChart
+          titulo="Projetos por projetista acústico"
+          dados={porProjetista}
+          onSelecionar={abrirGrupo('Projetos por projetista acústico', gruposProjetista)}
+        />
       </div>
 
       <RelatorioGeralSection projetos={projetosFiltrados} />
 
       <RelatorioProjetoSection projetos={projetosFiltrados} />
+
+      {modalGrupo && (
+        <GrupoProjetosModal
+          titulo={modalGrupo.titulo}
+          projetos={modalGrupo.projetos}
+          onFechar={() => setModalGrupo(null)}
+        />
+      )}
     </div>
   )
 }

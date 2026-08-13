@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { requireLogin } from '@/lib/supabase/require-login'
 import { ProjetosClient } from '@/components/projetos/ProjetosClient'
@@ -19,5 +20,9 @@ export default async function ProjetosPage() {
     )
   }
 
-  return <ProjetosClient projetosIniciais={projetos ?? []} isEditor={session.isEditor} />
+  return (
+    <Suspense fallback={null}>
+      <ProjetosClient projetosIniciais={projetos ?? []} isEditor={session.isEditor} />
+    </Suspense>
+  )
 }

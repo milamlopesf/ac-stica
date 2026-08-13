@@ -8,7 +8,16 @@ export interface DonutDatum {
   cor: string
 }
 
-export function DonutChart({ titulo, dados }: { titulo: string; dados: DonutDatum[] }) {
+export function DonutChart({
+  titulo,
+  dados,
+  onSelecionar,
+}: {
+  titulo: string
+  dados: DonutDatum[]
+  /** Quando definido, fatias e itens da legenda ficam clicáveis. */
+  onSelecionar?: (nome: string) => void
+}) {
   const total = dados.reduce((soma, d) => soma + d.valor, 0)
 
   return (
@@ -28,9 +37,10 @@ export function DonutChart({ titulo, dados }: { titulo: string; dados: DonutDatu
               cornerRadius={4}
               stroke="none"
               isAnimationActive={false}
+              onClick={onSelecionar ? (d) => onSelecionar(String(d.name)) : undefined}
             >
               {dados.map((d) => (
-                <Cell key={d.nome} fill={d.cor} />
+                <Cell key={d.nome} fill={d.cor} cursor={onSelecionar ? 'pointer' : undefined} />
               ))}
             </Pie>
             <Tooltip
@@ -47,12 +57,22 @@ export function DonutChart({ titulo, dados }: { titulo: string; dados: DonutDatu
 
       <ul className="mt-3 flex flex-col gap-1.5">
         {dados.map((d) => (
-          <li key={d.nome} className="flex items-center justify-between gap-2 text-xs">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.cor }} />
-              <span className="truncate text-gray-700">{d.nome}</span>
-            </span>
-            <span className="shrink-0 font-medium text-gray-500">{d.valor}</span>
+          <li key={d.nome}>
+            <button
+              type="button"
+              disabled={!onSelecionar}
+              onClick={() => onSelecionar?.(d.nome)}
+              className={
+                'flex w-full items-center justify-between gap-2 rounded px-1 py-0.5 text-xs ' +
+                (onSelecionar ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default')
+              }
+            >
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: d.cor }} />
+                <span className="truncate text-gray-700">{d.nome}</span>
+              </span>
+              <span className="shrink-0 font-medium text-gray-500">{d.valor}</span>
+            </button>
           </li>
         ))}
       </ul>

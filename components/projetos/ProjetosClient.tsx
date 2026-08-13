@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
@@ -22,6 +23,9 @@ export function ProjetosClient({
   projetosIniciais: Projeto[]
   isEditor: boolean
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [projetos, setProjetos] = useState<Projeto[]>(projetosIniciais)
   const [busca, setBusca] = useState('')
   const [filtroEtapa, setFiltroEtapa] = useState('')
@@ -30,7 +34,7 @@ export function ProjetosClient({
   const [filtroGerente, setFiltroGerente] = useState('')
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [filtroAtrasado, setFiltroAtrasado] = useState(false)
-  const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(() => searchParams.get('projeto'))
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
     if (typeof window === 'undefined') return 'lista'
@@ -42,6 +46,15 @@ export function ProjetosClient({
     setVisualizacao(v)
     localStorage.setItem(CHAVE_VISUALIZACAO, v)
   }
+
+  useEffect(() => {
+    if (!searchParams.get('projeto')) return
+    const restante = new URLSearchParams(searchParams.toString())
+    restante.delete('projeto')
+    const query = restante.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const recarregarProjetos = useCallback(async () => {
     const supabase = createClient()
