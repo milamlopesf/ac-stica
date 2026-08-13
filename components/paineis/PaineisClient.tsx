@@ -10,7 +10,7 @@ import { DonutChart, type DonutDatum } from './DonutChart'
 import { RelatorioGeralSection } from './RelatorioGeralSection'
 import { RelatorioProjetoSection } from './RelatorioProjetoSection'
 
-function agruparPorCampo(projetos: Projeto[], campo: 'gerente' | 'projetista'): DonutDatum[] {
+function agruparPorCampo(projetos: Projeto[], campo: 'diretor' | 'projetista'): DonutDatum[] {
   const contagem = new Map<string, number>()
   for (const p of projetos) {
     const chave = p[campo]?.trim() || 'Não atribuído'
@@ -111,7 +111,7 @@ export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
     }))
     .filter((d) => d.valor > 0)
 
-  const porGerente = agruparPorCampo(projetosFiltrados, 'gerente')
+  const porDiretor = agruparPorCampo(projetosFiltrados, 'diretor')
   const porProjetista = agruparPorCampo(projetosFiltrados, 'projetista')
 
   return (
@@ -236,7 +236,7 @@ export function PaineisClient({ projetos }: { projetos: Projeto[] }) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <DonutChart titulo="Projetos por etapa" dados={porEtapa} />
-        <DonutChart titulo="Projetos por gerente" dados={porGerente} />
+        <DonutChart titulo="Projetos por diretor" dados={porDiretor} />
         <DonutChart titulo="Projetos por projetista acústico" dados={porProjetista} />
       </div>
 
