@@ -130,8 +130,9 @@ create table biblioteca (
   rw text,
   modelo text,
   subcategoria text,
-  nome_arquivo text not null,
-  caminho_storage text not null,
+  -- nulos = item "pendente", cadastrado sem arquivo ainda (upload feito depois)
+  nome_arquivo text,
+  caminho_storage text,
   tamanho_bytes int,
   created_at timestamptz default now()
 );

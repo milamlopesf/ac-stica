@@ -1,10 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ItemBiblioteca } from '@/lib/types/database'
-import { MODELOS_LAUDO, SUBCATEGORIAS_LAUDO } from '@/lib/utils/biblioteca'
-import { formatarTamanho } from '@/lib/utils/storage'
+import {
+  MODELOS_LAUDO,
+  SUBCATEGORIAS_LAUDO,
+  TIPOS_ARQUIVO_ACEITOS,
+  extensaoValida,
+  ehImagem,
+} from '@/lib/utils/biblioteca'
+import { sanitizarNomeArquivo, formatarTamanho } from '@/lib/utils/storage'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
 
@@ -36,10 +42,13 @@ export function BibliotecaDetalheModal({
   const [subcategoria, setSubcategoria] = useState(item.subcategoria ?? '')
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
+  const [enviandoArquivo, setEnviandoArquivo] = useState(false)
   const [erro, setErro] = useState('')
-  const [visualizando, setVisualizando] = useState<string | null>(null)
+  const [visualizando, setVisualizando] = useState<{ url: string; imagem: boolean } | null>(null)
+  const inputArquivoRef = useRef<HTMLInputElement>(null)
 
-  const ehPdf = /\.pdf$/i.test(item.nome_arquivo)
+  const ehPdf = Boolean(item.nome_arquivo && /\.pdf$/i.test(item.nome_arquivo))
+  const arquivoEhImagem = Boolean(item.nome_arquivo && ehImagem(item.nome_arquivo))
 
   const alterado =
     titulo !== item.titulo ||
@@ -74,6 +83,7 @@ export function BibliotecaDetalheModal({
   }
 
   async function visualizar() {
+    if (!item.caminho_storage) return
     const { data, error } = await supabase.storage
       .from(BUCKET)
       .createSignedUrl(item.caminho_storage, 300)
@@ -81,13 +91,14 @@ export function BibliotecaDetalheModal({
       alert(`Erro ao abrir o arquivo: ${error?.message ?? ''}`)
       return
     }
-    setVisualizando(data.signedUrl)
+    setVisualizando({ url: data.signedUrl, imagem: arquivoEhImagem })
   }
 
   async function baixar() {
+    if (!item.caminho_storage) return
     const { data, error } = await supabase.storage
       .from(BUCKET)
-      .createSignedUrl(item.caminho_storage, 60, { download: item.nome_arquivo })
+      .createSignedUrl(item.caminho_storage, 60, { download: item.nome_arquivo ?? undefined })
     if (error || !data) {
       alert(`Erro ao gerar link de download: ${error?.message ?? ''}`)
       return
@@ -95,14 +106,48 @@ export function BibliotecaDetalheModal({
     window.open(data.signedUrl, '_blank')
   }
 
+  async function enviarArquivo(arquivo: File) {
+    setErro('')
+    if (!extensaoValida(arquivo.name)) {
+      setErro('Apenas arquivos PDF, Excel ou imagem (.pdf, .xls, .xlsx, .jpg, .png, .webp) são aceitos.')
+      return
+    }
+    setEnviandoArquivo(true)
+    const caminho = `${item.categoria}/${Date.now()}-${sanitizarNomeArquivo(arquivo.name)}`
+    const { error: erroUpload } = await supabase.storage.from(BUCKET).upload(caminho, arquivo)
+    if (erroUpload) {
+      setEnviandoArquivo(false)
+      setErro(`Erro ao enviar arquivo: ${erroUpload.message}`)
+      return
+    }
+    const { data, error: erroUpdate } = await supabase
+      .from('biblioteca')
+      .update({
+        nome_arquivo: arquivo.name,
+        caminho_storage: caminho,
+        tamanho_bytes: arquivo.size,
+      })
+      .eq('id', item.id)
+      .select()
+      .single()
+    setEnviandoArquivo(false)
+    if (erroUpdate) {
+      setErro(`Erro ao registrar arquivo: ${erroUpdate.message}`)
+      return
+    }
+    onAtualizado(data as ItemBiblioteca)
+  }
+
   async function excluir() {
     if (!confirm(`Excluir o item "${item.titulo}"? Essa ação não pode ser desfeita.`)) return
     setExcluindo(true)
-    const { error: erroStorage } = await supabase.storage.from(BUCKET).remove([item.caminho_storage])
-    if (erroStorage) {
-      setExcluindo(false)
-      alert(`Erro ao excluir arquivo: ${erroStorage.message}`)
-      return
+    if (item.caminho_storage) {
+      const { error: erroStorage } = await supabase.storage.from(BUCKET).remove([item.caminho_storage])
+      if (erroStorage) {
+        setExcluindo(false)
+        alert(`Erro ao excluir arquivo: ${erroStorage.message}`)
+        return
+      }
     }
     const { error: erroDelete } = await supabase.from('biblioteca').delete().eq('id', item.id)
     setExcluindo(false)
@@ -241,31 +286,62 @@ export function BibliotecaDetalheModal({
             </button>
           )}
 
-          <div className="flex items-center justify-between gap-3 rounded-md border border-gray-200 p-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="text-xl">📎</span>
-              <div className="min-w-0">
-                {ehPdf ? (
-                  <button
-                    onClick={visualizar}
-                    className="truncate text-sm font-medium text-blue-700 hover:underline"
-                    title={item.nome_arquivo}
-                  >
-                    {item.nome_arquivo}
-                  </button>
-                ) : (
-                  <p className="truncate text-sm font-medium text-gray-800">{item.nome_arquivo}</p>
-                )}
-                <p className="text-xs text-gray-400">{formatarTamanho(item.tamanho_bytes)}</p>
+          {item.caminho_storage && item.nome_arquivo ? (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-gray-200 p-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-xl">{arquivoEhImagem ? '🖼️' : '📎'}</span>
+                <div className="min-w-0">
+                  {ehPdf || arquivoEhImagem ? (
+                    <button
+                      onClick={visualizar}
+                      className="truncate text-sm font-medium text-blue-700 hover:underline"
+                      title={item.nome_arquivo}
+                    >
+                      {item.nome_arquivo}
+                    </button>
+                  ) : (
+                    <p className="truncate text-sm font-medium text-gray-800">{item.nome_arquivo}</p>
+                  )}
+                  <p className="text-xs text-gray-400">{formatarTamanho(item.tamanho_bytes)}</p>
+                </div>
               </div>
+              <button
+                onClick={baixar}
+                className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Baixar
+              </button>
             </div>
-            <button
-              onClick={baixar}
-              className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Baixar
-            </button>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-dashed border-amber-300 bg-amber-50 p-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-xl">⏳</span>
+                <p className="text-sm font-medium text-amber-800">Pendente de arquivo</p>
+              </div>
+              {isEditor && (
+                <>
+                  <button
+                    onClick={() => inputArquivoRef.current?.click()}
+                    disabled={enviandoArquivo}
+                    className="shrink-0 rounded-md border border-amber-400 bg-white px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    {enviandoArquivo ? 'Enviando...' : 'Enviar arquivo'}
+                  </button>
+                  <input
+                    ref={inputArquivoRef}
+                    type="file"
+                    accept={TIPOS_ARQUIVO_ACEITOS}
+                    onChange={(e) => {
+                      const arquivo = e.target.files?.[0]
+                      if (arquivo) enviarArquivo(arquivo)
+                      e.target.value = ''
+                    }}
+                    className="hidden"
+                  />
+                </>
+              )}
+            </div>
+          )}
 
           {isEditor && (
             <button
@@ -290,13 +366,13 @@ export function BibliotecaDetalheModal({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-2.5">
-            <p className="min-w-0 truncate text-sm font-medium text-gray-800" title={item.nome_arquivo}>
+            <p className="min-w-0 truncate text-sm font-medium text-gray-800" title={item.nome_arquivo ?? undefined}>
               {item.nome_arquivo}
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <a
-                href={visualizando}
-                download={item.nome_arquivo}
+                href={visualizando.url}
+                download={item.nome_arquivo ?? undefined}
                 className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Baixar
@@ -310,7 +386,14 @@ export function BibliotecaDetalheModal({
               </button>
             </div>
           </div>
-          <iframe src={visualizando} title={item.nome_arquivo} className="flex-1" />
+          {visualizando.imagem ? (
+            <div className="flex flex-1 items-center justify-center overflow-auto bg-gray-100 p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={visualizando.url} alt={item.nome_arquivo ?? ''} className="max-h-full max-w-full object-contain" />
+            </div>
+          ) : (
+            <iframe src={visualizando.url} title={item.nome_arquivo ?? undefined} className="flex-1" />
+          )}
         </div>
       </div>
     )}

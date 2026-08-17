@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/Badge'
 import { BibliotecaFormModal } from './BibliotecaFormModal'
 import { BibliotecaDetalheModal } from './BibliotecaDetalheModal'
 
-function iconePara(nomeArquivo: string) {
-  return /\.(xls|xlsx)$/i.test(nomeArquivo) ? '📊' : '📄'
+function iconePara(nomeArquivo: string | null) {
+  if (!nomeArquivo) return '⏳'
+  return /\.(xls|xlsx)$/i.test(nomeArquivo) ? '📊' : /\.(jpe?g|png|webp)$/i.test(nomeArquivo) ? '🖼️' : '📄'
 }
 
 export function BibliotecaClient({
@@ -132,9 +133,13 @@ export function BibliotecaClient({
                     )}
                   </div>
                 )}
-                <span className="shrink-0 text-xs text-gray-400">
-                  {formatarTamanho(item.tamanho_bytes)}
-                </span>
+                {item.caminho_storage ? (
+                  <span className="shrink-0 text-xs text-gray-400">
+                    {formatarTamanho(item.tamanho_bytes)}
+                  </span>
+                ) : (
+                  <Badge label="Pendente de arquivo" className="border-amber-200 bg-amber-50 text-amber-700" />
+                )}
               </div>
               {item.descricao && textoSimples(item.descricao) && (
                 <p className="truncate text-sm text-gray-500">{textoSimples(item.descricao)}</p>
