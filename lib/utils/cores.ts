@@ -1,4 +1,4 @@
-import type { Etapa, StatusProjeto, StatusAtividade, Prioridade } from '@/lib/types/database'
+import type { Etapa, StatusProjeto, StatusAtividade, Prioridade, NivelRisco, NotaAvaliacao } from '@/lib/types/database'
 
 interface CorConfig {
   label: string
@@ -38,6 +38,23 @@ export const CORES_PRIORIDADE: Record<Prioridade, CorConfig> = {
   Média: { label: 'Média', badge: 'bg-blue-100 text-blue-700 border-blue-300', hex: '#3b82f6' },
   Alta: { label: 'Alta', badge: 'bg-orange-100 text-orange-700 border-orange-300', hex: '#f97316' },
   Urgente: { label: 'Urgente', badge: 'bg-red-100 text-red-700 border-red-300', hex: '#ef4444' },
+}
+
+export const NIVEIS_RISCO: NivelRisco[] = ['Baixo', 'Médio', 'Alto']
+
+export const CORES_NIVEL_RISCO: Record<NivelRisco, CorConfig> = {
+  Baixo: { label: 'Baixo', badge: 'bg-green-100 text-green-700 border-green-300', hex: '#22c55e' },
+  Médio: { label: 'Médio', badge: 'bg-amber-100 text-amber-700 border-amber-300', hex: '#f59e0b' },
+  Alto: { label: 'Alto', badge: 'bg-red-100 text-red-700 border-red-300', hex: '#ef4444' },
+}
+
+export const NOTAS_AVALIACAO: NotaAvaliacao[] = ['Ótimo', 'Bom', 'Regular', 'Ruim']
+
+export const CORES_NOTA_AVALIACAO: Record<NotaAvaliacao, CorConfig> = {
+  Ótimo: { label: 'Ótimo', badge: 'bg-green-100 text-green-700 border-green-300', hex: '#22c55e' },
+  Bom: { label: 'Bom', badge: 'bg-blue-100 text-blue-700 border-blue-300', hex: '#3b82f6' },
+  Regular: { label: 'Regular', badge: 'bg-amber-100 text-amber-700 border-amber-300', hex: '#f59e0b' },
+  Ruim: { label: 'Ruim', badge: 'bg-red-100 text-red-700 border-red-300', hex: '#ef4444' },
 }
 
 export const ORDEM_PRIORIDADE: Record<Prioridade, number> = {

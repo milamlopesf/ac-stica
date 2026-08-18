@@ -13,7 +13,11 @@ export function RelatorioProjetoSection({ projetos }: { projetos: Projeto[] }) {
   function gerar() {
     const projeto = projetos.find((p) => p.id === projetoId)
     if (!projeto) return
-    emitirRelatorioProjeto(projeto)
+    const vinculadoId =
+      projeto.projeto_vinculado_id ??
+      projetos.find((p) => p.projeto_vinculado_id === projeto.id)?.id ??
+      null
+    emitirRelatorioProjeto(projeto, vinculadoId)
   }
 
   return (

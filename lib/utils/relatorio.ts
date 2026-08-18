@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
-import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
+import { CORES_ETAPA, CORES_STATUS, CORES_STATUS_ATIVIDADE, CORES_NIVEL_RISCO, CORES_NOTA_AVALIACAO } from '@/lib/utils/cores'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
+import { calcularCriticidade } from '@/lib/utils/riscos'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { textoComQuebras } from '@/lib/utils/texto'
 
@@ -81,6 +82,17 @@ const ESTILO_RELATORIO = `
   .item-titulo { font-weight: 600; }
   .item-data { color: #9ca3af; font-size: 12px; }
   .vazio { color: #9ca3af; font-style: italic; }
+  .tag {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    margin-right: 4px;
+    color: #fff;
+  }
+  .meta { font-size: 12px; color: #6b7280; margin: 2px 0 0; }
+  .meta span + span::before { content: '·'; margin: 0 6px; color: #d1d5db; }
   footer { margin-top: 40px; font-size: 11px; color: #9ca3af; text-align: right; }
   .acoes { margin-bottom: 24px; }
   .acoes button {
@@ -118,7 +130,7 @@ const ESTILO_RELATORIO = `
   }
 `
 
-export async function emitirRelatorioProjeto(projeto: Projeto) {
+export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: string | null) {
   const janela = window.open('', '_blank')
   if (!janela) {
     alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
@@ -129,8 +141,20 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
   )
 
   const supabase = createClient()
+  const mostrarLicoes = projeto.etapa === 'OBRA' || Boolean(vinculadoId)
+  const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
+  const idsLicoes = vinculadoId ? [projeto.id, vinculadoId] : [projeto.id]
 
-  const [{ data: notas }, { data: reunioes }, { data: anexos }, vinculado] = await Promise.all([
+  const [
+    { data: notas },
+    { data: reunioes },
+    { data: anexos },
+    vinculado,
+    { data: acoes },
+    { data: riscos },
+    { data: licoes },
+    { data: avaliacoes },
+  ] = await Promise.all([
     supabase
       .from('notas')
       .select('*')
@@ -149,6 +173,26 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     projeto.projeto_vinculado_id
       ? supabase.from('projetos').select('nome').eq('id', projeto.projeto_vinculado_id).single()
       : Promise.resolve({ data: null as { nome: string } | null }),
+    supabase
+      .from('atividades')
+      .select('*')
+      .eq('projeto_id', projeto.id)
+      .order('data_vencimento', { ascending: true, nullsFirst: false }),
+    supabase.from('riscos').select('*').eq('projeto_id', projeto.id).order('created_at', { ascending: false }),
+    mostrarLicoes
+      ? supabase
+          .from('licoes_aprendidas')
+          .select('*')
+          .in('projeto_id', idsLicoes)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: null as { texto: string; created_at: string }[] | null }),
+    mostrarAvaliacao
+      ? supabase
+          .from('avaliacoes_projetista')
+          .select('*')
+          .eq('projeto_id', projeto.id)
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: null as { nota: string; diagnostico: string | null; created_at: string }[] | null }),
   ])
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
@@ -201,6 +245,70 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
         .join('')
     : '<li class="vazio">Nenhum anexo enviado.</li>'
 
+  const listaAcoes = (acoes ?? []).length
+    ? (acoes ?? [])
+        .map((a) => {
+          const cor = CORES_STATUS_ATIVIDADE[a.status]
+          return `
+        <li>
+          <p class="item-titulo">${escapeHtml(a.texto)}</p>
+          <p class="meta">
+            <span class="tag" style="background:${cor.hex}">${escapeHtml(cor.label)}</span>
+            ${a.responsavel ? `<span>Responsável: ${escapeHtml(a.responsavel)}</span>` : ''}
+            ${a.data_vencimento ? `<span>Prazo: ${formatarData(a.data_vencimento)}</span>` : ''}
+          </p>
+        </li>`
+        })
+        .join('')
+    : '<li class="vazio">Nenhuma ação combinada registrada.</li>'
+
+  const listaRiscos = (riscos ?? []).length
+    ? (riscos ?? [])
+        .map((r) => {
+          const criticidade = calcularCriticidade(r.probabilidade, r.impacto)
+          return `
+        <li>
+          <p class="item-titulo">${escapeHtml(r.descricao)}${r.mitigado ? ' <span class="item-data">(mitigado)</span>' : ''}</p>
+          ${r.acao_mitigadora ? `<p class="texto-conteudo">Ação mitigadora: ${escapeHtml(r.acao_mitigadora)}</p>` : ''}
+          <p class="meta">
+            ${criticidade ? `<span class="tag" style="background:${CORES_NIVEL_RISCO[criticidade].hex}">Criticidade: ${criticidade}</span>` : ''}
+            ${r.probabilidade ? `<span>Probabilidade: ${escapeHtml(r.probabilidade)}</span>` : ''}
+            ${r.impacto ? `<span>Impacto em obra: ${escapeHtml(r.impacto)}</span>` : ''}
+            ${r.responsavel ? `<span>Responsável: ${escapeHtml(r.responsavel)}</span>` : ''}
+            ${r.data_limite ? `<span>Prazo: ${formatarData(r.data_limite)}</span>` : ''}
+          </p>
+        </li>`
+        })
+        .join('')
+    : '<li class="vazio">Nenhum risco mapeado.</li>'
+
+  const listaLicoes = (licoes ?? []).length
+    ? (licoes ?? [])
+        .map(
+          (l) => `
+        <li>
+          <p class="item-data">${formatarDataHora(l.created_at)}</p>
+          <p class="texto-conteudo">${escapeHtml(l.texto)}</p>
+        </li>`
+        )
+        .join('')
+    : '<li class="vazio">Nenhuma lição aprendida registrada.</li>'
+
+  const listaAvaliacoes = (avaliacoes ?? []).length
+    ? (avaliacoes ?? [])
+        .map((a) => {
+          const cor = CORES_NOTA_AVALIACAO[a.nota as keyof typeof CORES_NOTA_AVALIACAO]
+          const diagnostico = a.diagnostico ? textoComQuebras(a.diagnostico) : ''
+          return `
+        <li>
+          <p class="item-data">${formatarDataHora(a.created_at)}</p>
+          <p><span class="tag" style="background:${cor.hex}">${escapeHtml(cor.label)}</span></p>
+          ${diagnostico ? `<p class="texto-conteudo">${paraHtmlComQuebras(diagnostico)}</p>` : ''}
+        </li>`
+        })
+        .join('')
+    : '<li class="vazio">Nenhuma avaliação registrada.</li>'
+
   const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
   const html = `<!doctype html>
@@ -223,6 +331,34 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
   </div>
 
   <table class="info">${linhasInfo}</table>
+
+  <section>
+    <h2>Ações combinadas (${(acoes ?? []).length})</h2>
+    <ul>${listaAcoes}</ul>
+  </section>
+
+  <section>
+    <h2>Riscos mapeados (${(riscos ?? []).length})</h2>
+    <ul>${listaRiscos}</ul>
+  </section>
+
+  ${
+    mostrarLicoes
+      ? `<section>
+    <h2>Lições aprendidas (${(licoes ?? []).length})</h2>
+    <ul>${listaLicoes}</ul>
+  </section>`
+      : ''
+  }
+
+  ${
+    mostrarAvaliacao
+      ? `<section>
+    <h2>Avaliação do projetista — ${escapeHtml(projeto.projetista ?? '')} (${(avaliacoes ?? []).length})</h2>
+    <ul>${listaAvaliacoes}</ul>
+  </section>`
+      : ''
+  }
 
   <section>
     <h2>Anotações (${(notas ?? []).length})</h2>

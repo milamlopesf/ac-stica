@@ -16,16 +16,21 @@ import { ReunioesTab } from './tabs/ReunioesTab'
 import { AnexosTab } from './tabs/AnexosTab'
 import { HistoricoTab } from './tabs/HistoricoTab'
 import { CronogramaTab } from './tabs/CronogramaTab'
+import { AcoesTab } from './tabs/AcoesTab'
+import { RiscosTab } from './tabs/RiscosTab'
+import { LicoesAprendidasTab } from './tabs/LicoesAprendidasTab'
+import { AvaliacaoProjetistaTab } from './tabs/AvaliacaoProjetistaTab'
 
-type Aba = 'cronograma' | 'anotacoes' | 'reunioes' | 'anexos' | 'historico'
-
-const ABAS: { id: Aba; label: string }[] = [
-  { id: 'cronograma', label: 'Cronograma' },
-  { id: 'anotacoes', label: 'Anotações' },
-  { id: 'reunioes', label: 'Atas de Reunião' },
-  { id: 'anexos', label: 'Anexos' },
-  { id: 'historico', label: 'Histórico' },
-]
+type Aba =
+  | 'cronograma'
+  | 'anotacoes'
+  | 'acoes'
+  | 'riscos'
+  | 'licoes'
+  | 'avaliacao'
+  | 'reunioes'
+  | 'anexos'
+  | 'historico'
 
 export function ProjetoDetalhePanel({
   projeto,
@@ -55,6 +60,25 @@ export function ProjetoDetalhePanel({
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
+
+  const vinculadoId =
+    projeto.projeto_vinculado_id ??
+    outrosProjetos.find((p) => p.projeto_vinculado_id === projeto.id)?.id ??
+    null
+  const mostrarLicoes = projeto.etapa === 'OBRA' || Boolean(vinculadoId)
+  const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
+
+  const abas: { id: Aba; label: string }[] = [
+    { id: 'cronograma', label: 'Cronograma' },
+    { id: 'anotacoes', label: 'Anotações' },
+    { id: 'acoes', label: 'Ações' },
+    { id: 'riscos', label: 'Riscos' },
+    ...(mostrarLicoes ? [{ id: 'licoes' as const, label: 'Lições Aprendidas' }] : []),
+    ...(mostrarAvaliacao ? [{ id: 'avaliacao' as const, label: 'Avaliação do Projetista' }] : []),
+    { id: 'reunioes', label: 'Atas de Reunião' },
+    { id: 'anexos', label: 'Anexos' },
+    { id: 'historico', label: 'Histórico' },
+  ]
 
   async function handleExcluir() {
     if (!confirm(`Excluir o projeto "${projeto.nome}"? Essa ação não pode ser desfeita.`)) return
@@ -127,7 +151,7 @@ export function ProjetoDetalhePanel({
 
         <div className="flex gap-2 border-b border-gray-200 px-5 py-3">
           <button
-            onClick={() => emitirRelatorioProjeto(projeto)}
+            onClick={() => emitirRelatorioProjeto(projeto, vinculadoId)}
             className="flex items-center gap-1.5 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <IconRelatorio className="h-4 w-4" />
@@ -152,8 +176,8 @@ export function ProjetoDetalhePanel({
           )}
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200 px-5">
-          {ABAS.map((t) => (
+        <div className="flex flex-wrap gap-1 border-b border-gray-200 px-5">
+          {abas.map((t) => (
             <button
               key={t.id}
               onClick={() => setAba(t.id)}
@@ -172,6 +196,18 @@ export function ProjetoDetalhePanel({
         <div className="flex-1 p-5">
           {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} />}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'acoes' && <AcoesTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'riscos' && <RiscosTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'licoes' && mostrarLicoes && (
+            <LicoesAprendidasTab projetoId={projeto.id} vinculadoId={vinculadoId} isEditor={isEditor} />
+          )}
+          {aba === 'avaliacao' && mostrarAvaliacao && (
+            <AvaliacaoProjetistaTab
+              projetoId={projeto.id}
+              projetista={projeto.projetista as string}
+              isEditor={isEditor}
+            />
+          )}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'historico' && <HistoricoTab projetoId={projeto.id} />}
