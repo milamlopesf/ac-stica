@@ -58,6 +58,15 @@ function IconPaineis(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function IconCobertura(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <path d="M9 12.5 11.5 15 16 9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 3 4 6.5v5c0 5 3.4 8.7 8 9.5 4.6-.8 8-4.5 8-9.5v-5L12 3Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function NavLinks({ isEditor }: { isEditor: boolean }) {
   const pathname = usePathname()
 
@@ -68,6 +77,7 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
     { href: '/planilhas', label: 'Planilhas de Cálculo', icon: IconPlanilha, apenasEditor: true },
     { href: '/laudos', label: 'Laudos/Medições', icon: IconLaudo, apenasEditor: false },
     { href: '/paineis', label: 'Painéis', icon: IconPaineis, apenasEditor: false },
+    { href: '/cobertura', label: 'Cobertura', icon: IconCobertura, apenasEditor: false },
   ].filter((link) => !link.apenasEditor || isEditor)
 
   return (
