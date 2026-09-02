@@ -9,7 +9,7 @@ import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
 import { ProjetoCard } from './ProjetoCard'
-import { ProjetoListItem } from './ProjetoListItem'
+import { ProjetoListItem, ProjetosListaHeader } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
 import { ProjetoFormModal } from './ProjetoFormModal'
 
@@ -325,19 +325,22 @@ export function ProjetosClient({
       {projetosFiltrados.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">Nenhum projeto encontrado.</p>
       ) : visualizacao === 'lista' ? (
-        <div className="flex flex-col gap-2">
-          {projetosFiltrados.map((projeto) => (
-            <ProjetoListItem
-              key={projeto.id}
-              projeto={projeto}
-              nomeVinculado={
-                projeto.projeto_vinculado_id
-                  ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
-                  : undefined
-              }
-              onClick={() => setSelecionadoId(projeto.id)}
-            />
-          ))}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <ProjetosListaHeader />
+          <div className="divide-y divide-gray-100">
+            {projetosFiltrados.map((projeto) => (
+              <ProjetoListItem
+                key={projeto.id}
+                projeto={projeto}
+                nomeVinculado={
+                  projeto.projeto_vinculado_id
+                    ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
+                    : undefined
+                }
+                onClick={() => setSelecionadoId(projeto.id)}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -6,6 +6,36 @@ import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 
+// Mesma definição de colunas usada no cabeçalho e em cada linha, pra ficar
+// tudo alinhado. Colunas com largura fixa em px, "Projeto" ocupa o resto.
+export const GRID_COLUNAS =
+  'grid items-center gap-x-3 ' +
+  'grid-cols-[14px_minmax(0,1fr)_82px_160px_88px_24px_16px] ' +
+  'md:grid-cols-[14px_minmax(0,1fr)_82px_160px_88px_128px_128px_24px_16px] ' +
+  'lg:grid-cols-[14px_minmax(0,1fr)_82px_160px_88px_128px_128px_112px_24px_16px]'
+
+export function ProjetosListaHeader() {
+  return (
+    <div
+      className={
+        GRID_COLUNAS +
+        ' border-b border-gray-200 px-4 pb-2 text-[11px] font-semibold tracking-wide text-gray-400 uppercase'
+      }
+    >
+      <span />
+      <span>Projeto</span>
+      <span>Etapa</span>
+      <span>Status</span>
+      <span>Entrega</span>
+      <span className="hidden md:inline">Diretor</span>
+      <span className="hidden md:inline">Gerente</span>
+      <span className="hidden lg:inline">Projetista</span>
+      <span />
+      <span />
+    </div>
+  )
+}
+
 export function ProjetoListItem({
   projeto,
   nomeVinculado,
@@ -29,7 +59,10 @@ export function ProjetoListItem({
           onClick()
         }
       }}
-      className="flex cursor-pointer flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-teal-300 hover:shadow-sm sm:flex-nowrap"
+      className={
+        GRID_COLUNAS +
+        ' cursor-pointer px-4 py-3 text-left transition hover:bg-gray-50'
+      }
     >
       <span
         className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -37,38 +70,34 @@ export function ProjetoListItem({
         title={corStatus.label}
       />
 
-      <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900" title={projeto.nome}>
-        {projeto.nome}
-      </h3>
-
-      <div className="flex shrink-0 flex-wrap gap-2">
-        <Badge label={corEtapa.label} className={corEtapa.badge} />
-        <Badge label={corStatus.label} className={corStatus.badge} />
+      <span className="flex min-w-0 items-center gap-1.5">
+        <h3 className="min-w-0 truncate font-medium text-gray-900" title={projeto.nome}>
+          {projeto.nome}
+        </h3>
         {projeto.projeto_vinculado_id && (
-          <span
-            title={nomeVinculado ? `Vinculado a ${nomeVinculado}` : undefined}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-blue-300 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700"
-          >
-            <IconVinculo className="h-3 w-3" />
-            Vinculado
+          <span title={nomeVinculado ? `Vinculado a ${nomeVinculado}` : 'Vinculado'}>
+            <IconVinculo className="h-3.5 w-3.5 shrink-0 text-blue-500" />
           </span>
         )}
-      </div>
+      </span>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 sm:w-auto">
-        <span>
-          Entrega: <span className="font-medium text-gray-700">{formatarData(projeto.entrega)}</span>
-        </span>
-        <span className="hidden md:inline">
-          Diretor: <span className="font-medium text-gray-700">{projeto.diretor || '—'}</span>
-        </span>
-        <span className="hidden md:inline">
-          Gerente: <span className="font-medium text-gray-700">{projeto.gerente || '—'}</span>
-        </span>
-        <span className="hidden lg:inline">
-          Projetista: <span className="font-medium text-gray-700">{projeto.projetista || '—'}</span>
-        </span>
-      </div>
+      <span className="min-w-0">
+        <Badge label={corEtapa.label} className={corEtapa.badge} />
+      </span>
+      <span className="min-w-0">
+        <Badge label={corStatus.label} className={corStatus.badge} />
+      </span>
+
+      <span className="truncate text-xs text-gray-600">{formatarData(projeto.entrega)}</span>
+      <span className="hidden truncate text-xs text-gray-600 md:inline" title={projeto.diretor || undefined}>
+        {projeto.diretor || '—'}
+      </span>
+      <span className="hidden truncate text-xs text-gray-600 md:inline" title={projeto.gerente || undefined}>
+        {projeto.gerente || '—'}
+      </span>
+      <span className="hidden truncate text-xs text-gray-600 lg:inline" title={projeto.projetista || undefined}>
+        {projeto.projetista || '—'}
+      </span>
 
       <button
         onClick={(e) => {
