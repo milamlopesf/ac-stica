@@ -1,29 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import type { Projeto } from '@/lib/types/database'
-import { LISTA_COBERTURA } from '@/lib/data/listaCobertura'
-import {
-  calcularAcompanhamento,
-  calcularContratado,
-  CLASSE_STATUS_COBERTURA,
-  extrairCodigo,
-  LABEL_STATUS_COBERTURA,
-  type StatusCobertura,
-} from '@/lib/utils/cobertura'
+import { useState } from 'react'
+import { LISTA_COBERTURA, type ProjetoCobertura } from '@/lib/data/listaCobertura'
+import { CLASSE_STATUS_COBERTURA, LABEL_STATUS_COBERTURA } from '@/lib/utils/cobertura'
 import { Badge } from '@/components/ui/Badge'
 
-type Linha = {
-  ref: string
-  proj: string
-  dir: string
-  projetista: string | null
-  encontrado: boolean
-  contratado: StatusCobertura
-  acompanhamento: StatusCobertura
-}
-
-function exportarCsv(linhas: Linha[]) {
+function exportarCsv(linhas: ProjetoCobertura[]) {
   const cabecalho = ['Referência', 'Projeto', 'Diretor', 'Contratado (acústica)', 'Acompanhamento interno']
   const linhasCsv = linhas.map((l) => [
     l.ref,
@@ -46,44 +28,14 @@ function exportarCsv(linhas: Linha[]) {
   URL.revokeObjectURL(url)
 }
 
-export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
+export function CoberturaClient() {
   const [busca, setBusca] = useState('')
   const [filtroDiretor, setFiltroDiretor] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState<'' | 'pendente' | 'sim' | 'nao'>('')
+  const [filtroStatus, setFiltroStatus] = useState<'' | 'sim' | 'nao'>('')
 
-  const porCodigo = useMemo(() => {
-    const mapa = new Map<string, Projeto>()
-    for (const p of projetos) {
-      const codigo = extrairCodigo(p.nome)
-      if (codigo) mapa.set(codigo, p)
-    }
-    return mapa
-  }, [projetos])
+  const diretores = Array.from(new Set(LISTA_COBERTURA.map((p) => p.dir))).sort()
 
-  const todasAsLinhas: Linha[] = useMemo(() => {
-    return LISTA_COBERTURA.map((item) => {
-      const codigo = extrairCodigo(item.ref)
-      const projeto = codigo ? porCodigo.get(codigo) : undefined
-      const encontrado = Boolean(projeto)
-      const projetista = projeto?.projetista ?? null
-      return {
-        ref: item.ref,
-        proj: item.proj,
-        dir: item.dir,
-        projetista,
-        encontrado,
-        contratado: calcularContratado(projetista, encontrado),
-        acompanhamento: calcularAcompanhamento(projetista, encontrado),
-      }
-    })
-  }, [porCodigo])
-
-  const diretores = useMemo(
-    () => Array.from(new Set(LISTA_COBERTURA.map((p) => p.dir))).sort(),
-    []
-  )
-
-  const linhasFiltradas = todasAsLinhas.filter((l) => {
+  const linhasFiltradas = LISTA_COBERTURA.filter((l) => {
     if (busca) {
       const q = busca.toLowerCase()
       if (!l.proj.toLowerCase().includes(q) && !l.ref.toLowerCase().includes(q)) return false
@@ -93,12 +45,11 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
     return true
   })
 
-  const totalContratadoSim = todasAsLinhas.filter((l) => l.contratado === 'sim').length
-  const totalAcompanhamentoSim = todasAsLinhas.filter((l) => l.acompanhamento === 'sim').length
-  const totalNaoLocalizado = todasAsLinhas.filter((l) => !l.encontrado).length
+  const totalContratadoSim = LISTA_COBERTURA.filter((l) => l.contratado === 'sim').length
+  const totalAcompanhamentoSim = LISTA_COBERTURA.filter((l) => l.acompanhamento === 'sim').length
 
   const porDiretor = diretores.map((dir) => {
-    const lista = todasAsLinhas.filter((l) => l.dir === dir)
+    const lista = LISTA_COBERTURA.filter((l) => l.dir === dir)
     const n = lista.length
     const cSim = lista.filter((l) => l.contratado === 'sim').length
     const aSim = lista.filter((l) => l.acompanhamento === 'sim').length
@@ -118,16 +69,16 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
           <h1 className="text-2xl font-semibold text-gray-900">Painel de Cobertura — Acústica</h1>
         </div>
         <button
-          onClick={() => exportarCsv(todasAsLinhas)}
+          onClick={() => exportarCsv(LISTA_COBERTURA)}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           ↓ Exportar CSV
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border-l-4 border-l-gray-500 border-y border-r border-gray-200 bg-white p-4">
-          <p className="text-3xl font-bold text-gray-900">{todasAsLinhas.length}</p>
+          <p className="text-3xl font-bold text-gray-900">{LISTA_COBERTURA.length}</p>
           <p className="mt-1 text-xs font-semibold text-gray-500 uppercase">Projetos em desenvolvimento</p>
         </div>
         <div className="rounded-lg border-l-4 border-l-green-500 border-y border-r border-gray-200 bg-white p-4">
@@ -141,10 +92,6 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
           <p className="mt-1 text-xs font-semibold text-gray-500 uppercase">
             Acompanhamento interno de consultoria de acústica
           </p>
-        </div>
-        <div className="rounded-lg border-l-4 border-l-gray-300 border-y border-r border-gray-200 bg-white p-4">
-          <p className="text-3xl font-bold text-gray-400">{totalNaoLocalizado}</p>
-          <p className="mt-1 text-xs font-semibold text-gray-500 uppercase">Não localizados no painel</p>
         </div>
       </div>
 
@@ -173,7 +120,7 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
           <div>
             <h2 className="text-base font-semibold text-gray-900">Projetos em Desenvolvimento</h2>
             <p className="text-xs text-gray-500">
-              {linhasFiltradas.length} de {todasAsLinhas.length} projetos
+              {linhasFiltradas.length} de {LISTA_COBERTURA.length} projetos
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -201,7 +148,6 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
             >
               <option value="">Todos os status</option>
-              <option value="pendente">Pendentes</option>
               <option value="sim">Contratado = Sim</option>
               <option value="nao">Contratado = Não</option>
             </select>
@@ -242,13 +188,6 @@ export function CoberturaClient({ projetos }: { projetos: Projeto[] }) {
             </tbody>
           </table>
         </div>
-
-        {totalNaoLocalizado > 0 && (
-          <p className="border-t border-gray-100 px-5 py-3 text-xs text-gray-400">
-            {totalNaoLocalizado} projeto(s) desta lista ainda não foram encontrados no Painel Acústica
-            (código não bate com nenhum projeto cadastrado).
-          </p>
-        )}
       </div>
     </div>
   )
