@@ -16,6 +16,17 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
 
+// Ordem de prioridade pedida: A Fazer, Atrasado (calculado pela data de
+// entrega, como já é feito no resto do app), Em Andamento, Aguardando
+// Terceiros, Concluído.
+function grupoOrdenacaoStatus(p: Projeto, hoje: string): number {
+  if (p.status === 'A Fazer') return 0
+  if (estaAtrasado(p, hoje)) return 1
+  if (p.status === 'Em Andamento') return 2
+  if (p.status === 'Aguardando Terceiros') return 3
+  return 4
+}
+
 export function ProjetosClient({
   projetosIniciais,
   isEditor,
@@ -105,6 +116,9 @@ export function ProjetosClient({
         return true
       })
       .sort((a, b) => {
+        const grupoA = grupoOrdenacaoStatus(a, hoje)
+        const grupoB = grupoOrdenacaoStatus(b, hoje)
+        if (grupoA !== grupoB) return grupoA - grupoB
         if (!a.entrega && !b.entrega) return 0
         if (!a.entrega) return 1
         if (!b.entrega) return -1
