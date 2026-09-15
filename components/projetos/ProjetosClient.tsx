@@ -12,6 +12,7 @@ import { ProjetoCard } from './ProjetoCard'
 import { ProjetoListItem, ProjetosListaHeader } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
 import { ProjetoFormModal } from './ProjetoFormModal'
+import { IconVinculo } from '@/components/ui/IconVinculo'
 
 type Visualizacao = 'lista' | 'grade'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
@@ -45,6 +46,7 @@ export function ProjetosClient({
   const [filtroGerente, setFiltroGerente] = useState('')
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [filtroAtrasado, setFiltroAtrasado] = useState(false)
+  const [filtroVinculado, setFiltroVinculado] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(() => searchParams.get('projeto'))
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
@@ -113,6 +115,7 @@ export function ProjetosClient({
         if (filtroDiretor && p.diretor !== filtroDiretor) return false
         if (filtroGerente && p.gerente !== filtroGerente) return false
         if (filtroProjetista && p.projetista !== filtroProjetista) return false
+        if (filtroVinculado && !p.projeto_vinculado_id) return false
         return true
       })
       .sort((a, b) => {
@@ -134,6 +137,7 @@ export function ProjetosClient({
     filtroDiretor,
     filtroGerente,
     filtroProjetista,
+    filtroVinculado,
   ])
 
   function handleProjetoCriado(novo: Projeto) {
@@ -347,6 +351,18 @@ export function ProjetosClient({
             </option>
           ))}
         </select>
+        <button
+          onClick={() => setFiltroVinculado((v) => !v)}
+          className={clsx(
+            'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition',
+            filtroVinculado
+              ? 'border-blue-400 bg-blue-50 text-blue-700'
+              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          )}
+        >
+          <IconVinculo className="h-3.5 w-3.5" />
+          Só vinculados
+        </button>
       </div>
 
       {projetosFiltrados.length === 0 ? (
