@@ -1,23 +1,24 @@
-import type { Projeto } from '@/lib/types/database'
-import { CORES_ETAPA, CORES_STATUS } from '@/lib/utils/cores'
+import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
+import { CORES_ETAPA, CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
 import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
-import { Badge } from '@/components/ui/Badge'
+import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 
 export function ProjetoCard({
   projeto,
   nomeVinculado,
+  isEditor = false,
   onClick,
+  onAtualizarCampo,
 }: {
   projeto: Projeto
   nomeVinculado?: string
+  isEditor?: boolean
   onClick: () => void
+  onAtualizarCampo?: (campo: 'etapa' | 'status', valor: string) => void
 }) {
-  const corEtapa = CORES_ETAPA[projeto.etapa]
-  const corStatus = CORES_STATUS[projeto.status]
-
   return (
     <div
       role="button"
@@ -47,8 +48,20 @@ export function ProjetoCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Badge label={corEtapa.label} className={corEtapa.badge} />
-        <Badge label={corStatus.label} className={corStatus.badge} />
+        <BadgeSelecionavel<Etapa>
+          valor={projeto.etapa}
+          opcoes={ETAPAS}
+          cores={CORES_ETAPA}
+          isEditor={isEditor}
+          onSelecionar={(v) => onAtualizarCampo?.('etapa', v)}
+        />
+        <BadgeSelecionavel<StatusProjeto>
+          valor={projeto.status}
+          opcoes={STATUS_PROJETO}
+          cores={CORES_STATUS}
+          isEditor={isEditor}
+          onSelecionar={(v) => onAtualizarCampo?.('status', v)}
+        />
         {projeto.projeto_vinculado_id && (
           <span
             title={nomeVinculado ? `Vinculado a ${nomeVinculado}` : undefined}

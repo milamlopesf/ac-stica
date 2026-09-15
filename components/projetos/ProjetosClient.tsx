@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
-import type { Projeto } from '@/lib/types/database'
+import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
 import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
@@ -136,6 +136,19 @@ export function ProjetosClient({
   function handleProjetoExcluido(id: string) {
     setProjetos((prev) => prev.filter((p) => p.id !== id))
     setSelecionadoId(null)
+  }
+
+  async function atualizarCampoRapido(projetoId: string, campo: 'etapa' | 'status', valor: string) {
+    const anterior = projetos.find((p) => p.id === projetoId)
+    if (!anterior || anterior[campo] === valor) return
+    setProjetos((prev) => prev.map((p) => (p.id === projetoId ? { ...p, [campo]: valor } : p)))
+    const supabase = createClient()
+    const payload = campo === 'etapa' ? { etapa: valor as Etapa } : { status: valor as StatusProjeto }
+    const { error } = await supabase.from('projetos').update(payload).eq('id', projetoId)
+    if (error) {
+      alert(`Erro ao atualizar: ${error.message}`)
+      setProjetos((prev) => prev.map((p) => (p.id === projetoId ? anterior : p)))
+    }
   }
 
   const selecionado = projetos.find((p) => p.id === selecionadoId) ?? null
@@ -337,7 +350,9 @@ export function ProjetosClient({
                     ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                     : undefined
                 }
+                isEditor={isEditor}
                 onClick={() => setSelecionadoId(projeto.id)}
+                onAtualizarCampo={(campo, valor) => atualizarCampoRapido(projeto.id, campo, valor)}
               />
             ))}
           </div>
@@ -353,7 +368,9 @@ export function ProjetosClient({
                   ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                   : undefined
               }
+              isEditor={isEditor}
               onClick={() => setSelecionadoId(projeto.id)}
+              onAtualizarCampo={(campo, valor) => atualizarCampoRapido(projeto.id, campo, valor)}
             />
           ))}
         </div>
