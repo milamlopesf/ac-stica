@@ -20,6 +20,7 @@ import { AcoesTab } from './tabs/AcoesTab'
 import { RiscosTab } from './tabs/RiscosTab'
 import { LicoesAprendidasTab } from './tabs/LicoesAprendidasTab'
 import { AvaliacaoProjetistaTab } from './tabs/AvaliacaoProjetistaTab'
+import { CalculosTRTab } from './tabs/CalculosTRTab'
 
 type Aba =
   | 'cronograma'
@@ -30,6 +31,7 @@ type Aba =
   | 'avaliacao'
   | 'reunioes'
   | 'anexos'
+  | 'calculos_tr'
   | 'historico'
 
 export function ProjetoDetalhePanel({
@@ -77,6 +79,7 @@ export function ProjetoDetalhePanel({
     ...(mostrarAvaliacao ? [{ id: 'avaliacao' as const, label: 'Avaliação do Projetista' }] : []),
     { id: 'reunioes', label: 'Atas de Reunião' },
     { id: 'anexos', label: 'Anexos' },
+    { id: 'calculos_tr', label: 'Cálculos de TR' },
     { id: 'historico', label: 'Histórico' },
   ]
 
@@ -210,6 +213,7 @@ export function ProjetoDetalhePanel({
           )}
           {aba === 'reunioes' && <ReunioesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'anexos' && <AnexosTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'calculos_tr' && <CalculosTRTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'historico' && <HistoricoTab projetoId={projeto.id} />}
         </div>
       </div>

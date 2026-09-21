@@ -223,6 +223,7 @@ create index idx_tr_materiais_categoria on tr_materiais(categoria);
 -- cliente (lib/utils/tr.ts) a partir daqui + das superfícies cadastradas.
 create table tr_calculos (
   id uuid primary key default gen_random_uuid(),
+  projeto_id uuid references projetos(id) on delete set null,
   cliente text,
   ambiente text not null,
   comprimento numeric(6,2),
@@ -242,6 +243,8 @@ create table tr_calculos (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create index idx_tr_calculos_projeto on tr_calculos(projeto_id);
 
 -- Superfícies de cada cenário (situação atual / projeto proposto). A
 -- ocupação (0/50/100%) não é salva por linha — é recalculada ao vivo na tela

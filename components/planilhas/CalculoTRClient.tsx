@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { CalculoTR, MaterialTR } from '@/lib/types/database'
+import type { CalculoTR, MaterialTR, Projeto } from '@/lib/types/database'
 import { TIPOS_AMBIENTE_TR } from '@/lib/utils/tr'
 import { NovoCalculoTRModal } from './NovoCalculoTRModal'
 import { CalculoTRDetalhe } from './CalculoTRDetalhe'
@@ -15,21 +16,44 @@ function formatarDataHora(iso: string): string {
 export function CalculoTRClient({
   calculosIniciais,
   materiais,
+  projetosIniciais,
 }: {
   calculosIniciais: CalculoTR[]
   materiais: MaterialTR[]
+  projetosIniciais: Projeto[]
 }) {
   const supabase = createClient()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [calculos, setCalculos] = useState<CalculoTR[]>(calculosIniciais)
-  const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
-  const [modalNovoAberto, setModalNovoAberto] = useState(false)
+  const [projetos, setProjetos] = useState<Projeto[]>(projetosIniciais)
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(() => searchParams.get('calculo'))
+  const [modalNovoAberto, setModalNovoAberto] = useState(() => searchParams.get('novo') === '1')
+  const projetoIdInicial = searchParams.get('projeto') ?? undefined
+
+  useEffect(() => {
+    if (!searchParams.get('calculo') && !searchParams.get('novo') && !searchParams.get('projeto')) return
+    const restante = new URLSearchParams(searchParams.toString())
+    restante.delete('calculo')
+    restante.delete('novo')
+    restante.delete('projeto')
+    const query = restante.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const selecionado = calculos.find((c) => c.id === selecionadoId) ?? null
+  const projetosPorId = useMemo(() => new Map(projetos.map((p) => [p.id, p])), [projetos])
 
   function handleCriado(novo: CalculoTR) {
     setCalculos((prev) => [novo, ...prev])
     setModalNovoAberto(false)
     setSelecionadoId(novo.id)
+  }
+
+  function handleProjetoCriado(novo: Projeto) {
+    setProjetos((prev) => [...prev, novo])
   }
 
   function handleAtualizado(atualizado: CalculoTR) {
@@ -52,8 +76,10 @@ export function CalculoTRClient({
       <CalculoTRDetalhe
         calculo={selecionado}
         materiais={materiais}
+        projetos={projetos}
         onVoltar={() => setSelecionadoId(null)}
         onAtualizado={handleAtualizado}
+        onProjetoCriado={handleProjetoCriado}
       />
     )
   }
@@ -90,6 +116,11 @@ export function CalculoTRClient({
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-medium text-gray-900">{c.ambiente}</h3>
                   {c.cliente && <span className="text-sm text-gray-500">· {c.cliente}</span>}
+                  {c.projeto_id && projetosPorId.get(c.projeto_id) && (
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      {projetosPorId.get(c.projeto_id)!.nome}
+                    </span>
+                  )}
                 </div>
                 <p className="mt-0.5 text-xs text-gray-500">
                   {TIPOS_AMBIENTE_TR[c.tipo_ambiente].label} · {c.volume.toFixed(1)} m³ · atualizado em{' '}
@@ -108,7 +139,13 @@ export function CalculoTRClient({
       )}
 
       {modalNovoAberto && (
-        <NovoCalculoTRModal onFechar={() => setModalNovoAberto(false)} onCriado={handleCriado} />
+        <NovoCalculoTRModal
+          projetos={projetos}
+          projetoIdInicial={projetoIdInicial}
+          onFechar={() => setModalNovoAberto(false)}
+          onCriado={handleCriado}
+          onProjetoCriado={handleProjetoCriado}
+        />
       )}
     </div>
   )

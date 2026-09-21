@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { createClient } from '@/lib/supabase/client'
-import type { CalculoTR, MaterialTR, SuperficieTR, TipoAmbienteTR, TipoSomTR, CenarioTR } from '@/lib/types/database'
+import type { CalculoTR, MaterialTR, Projeto, SuperficieTR, TipoAmbienteTR, TipoSomTR, CenarioTR } from '@/lib/types/database'
+import { ProjetoPickerTR } from './ProjetoPickerTR'
 import {
   BANDAS_FREQUENCIA,
   LABEL_CENARIO,
@@ -29,13 +30,17 @@ function fmt(v: number | null | undefined, casas = 2) {
 export function CalculoTRDetalhe({
   calculo,
   materiais,
+  projetos,
   onVoltar,
   onAtualizado,
+  onProjetoCriado,
 }: {
   calculo: CalculoTR
   materiais: MaterialTR[]
+  projetos: Projeto[]
   onVoltar: () => void
   onAtualizado: (c: CalculoTR) => void
+  onProjetoCriado: (p: Projeto) => void
 }) {
   const supabase = createClient()
   const [superficies, setSuperficies] = useState<SuperficieTR[]>([])
@@ -174,6 +179,11 @@ export function CalculoTRDetalhe({
           </button>
           <h1 className="mt-1 text-2xl font-semibold text-gray-900">{calculo.ambiente}</h1>
           {calculo.cliente && <p className="text-sm text-gray-500">Cliente: {calculo.cliente}</p>}
+          {calculo.projeto_id && projetos.find((p) => p.id === calculo.projeto_id) && (
+            <p className="text-sm text-gray-500">
+              Projeto: <span className="font-medium text-blue-700">{projetos.find((p) => p.id === calculo.projeto_id)!.nome}</span>
+            </p>
+          )}
         </div>
         <button
           onClick={() => setEditandoDados((v) => !v)}
@@ -184,7 +194,13 @@ export function CalculoTRDetalhe({
       </div>
 
       {editandoDados && (
-        <DadosAmbienteForm calculo={calculo} materiaisPublico={materiaisPublico} onSalvar={salvarDados} />
+        <DadosAmbienteForm
+          calculo={calculo}
+          materiaisPublico={materiaisPublico}
+          projetos={projetos}
+          onSalvar={salvarDados}
+          onProjetoCriado={onProjetoCriado}
+        />
       )}
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
@@ -325,12 +341,17 @@ function LinhaResultado({ label, valores, destaque }: { label: string; valores: 
 function DadosAmbienteForm({
   calculo,
   materiaisPublico,
+  projetos,
   onSalvar,
+  onProjetoCriado,
 }: {
   calculo: CalculoTR
   materiaisPublico: MaterialTR[]
+  projetos: Projeto[]
   onSalvar: (dados: Partial<Omit<CalculoTR, 'id' | 'created_at' | 'updated_at'>>) => void
+  onProjetoCriado: (p: Projeto) => void
 }) {
+  const [projetoId, setProjetoId] = useState(calculo.projeto_id ?? '')
   const [cliente, setCliente] = useState(calculo.cliente ?? '')
   const [ambiente, setAmbiente] = useState(calculo.ambiente)
   const [volume, setVolume] = useState(String(calculo.volume))
@@ -346,6 +367,7 @@ function DadosAmbienteForm({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     onSalvar({
+      projeto_id: projetoId || null,
       cliente: cliente.trim() || null,
       ambiente: ambiente.trim(),
       volume: parseFloat(volume) || calculo.volume,
@@ -360,6 +382,13 @@ function DadosAmbienteForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4">
+      <ProjetoPickerTR
+        projetos={projetos}
+        projetoId={projetoId}
+        onChange={setProjetoId}
+        onProjetoCriado={onProjetoCriado}
+      />
+
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Cliente</label>

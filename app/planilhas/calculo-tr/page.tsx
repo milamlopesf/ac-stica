@@ -1,23 +1,28 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireEditor } from '@/lib/supabase/require-editor'
 import { CalculoTRClient } from '@/components/planilhas/CalculoTRClient'
-import type { CalculoTR, MaterialTR } from '@/lib/types/database'
+import type { CalculoTR, MaterialTR, Projeto } from '@/lib/types/database'
 
 export default async function CalculoTRPage() {
   await requireEditor()
   const supabase = await createClient()
 
-  const [{ data: calculos, error: erroCalculos }, { data: materiais, error: erroMateriais }] =
-    await Promise.all([
-      supabase.from('tr_calculos').select('*').order('updated_at', { ascending: false }),
-      supabase.from('tr_materiais').select('*').order('categoria', { ascending: true }).order('nome', { ascending: true }),
-    ])
+  const [
+    { data: calculos, error: erroCalculos },
+    { data: materiais, error: erroMateriais },
+    { data: projetos, error: erroProjetos },
+  ] = await Promise.all([
+    supabase.from('tr_calculos').select('*').order('updated_at', { ascending: false }),
+    supabase.from('tr_materiais').select('*').order('categoria', { ascending: true }).order('nome', { ascending: true }),
+    supabase.from('projetos').select('*').order('nome', { ascending: true }),
+  ])
 
-  if (erroCalculos || erroMateriais) {
+  if (erroCalculos || erroMateriais || erroProjetos) {
     return (
       <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-        Erro ao carregar: {(erroCalculos ?? erroMateriais)?.message}
+        Erro ao carregar: {(erroCalculos ?? erroMateriais ?? erroProjetos)?.message}
       </div>
     )
   }
@@ -39,9 +44,12 @@ export default async function CalculoTRPage() {
   }
 
   return (
-    <CalculoTRClient
-      calculosIniciais={(calculos as CalculoTR[]) ?? []}
-      materiais={materiais as MaterialTR[]}
-    />
+    <Suspense fallback={null}>
+      <CalculoTRClient
+        calculosIniciais={(calculos as CalculoTR[]) ?? []}
+        materiais={materiais as MaterialTR[]}
+        projetosIniciais={(projetos as Projeto[]) ?? []}
+      />
+    </Suspense>
   )
 }

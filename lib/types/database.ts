@@ -195,6 +195,7 @@ export type TipoAmbienteTR =
 
 export type CalculoTR = {
   id: string
+  projeto_id: string | null
   cliente: string | null
   ambiente: string
   comprimento: number | null
@@ -420,6 +421,7 @@ export type Database = {
         Row: CalculoTR
         Insert: {
           id?: string
+          projeto_id?: string | null
           cliente?: string | null
           ambiente: string
           comprimento?: number | null

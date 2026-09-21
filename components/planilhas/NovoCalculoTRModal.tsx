@@ -2,17 +2,25 @@
 
 import { useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { CalculoTR, TipoAmbienteTR, TipoSomTR } from '@/lib/types/database'
+import type { CalculoTR, Projeto, TipoAmbienteTR, TipoSomTR } from '@/lib/types/database'
 import { TIPOS_AMBIENTE_TR } from '@/lib/utils/tr'
+import { ProjetoPickerTR } from './ProjetoPickerTR'
 
 export function NovoCalculoTRModal({
+  projetos,
+  projetoIdInicial,
   onFechar,
   onCriado,
+  onProjetoCriado,
 }: {
+  projetos: Projeto[]
+  projetoIdInicial?: string
   onFechar: () => void
   onCriado: (calculo: CalculoTR) => void
+  onProjetoCriado: (projeto: Projeto) => void
 }) {
   const supabase = createClient()
+  const [projetoId, setProjetoId] = useState(projetoIdInicial ?? '')
   const [cliente, setCliente] = useState('')
   const [ambiente, setAmbiente] = useState('')
   const [comprimento, setComprimento] = useState('')
@@ -53,6 +61,7 @@ export function NovoCalculoTRModal({
     const { data, error } = await supabase
       .from('tr_calculos')
       .insert({
+        projeto_id: projetoId || null,
         cliente: cliente.trim() || null,
         ambiente: ambiente.trim(),
         comprimento: comprimento ? parseFloat(comprimento) : null,
@@ -91,6 +100,13 @@ export function NovoCalculoTRModal({
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <ProjetoPickerTR
+            projetos={projetos}
+            projetoId={projetoId}
+            onChange={setProjetoId}
+            onProjetoCriado={onProjetoCriado}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Cliente</label>
