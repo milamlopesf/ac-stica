@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CategoriaBiblioteca, ItemBiblioteca } from '@/lib/types/database'
 import { CATEGORIAS_BIBLIOTECA, SUBCATEGORIAS_LAUDO } from '@/lib/utils/biblioteca'
 import { formatarTamanho } from '@/lib/utils/storage'
@@ -24,11 +25,20 @@ export function BibliotecaClient({
   itensIniciais: ItemBiblioteca[]
   isEditor: boolean
 }) {
+  const router = useRouter()
   const [itens, setItens] = useState<ItemBiblioteca[]>(itensIniciais)
   const [busca, setBusca] = useState('')
   const [filtroSubcategoria, setFiltroSubcategoria] = useState('')
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
+
+  function abrirItem(item: ItemBiblioteca) {
+    if (item.ferramenta === 'calculo_tr') {
+      router.push('/planilhas/calculo-tr')
+      return
+    }
+    setSelecionadoId(item.id)
+  }
 
   const itensFiltrados = itens.filter((i) => {
     if (!i.titulo.toLowerCase().includes(busca.toLowerCase())) return false
@@ -110,12 +120,15 @@ export function BibliotecaClient({
           {itensFiltrados.map((item) => (
             <button
               key={item.id}
-              onClick={() => setSelecionadoId(item.id)}
+              onClick={() => abrirItem(item)}
               className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md"
             >
               <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
-                <span className="shrink-0 text-xl">{iconePara(item.nome_arquivo)}</span>
+                <span className="shrink-0 text-xl">{item.ferramenta === 'calculo_tr' ? '🧮' : iconePara(item.nome_arquivo)}</span>
                 <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900">{item.titulo}</h3>
+                {item.ferramenta === 'calculo_tr' && (
+                  <Badge label="Ferramenta interativa" className="border-green-200 bg-green-50 text-green-700" />
+                )}
                 {categoria === 'laudos' && item.modelo && (
                   <Badge label={item.modelo} className="border-blue-200 bg-blue-50 text-blue-700" />
                 )}
@@ -138,7 +151,9 @@ export function BibliotecaClient({
                     {formatarTamanho(item.tamanho_bytes)}
                   </span>
                 ) : (
-                  <Badge label="Pendente de arquivo" className="border-amber-200 bg-amber-50 text-amber-700" />
+                  item.ferramenta !== 'calculo_tr' && (
+                    <Badge label="Pendente de arquivo" className="border-amber-200 bg-amber-50 text-amber-700" />
+                  )
                 )}
               </div>
               {item.descricao && textoSimples(item.descricao) && (

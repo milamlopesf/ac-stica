@@ -144,6 +144,8 @@ export type Profile = {
 
 export type CategoriaBiblioteca = 'normas' | 'planilhas' | 'laudos'
 
+export type FerramentaBiblioteca = 'calculo_tr'
+
 export type ItemBiblioteca = {
   id: string
   categoria: CategoriaBiblioteca
@@ -156,6 +158,69 @@ export type ItemBiblioteca = {
   nome_arquivo: string | null
   caminho_storage: string | null
   tamanho_bytes: number | null
+  ferramenta: FerramentaBiblioteca | null
+  created_at: string
+}
+
+export type UnidadeMaterialTR = 'coef_area' | 'sabins_por_pessoa'
+
+export type MaterialTR = {
+  id: string
+  categoria: string
+  nome: string
+  unidade: UnidadeMaterialTR
+  coef_125: number
+  coef_250: number
+  coef_500: number
+  coef_1000: number
+  coef_2000: number
+  coef_4000: number
+  created_at: string
+}
+
+export type TipoSomTR = 'voz' | 'musica'
+
+export type TipoAmbienteTR =
+  | 'estudio_radio_voz'
+  | 'anfiteatro_voz'
+  | 'teatros'
+  | 'igrejas_fala'
+  | 'igrejas_musica'
+  | 'salas_concerto_classico'
+  | 'salas_concerto_romantico'
+  | 'salas_aula'
+  | 'restaurantes'
+  | 'home_theater_cinema'
+  | 'personalizado'
+
+export type CalculoTR = {
+  id: string
+  cliente: string | null
+  ambiente: string
+  comprimento: number | null
+  largura: number | null
+  altura: number | null
+  volume: number
+  temperatura: number
+  tipo_som: TipoSomTR
+  tipo_ambiente: TipoAmbienteTR
+  tr_alvo_1khz_personalizado: number | null
+  lotacao_total: number | null
+  material_publico_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CenarioTR = 'atual' | 'proposta'
+
+export type SuperficieTR = {
+  id: string
+  calculo_id: string
+  cenario: CenarioTR
+  material_id: string
+  descricao: string | null
+  area: number
+  ordem: number
   created_at: string
 }
 
@@ -327,9 +392,65 @@ export type Database = {
           nome_arquivo?: string | null
           caminho_storage?: string | null
           tamanho_bytes?: number | null
+          ferramenta?: FerramentaBiblioteca | null
           created_at?: string
         }
         Update: Partial<Omit<ItemBiblioteca, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      tr_materiais: {
+        Row: MaterialTR
+        Insert: {
+          id?: string
+          categoria: string
+          nome: string
+          unidade?: UnidadeMaterialTR
+          coef_125: number
+          coef_250: number
+          coef_500: number
+          coef_1000: number
+          coef_2000: number
+          coef_4000: number
+          created_at?: string
+        }
+        Update: Partial<Omit<MaterialTR, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      tr_calculos: {
+        Row: CalculoTR
+        Insert: {
+          id?: string
+          cliente?: string | null
+          ambiente: string
+          comprimento?: number | null
+          largura?: number | null
+          altura?: number | null
+          volume: number
+          temperatura?: number
+          tipo_som?: TipoSomTR
+          tipo_ambiente: TipoAmbienteTR
+          tr_alvo_1khz_personalizado?: number | null
+          lotacao_total?: number | null
+          material_publico_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<CalculoTR, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      tr_calculo_superficies: {
+        Row: SuperficieTR
+        Insert: {
+          id?: string
+          calculo_id: string
+          cenario: CenarioTR
+          material_id: string
+          descricao?: string | null
+          area: number
+          ordem?: number
+          created_at?: string
+        }
+        Update: Partial<Omit<SuperficieTR, 'id' | 'created_at'>>
         Relationships: []
       }
     }

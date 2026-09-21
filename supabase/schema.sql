@@ -180,8 +180,85 @@ create table biblioteca (
   nome_arquivo text,
   caminho_storage text,
   tamanho_bytes int,
+  -- item com ferramenta interativa embutida (ex: 'calculo_tr' abre a
+  -- calculadora de T60 em vez do modal padrão de detalhe/download)
+  ferramenta text,
   created_at timestamptz default now()
 );
+
+
+-- ============================================================================
+-- 2b. CALCULADORA DE TEMPO DE REVERBERAÇÃO (TR / T60)
+-- ============================================================================
+--
+-- Versão interativa da planilha "Cálculo de TR" (aberta a partir do item de
+-- mesmo nome em Planilhas de Cálculo, via biblioteca.ferramenta = 'calculo_tr').
+-- Reproduz as fórmulas da planilha original (Sabine, Eyring, curvas-alvo por
+-- tipo de ambiente e faixas de tolerância Everest & Pohlmann) — ver lib/utils/tr.ts.
+
+-- Biblioteca de materiais (coeficientes de absorção por banda de oitava),
+-- importada da aba "Biblioteca de materiais" da planilha original. Editores
+-- podem cadastrar materiais próprios (categoria livre, ex: "Meus Materiais").
+create table tr_materiais (
+  id uuid primary key default gen_random_uuid(),
+  categoria text not null,
+  nome text not null,
+  -- 'coef_area': coeficiente de absorção (0-1+), multiplicado pela área da
+  -- superfície. 'sabins_por_pessoa': absorção equivalente direta por pessoa
+  -- (m² sabin), multiplicada pela lotação — só usado por materiais de público.
+  unidade text not null default 'coef_area' check (unidade in ('coef_area', 'sabins_por_pessoa')),
+  coef_125 numeric(5,3) not null,
+  coef_250 numeric(5,3) not null,
+  coef_500 numeric(5,3) not null,
+  coef_1000 numeric(5,3) not null,
+  coef_2000 numeric(5,3) not null,
+  coef_4000 numeric(5,3) not null,
+  created_at timestamptz default now()
+);
+
+create index idx_tr_materiais_categoria on tr_materiais(categoria);
+
+-- Um cálculo salvo (um "Ambiente"). Guarda só os parâmetros de entrada —
+-- Sabine, Eyring, curva-alvo e faixas de tolerância são recalculados no
+-- cliente (lib/utils/tr.ts) a partir daqui + das superfícies cadastradas.
+create table tr_calculos (
+  id uuid primary key default gen_random_uuid(),
+  cliente text,
+  ambiente text not null,
+  comprimento numeric(6,2),
+  largura numeric(6,2),
+  altura numeric(6,2),
+  volume numeric(10,2) not null,
+  temperatura numeric(4,1) not null default 25,
+  tipo_som text not null check (tipo_som in ('voz', 'musica')),
+  tipo_ambiente text not null check (tipo_ambiente in (
+    'estudio_radio_voz', 'anfiteatro_voz', 'teatros', 'igrejas_fala', 'igrejas_musica',
+    'salas_concerto_classico', 'salas_concerto_romantico', 'salas_aula', 'restaurantes',
+    'home_theater_cinema', 'personalizado'
+  )),
+  tr_alvo_1khz_personalizado numeric(5,3),
+  lotacao_total int,
+  material_publico_id uuid references tr_materiais(id),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Superfícies de cada cenário (situação atual / projeto proposto). A
+-- ocupação (0/50/100%) não é salva por linha — é recalculada ao vivo na tela
+-- a partir de tr_calculos.lotacao_total + material_publico_id, só no cenário
+-- "proposta".
+create table tr_calculo_superficies (
+  id uuid primary key default gen_random_uuid(),
+  calculo_id uuid not null references tr_calculos(id) on delete cascade,
+  cenario text not null check (cenario in ('atual', 'proposta')),
+  material_id uuid not null references tr_materiais(id),
+  descricao text,
+  area numeric(8,2) not null check (area > 0),
+  ordem int not null default 0,
+  created_at timestamptz default now()
+);
+
+create index idx_tr_calculo_superficies_calculo on tr_calculo_superficies(calculo_id);
 
 
 -- ============================================================================
@@ -200,6 +277,9 @@ alter table projeto_historico enable row level security;
 alter table cronograma_etapas enable row level security;
 alter table profiles enable row level security;
 alter table biblioteca enable row level security;
+alter table tr_materiais enable row level security;
+alter table tr_calculos enable row level security;
+alter table tr_calculo_superficies enable row level security;
 
 
 -- ============================================================================
@@ -311,6 +391,36 @@ create policy "editor insere" on biblioteca for insert
 create policy "editor atualiza" on biblioteca for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on biblioteca for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- tr_materiais
+create policy "leitura autenticada" on tr_materiais for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on tr_materiais for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on tr_materiais for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on tr_materiais for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- tr_calculos
+create policy "leitura autenticada" on tr_calculos for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on tr_calculos for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on tr_calculos for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on tr_calculos for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- tr_calculo_superficies
+create policy "leitura autenticada" on tr_calculo_superficies for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on tr_calculo_superficies for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on tr_calculo_superficies for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on tr_calculo_superficies for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- profiles: qualquer pessoa LOGADA pode ler (necessário para o app checar se
