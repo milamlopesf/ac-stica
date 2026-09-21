@@ -29,9 +29,10 @@ export default async function CalculoTRPage() {
           ← Voltar para Planilhas de Cálculo
         </Link>
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          A biblioteca de materiais ainda não foi importada no banco de dados. Rode
-          supabase/migrations/2026-09-tr-calculadora.sql no SQL Editor do Supabase antes de usar
-          a calculadora.
+          A biblioteca de materiais ainda não foi importada no banco de dados. Rode os arquivos
+          supabase/migrations/2026-09-tr-calculadora-1-schema.sql e
+          2026-09-tr-calculadora-2-materiais.sql (nessa ordem) no SQL Editor do Supabase antes de
+          usar a calculadora.
         </div>
       </div>
     )

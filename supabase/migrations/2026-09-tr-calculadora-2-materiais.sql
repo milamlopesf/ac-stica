@@ -1,115 +1,22 @@
 -- ============================================================================
--- Calculadora de Tempo de Reverberacao (TR) -- criacao das tabelas + import
--- da biblioteca de materiais (528 materiais + 2 valores de absorcao por pessoa),
--- extraidos da planilha 'Tempo_de_reverberacao_3.xlsx' fornecida pelo usuario.
+-- Calculadora de Tempo de Reverberacao (TR) -- passo 2/2: importa a
+-- biblioteca de materiais (528 materiais + 2 valores de absorcao por
+-- pessoa). Rode DEPOIS de 2026-09-tr-calculadora-1-schema.sql.
 --
--- Rode este arquivo inteiro uma unica vez no SQL Editor do Supabase.
--- Estrutura das tabelas tambem documentada em supabase/schema.sql (secao 2b).
+-- Dividido em blocos menores (cada um seu proprio "insert into ... values")
+-- porque um INSERT unico com 530 linhas pode ser cortado ao colar em
+-- alguns editores SQL. Rode os blocos NA ORDEM, um por vez (cada um ja
+-- termina com ";" -- pode selecionar um bloco de cada vez e apertar Run).
+--
+-- Se uma tentativa anterior de rodar este arquivo falhou no meio e voce
+-- nao tem certeza de quantas linhas ja foram inseridas, rode o truncate
+-- abaixo primeiro para garantir que nao fique nada duplicado (seguro numa
+-- importacao inicial, quando ainda nao existe nenhum calculo salvo):
+--
+-- truncate table tr_materiais restart identity cascade;
 -- ============================================================================
 
-alter table biblioteca add column if not exists ferramenta text;
-
--- Marca o item existente "Cálculo de TR" para abrir a calculadora interativa
--- em vez do modal padrão de detalhe/download. Ajuste o "titulo ilike" abaixo
--- se o item na sua biblioteca tiver um título ligeiramente diferente.
-update biblioteca set ferramenta = 'calculo_tr'
-where categoria = 'planilhas' and titulo ilike '%C%lculo de TR%' and ferramenta is null;
-
-create table if not exists tr_materiais (
-  id uuid primary key default gen_random_uuid(),
-  categoria text not null,
-  nome text not null,
-  unidade text not null default 'coef_area' check (unidade in ('coef_area', 'sabins_por_pessoa')),
-  coef_125 numeric(5,3) not null,
-  coef_250 numeric(5,3) not null,
-  coef_500 numeric(5,3) not null,
-  coef_1000 numeric(5,3) not null,
-  coef_2000 numeric(5,3) not null,
-  coef_4000 numeric(5,3) not null,
-  created_at timestamptz default now()
-);
-
-create index if not exists idx_tr_materiais_categoria on tr_materiais(categoria);
-
-create table if not exists tr_calculos (
-  id uuid primary key default gen_random_uuid(),
-  cliente text,
-  ambiente text not null,
-  comprimento numeric(6,2),
-  largura numeric(6,2),
-  altura numeric(6,2),
-  volume numeric(10,2) not null,
-  temperatura numeric(4,1) not null default 25,
-  tipo_som text not null check (tipo_som in ('voz', 'musica')),
-  tipo_ambiente text not null check (tipo_ambiente in (
-    'estudio_radio_voz', 'anfiteatro_voz', 'teatros', 'igrejas_fala', 'igrejas_musica',
-    'salas_concerto_classico', 'salas_concerto_romantico', 'salas_aula', 'restaurantes',
-    'home_theater_cinema', 'personalizado'
-  )),
-  tr_alvo_1khz_personalizado numeric(5,3),
-  lotacao_total int,
-  material_publico_id uuid references tr_materiais(id),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
-create table if not exists tr_calculo_superficies (
-  id uuid primary key default gen_random_uuid(),
-  calculo_id uuid not null references tr_calculos(id) on delete cascade,
-  cenario text not null check (cenario in ('atual', 'proposta')),
-  material_id uuid not null references tr_materiais(id),
-  descricao text,
-  area numeric(8,2) not null check (area > 0),
-  ordem int not null default 0,
-  created_at timestamptz default now()
-);
-
-create index if not exists idx_tr_calculo_superficies_calculo on tr_calculo_superficies(calculo_id);
-
-alter table tr_materiais enable row level security;
-alter table tr_calculos enable row level security;
-alter table tr_calculo_superficies enable row level security;
-
-drop policy if exists "leitura autenticada" on tr_materiais;
-drop policy if exists "editor insere" on tr_materiais;
-drop policy if exists "editor atualiza" on tr_materiais;
-drop policy if exists "editor apaga" on tr_materiais;
-create policy "leitura autenticada" on tr_materiais for select
-  using (exists (select 1 from profiles where id = auth.uid()));
-create policy "editor insere" on tr_materiais for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor atualiza" on tr_materiais for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor apaga" on tr_materiais for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-
-drop policy if exists "leitura autenticada" on tr_calculos;
-drop policy if exists "editor insere" on tr_calculos;
-drop policy if exists "editor atualiza" on tr_calculos;
-drop policy if exists "editor apaga" on tr_calculos;
-create policy "leitura autenticada" on tr_calculos for select
-  using (exists (select 1 from profiles where id = auth.uid()));
-create policy "editor insere" on tr_calculos for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor atualiza" on tr_calculos for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor apaga" on tr_calculos for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-
-drop policy if exists "leitura autenticada" on tr_calculo_superficies;
-drop policy if exists "editor insere" on tr_calculo_superficies;
-drop policy if exists "editor atualiza" on tr_calculo_superficies;
-drop policy if exists "editor apaga" on tr_calculo_superficies;
-create policy "leitura autenticada" on tr_calculo_superficies for select
-  using (exists (select 1 from profiles where id = auth.uid()));
-create policy "editor insere" on tr_calculo_superficies for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor atualiza" on tr_calculo_superficies for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor apaga" on tr_calculo_superficies for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-
--- Biblioteca de materiais (coeficientes de absorcao por banda de oitava)
+-- bloco 1/6 (100 materiais)
 insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Ar', 'Ar', 'coef_area', 0.0, 0.0, 0.0, 0.001, 0.0024, 0.0059),
   ('Ar', 'Ar- umidade relativa 40%', 'coef_area', 0.0, 0.0, 0.0, 0.0, 0.002, 0.009),
@@ -210,7 +117,10 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Lambris', 'Técnica - Painel Acústico Ripado 15/25 - plenum 15mm', 'coef_area', 0.05, 0.15, 0.2, 0.3, 0.55, 0.7),
   ('Lambris', 'Técnica - Painel Acústico Ripado 15/25 - plenum 50mm', 'coef_area', 0.3, 0.55, 0.65, 0.75, 0.85, 0.85),
   ('Lambris', 'Técnica - Painel Acústico Ripado 25/25 - plenum 15mm', 'coef_area', 0.05, 0.15, 0.25, 0.4, 0.55, 0.65),
-  ('Lambris', 'Técnica - Painel Acústico Ripado 25/25 - plenum 50mm', 'coef_area', 0.3, 0.65, 0.75, 0.75, 0.8, 0.8),
+  ('Lambris', 'Técnica - Painel Acústico Ripado 25/25 - plenum 50mm', 'coef_area', 0.3, 0.65, 0.75, 0.75, 0.8, 0.8);
+
+-- bloco 2/6 (100 materiais)
+insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Lambris', 'Técnica - Painel Acústico Ripado Difusor - plenum 15mm', 'coef_area', 0.15, 0.25, 0.55, 0.85, 0.6, 0.35),
   ('Lambris', 'Técnica - Painel Acústico Ripado Difusor - plenum 50mm', 'coef_area', 0.2, 0.55, 0.95, 0.7, 0.55, 0.55),
   ('Lambris', 'Técnica - Painel Acústico Frisado - FRT 16/0', 'coef_area', 0.2, 0.1, 0.05, 0.1, 0.15, 0.2),
@@ -310,7 +220,10 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Forros', 'Luxacustic manta, revestida c/ filme preto extin-flame', 'coef_area', 0.01, 0.1, 0.3, 0.53, 0.54, 0.44),
   ('Forros', 'Luxaustic projetada sobre superficie rígida, espessura entre 25 e 31 mm', 'coef_area', 0.37, 0.41, 0.61, 0.98, 1.0, 1.0),
   ('Forros', 'Ecophon Sombra 15mm e plenum 200mm', 'coef_area', 0.35, 0.8, 1.0, 0.85, 1.0, 1.0),
-  ('Forros', 'Ecophon Sombra 15mm e plenum 50mm', 'coef_area', 0.1, 0.25, 0.6, 0.95, 1.0, 1.0),
+  ('Forros', 'Ecophon Sombra 15mm e plenum 50mm', 'coef_area', 0.1, 0.25, 0.6, 0.95, 1.0, 1.0);
+
+-- bloco 3/6 (100 materiais)
+insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Forros', 'Eucatex - fibra de madeira - com perfuraçao regular', 'coef_area', 0.32, 0.35, 0.41, 0.74, 0.56, 0.69),
   ('Forros', 'Eucatex - Travertino', 'coef_area', 0.3, 0.3, 0.25, 0.25, 0.18, 0.46),
   ('Forros', 'Eucatex - Ranhurado', 'coef_area', 0.18, 0.21, 0.23, 0.28, 0.26, 0.46),
@@ -410,7 +323,10 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Forros', 'Forro ECLIPSE - USG - Forro D12, padrão aleatório 8/12/50 R, plenum de 100 mm', 'coef_area', 0.19, 0.29, 0.78, 0.64, 0.32, 0.57),
   ('Forros', 'Forro ECLIPSE - USG - Forro D12, padrão aleatório 8/12/50 R, c/ fibra de vidro 80 mm, c/ plenum 100 mm', 'coef_area', 0.56, 0.83, 0.53, 0.49, 0.33, 0.35),
   ('Forros', 'Forro ECLIPSE - USG - Forro D12, padrão retilíneo 12/25 Q, plenum de 100 mm', 'coef_area', 0.16, 0.2, 0.55, 0.83, 0.52, 0.69),
-  ('Forros', 'Forro ECLIPSE - USG - Forro D12, padrão retilíneo 12/25 Q, c/ fibra de vidro 80 mm, c/ plenum de 100 mm', 'coef_area', 0.6, 0.8, 0.48, 0.54, 0.48, 0.51),
+  ('Forros', 'Forro ECLIPSE - USG - Forro D12, padrão retilíneo 12/25 Q, c/ fibra de vidro 80 mm, c/ plenum de 100 mm', 'coef_area', 0.6, 0.8, 0.48, 0.54, 0.48, 0.51);
+
+-- bloco 4/6 (100 materiais)
+insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Forros', 'Forro ECLIPSE - USG - Armstrong Cirrus RH90 forro 19 mm', 'coef_area', 0.28, 0.36, 0.49, 0.68, 0.81, 0.89),
   ('Forros', 'Forro ECLIPSE - USG - Armstrong Dune RH90 forro 19 mm', 'coef_area', 0.37, 0.38, 0.65, 0.59, 0.49, 0.37),
   ('Forros', 'Forro ECLIPSE - USG - Armstrong Fine Fissured Rh90 forro 16 mm', 'coef_area', 0.35, 0.34, 0.55, 0.72, 0.65, 0.62),
@@ -510,7 +426,10 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Illtec', 'SONEX Illtec Skin 40', 'coef_area', 0.16, 0.72, 0.75, 0.3, 0.38, 0.26),
   ('Illtec', 'NRC 0,10', 'coef_area', 0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
   ('Illtec', 'NRC 0,20', 'coef_area', 0.2, 0.2, 0.2, 0.2, 0.2, 0.2),
-  ('Illtec', 'NRC 0,30', 'coef_area', 0.3, 0.3, 0.3, 0.3, 0.3, 0.3),
+  ('Illtec', 'NRC 0,30', 'coef_area', 0.3, 0.3, 0.3, 0.3, 0.3, 0.3);
+
+-- bloco 5/6 (100 materiais)
+insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Illtec', 'NRC 0,40', 'coef_area', 0.4, 0.4, 0.4, 0.4, 0.4, 0.4),
   ('Illtec', 'NRC 0,50', 'coef_area', 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),
   ('Illtec', 'NRC 0,60', 'coef_area', 0.6, 0.6, 0.6, 0.6, 0.6, 0.6),
@@ -610,7 +529,10 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Illtec', 'Sonique wave 50/10', 'coef_area', 0.1, 0.74, 0.96, 0.88, 0.88, 0.92),
   ('Illtec', 'Sonique wave 75/30', 'coef_area', 0.19, 0.93, 1.0, 0.96, 0.96, 0.96),
   ('Illtec', 'Sonique wave 37i', 'coef_area', 0.05, 0.54, 0.75, 0.9, 1.0, 0.93),
-  ('Illtec', 'Sonique wave 47i', 'coef_area', 0.09, 0.66, 0.97, 0.92, 1.06, 0.96),
+  ('Illtec', 'Sonique wave 47i', 'coef_area', 0.09, 0.66, 0.97, 0.92, 1.06, 0.96);
+
+-- bloco 6/6 (30 materiais)
+insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500, coef_1000, coef_2000, coef_4000) values
   ('Illtec', 'Sonique wave 57i', 'coef_area', 0.09, 0.68, 0.97, 0.97, 1.0, 0.97),
   ('Illtec', 'Sonique wave 62i', 'coef_area', 0.11, 0.76, 0.96, 0.98, 1.0, 1.0),
   ('Illtec', 'Sonique wave 87i', 'coef_area', 0.17, 0.96, 1.0, 1.0, 1.0, 1.0),
@@ -641,3 +563,4 @@ insert into tr_materiais (categoria, nome, unidade, coef_125, coef_250, coef_500
   ('Mobílias E Outros', 'Pessoa adulta em pé', 'coef_area', 0.18, 0.32, 0.44, 0.42, 0.46, 0.37),
   ('Público', 'Pessoa em assento de madeira [m2]', 'sabins_por_pessoa', 0.28, 0.25, 0.35, 0.38, 0.38, 0.35),
   ('Público', 'Pessoa adulta em pé', 'sabins_por_pessoa', 0.18, 0.32, 0.44, 0.42, 0.46, 0.37);
+
