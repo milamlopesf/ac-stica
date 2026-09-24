@@ -16,18 +16,12 @@ import { ReunioesTab } from './tabs/ReunioesTab'
 import { AnexosTab } from './tabs/AnexosTab'
 import { HistoricoTab } from './tabs/HistoricoTab'
 import { CronogramaTab } from './tabs/CronogramaTab'
-import { AcoesTab } from './tabs/AcoesTab'
-import { RiscosTab } from './tabs/RiscosTab'
-import { LicoesAprendidasTab } from './tabs/LicoesAprendidasTab'
 import { AvaliacaoProjetistaTab } from './tabs/AvaliacaoProjetistaTab'
 import { CalculosTRTab } from './tabs/CalculosTRTab'
 
 type Aba =
   | 'cronograma'
   | 'anotacoes'
-  | 'acoes'
-  | 'riscos'
-  | 'licoes'
   | 'avaliacao'
   | 'reunioes'
   | 'anexos'
@@ -67,15 +61,11 @@ export function ProjetoDetalhePanel({
     projeto.projeto_vinculado_id ??
     outrosProjetos.find((p) => p.projeto_vinculado_id === projeto.id)?.id ??
     null
-  const mostrarLicoes = projeto.etapa === 'OBRA' || Boolean(vinculadoId)
   const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
 
   const abas: { id: Aba; label: string }[] = [
     { id: 'cronograma', label: 'Cronograma' },
     { id: 'anotacoes', label: 'Anotações' },
-    { id: 'acoes', label: 'Ações' },
-    { id: 'riscos', label: 'Riscos' },
-    ...(mostrarLicoes ? [{ id: 'licoes' as const, label: 'Lições Aprendidas' }] : []),
     ...(mostrarAvaliacao ? [{ id: 'avaliacao' as const, label: 'Avaliação do Projetista' }] : []),
     { id: 'reunioes', label: 'Atas de Reunião' },
     { id: 'anexos', label: 'Anexos' },
@@ -199,11 +189,6 @@ export function ProjetoDetalhePanel({
         <div className="flex-1 p-5">
           {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} />}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'acoes' && <AcoesTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'riscos' && <RiscosTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'licoes' && mostrarLicoes && (
-            <LicoesAprendidasTab projetoId={projeto.id} vinculadoId={vinculadoId} isEditor={isEditor} />
-          )}
           {aba === 'avaliacao' && mostrarAvaliacao && (
             <AvaliacaoProjetistaTab
               projetoId={projeto.id}
