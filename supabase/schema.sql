@@ -57,35 +57,6 @@ create table atividades (
   created_at timestamptz default now()
 );
 
--- Riscos mapeados por projeto (aba "Riscos"). Criticidade (Baixo/Médio/Alto)
--- é calculada no app cruzando probabilidade x impacto — não fica salva aqui.
-create table riscos (
-  id uuid primary key default gen_random_uuid(),
-  projeto_id uuid not null references projetos(id) on delete cascade,
-  descricao text not null,
-  acao_mitigadora text,
-  responsavel text,
-  data_limite date,
-  probabilidade text check (probabilidade in ('Baixo','Médio','Alto')),
-  impacto text check (impacto in ('Baixo','Médio','Alto')),
-  mitigado boolean not null default false,
-  created_at timestamptz default now()
-);
-
-create index idx_riscos_projeto on riscos(projeto_id);
-
--- Lições aprendidas (aba "Lições Aprendidas"): só aparece em projetos com
--- etapa = OBRA ou que tenham um projeto vinculado. O app mostra os mesmos
--- registros tanto no card da obra quanto no do projeto vinculado a ela.
-create table licoes_aprendidas (
-  id uuid primary key default gen_random_uuid(),
-  projeto_id uuid not null references projetos(id) on delete cascade,
-  texto text not null,
-  created_at timestamptz default now()
-);
-
-create index idx_licoes_projeto on licoes_aprendidas(projeto_id);
-
 -- Avaliação da entrega do projetista externo (aba "Avaliação do Projetista"):
 -- só aparece quando projetos.projetista não é 'Interno'.
 create table avaliacoes_projetista (
@@ -270,8 +241,6 @@ create index idx_tr_calculo_superficies_calculo on tr_calculo_superficies(calcul
 
 alter table projetos enable row level security;
 alter table atividades enable row level security;
-alter table riscos enable row level security;
-alter table licoes_aprendidas enable row level security;
 alter table avaliacoes_projetista enable row level security;
 alter table notas enable row level security;
 alter table reunioes enable row level security;
@@ -307,26 +276,6 @@ create policy "editor insere" on atividades for insert
 create policy "editor atualiza" on atividades for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on atividades for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-
--- riscos
-create policy "leitura autenticada" on riscos for select
-  using (exists (select 1 from profiles where id = auth.uid()));
-create policy "editor insere" on riscos for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor atualiza" on riscos for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor apaga" on riscos for delete
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-
--- licoes_aprendidas
-create policy "leitura autenticada" on licoes_aprendidas for select
-  using (exists (select 1 from profiles where id = auth.uid()));
-create policy "editor insere" on licoes_aprendidas for insert
-  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor atualiza" on licoes_aprendidas for update
-  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
-create policy "editor apaga" on licoes_aprendidas for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- avaliacoes_projetista

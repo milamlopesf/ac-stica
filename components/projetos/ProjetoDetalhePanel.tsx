@@ -57,10 +57,6 @@ export function ProjetoDetalhePanel({
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
 
-  const vinculadoId =
-    projeto.projeto_vinculado_id ??
-    outrosProjetos.find((p) => p.projeto_vinculado_id === projeto.id)?.id ??
-    null
   const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
 
   const abas: { id: Aba; label: string }[] = [
@@ -144,7 +140,7 @@ export function ProjetoDetalhePanel({
 
         <div className="flex gap-2 border-b border-gray-200 px-5 py-3">
           <button
-            onClick={() => emitirRelatorioProjeto(projeto, vinculadoId)}
+            onClick={() => emitirRelatorioProjeto(projeto)}
             className="flex items-center gap-1.5 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <IconRelatorio className="h-4 w-4" />

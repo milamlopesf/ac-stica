@@ -42,28 +42,6 @@ export type Atividade = {
   created_at: string
 }
 
-export type NivelRisco = 'Baixo' | 'Médio' | 'Alto'
-
-export type Risco = {
-  id: string
-  projeto_id: string
-  descricao: string
-  acao_mitigadora: string | null
-  responsavel: string | null
-  data_limite: string | null
-  probabilidade: NivelRisco | null
-  impacto: NivelRisco | null
-  mitigado: boolean
-  created_at: string
-}
-
-export type LicaoAprendida = {
-  id: string
-  projeto_id: string
-  texto: string
-  created_at: string
-}
-
 export type NotaAvaliacao = 'Ótimo' | 'Bom' | 'Regular' | 'Ruim'
 
 export type AvaliacaoProjetista = {
@@ -263,34 +241,6 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<Atividade, 'id' | 'created_at'>>
-        Relationships: []
-      }
-      riscos: {
-        Row: Risco
-        Insert: {
-          id?: string
-          projeto_id: string
-          descricao: string
-          acao_mitigadora?: string | null
-          responsavel?: string | null
-          data_limite?: string | null
-          probabilidade?: NivelRisco | null
-          impacto?: NivelRisco | null
-          mitigado?: boolean
-          created_at?: string
-        }
-        Update: Partial<Omit<Risco, 'id' | 'created_at'>>
-        Relationships: []
-      }
-      licoes_aprendidas: {
-        Row: LicaoAprendida
-        Insert: {
-          id?: string
-          projeto_id: string
-          texto: string
-          created_at?: string
-        }
-        Update: Partial<Omit<LicaoAprendida, 'id' | 'created_at'>>
         Relationships: []
       }
       avaliacoes_projetista: {

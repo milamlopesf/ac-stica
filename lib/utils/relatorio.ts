@@ -1,9 +1,8 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Projeto } from '@/lib/types/database'
-import { CORES_ETAPA, CORES_STATUS, CORES_STATUS_ATIVIDADE, CORES_NIVEL_RISCO, CORES_NOTA_AVALIACAO } from '@/lib/utils/cores'
+import { CORES_ETAPA, CORES_STATUS, CORES_STATUS_ATIVIDADE, CORES_NOTA_AVALIACAO } from '@/lib/utils/cores'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
-import { calcularCriticidade } from '@/lib/utils/riscos'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { textoComQuebras } from '@/lib/utils/texto'
 
@@ -130,7 +129,7 @@ const ESTILO_RELATORIO = `
   }
 `
 
-export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: string | null) {
+export async function emitirRelatorioProjeto(projeto: Projeto) {
   const janela = window.open('', '_blank')
   if (!janela) {
     alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
@@ -141,9 +140,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: str
   )
 
   const supabase = createClient()
-  const mostrarLicoes = projeto.etapa === 'OBRA' || Boolean(vinculadoId)
   const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
-  const idsLicoes = vinculadoId ? [projeto.id, vinculadoId] : [projeto.id]
 
   const [
     { data: notas },
@@ -151,8 +148,6 @@ export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: str
     { data: anexos },
     vinculado,
     { data: acoes },
-    { data: riscos },
-    { data: licoes },
     { data: avaliacoes },
   ] = await Promise.all([
     supabase
@@ -178,14 +173,6 @@ export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: str
       .select('*')
       .eq('projeto_id', projeto.id)
       .order('data_vencimento', { ascending: true, nullsFirst: false }),
-    supabase.from('riscos').select('*').eq('projeto_id', projeto.id).order('created_at', { ascending: false }),
-    mostrarLicoes
-      ? supabase
-          .from('licoes_aprendidas')
-          .select('*')
-          .in('projeto_id', idsLicoes)
-          .order('created_at', { ascending: false })
-      : Promise.resolve({ data: null as { texto: string; created_at: string }[] | null }),
     mostrarAvaliacao
       ? supabase
           .from('avaliacoes_projetista')
@@ -262,38 +249,6 @@ export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: str
         .join('')
     : '<li class="vazio">Nenhuma ação combinada registrada.</li>'
 
-  const listaRiscos = (riscos ?? []).length
-    ? (riscos ?? [])
-        .map((r) => {
-          const criticidade = calcularCriticidade(r.probabilidade, r.impacto)
-          return `
-        <li>
-          <p class="item-titulo">${escapeHtml(r.descricao)}${r.mitigado ? ' <span class="item-data">(mitigado)</span>' : ''}</p>
-          ${r.acao_mitigadora ? `<p class="texto-conteudo">Ação mitigadora: ${escapeHtml(r.acao_mitigadora)}</p>` : ''}
-          <p class="meta">
-            ${criticidade ? `<span class="tag" style="background:${CORES_NIVEL_RISCO[criticidade].hex}">Criticidade: ${criticidade}</span>` : ''}
-            ${r.probabilidade ? `<span>Probabilidade: ${escapeHtml(r.probabilidade)}</span>` : ''}
-            ${r.impacto ? `<span>Impacto em obra: ${escapeHtml(r.impacto)}</span>` : ''}
-            ${r.responsavel ? `<span>Responsável: ${escapeHtml(r.responsavel)}</span>` : ''}
-            ${r.data_limite ? `<span>Prazo: ${formatarData(r.data_limite)}</span>` : ''}
-          </p>
-        </li>`
-        })
-        .join('')
-    : '<li class="vazio">Nenhum risco mapeado.</li>'
-
-  const listaLicoes = (licoes ?? []).length
-    ? (licoes ?? [])
-        .map(
-          (l) => `
-        <li>
-          <p class="item-data">${formatarDataHora(l.created_at)}</p>
-          <p class="texto-conteudo">${escapeHtml(l.texto)}</p>
-        </li>`
-        )
-        .join('')
-    : '<li class="vazio">Nenhuma lição aprendida registrada.</li>'
-
   const listaAvaliacoes = (avaliacoes ?? []).length
     ? (avaliacoes ?? [])
         .map((a) => {
@@ -336,20 +291,6 @@ export async function emitirRelatorioProjeto(projeto: Projeto, vinculadoId?: str
     <h2>Ações combinadas (${(acoes ?? []).length})</h2>
     <ul>${listaAcoes}</ul>
   </section>
-
-  <section>
-    <h2>Riscos mapeados (${(riscos ?? []).length})</h2>
-    <ul>${listaRiscos}</ul>
-  </section>
-
-  ${
-    mostrarLicoes
-      ? `<section>
-    <h2>Lições aprendidas (${(licoes ?? []).length})</h2>
-    <ul>${listaLicoes}</ul>
-  </section>`
-      : ''
-  }
 
   ${
     mostrarAvaliacao
