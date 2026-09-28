@@ -210,17 +210,20 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
               </div>
               {(isEditor || (reuniao.participantes && reuniao.participantes.trim())) && (
                 <div className="mt-2">
+                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    Participantes
+                  </p>
                   {isEditor ? (
                     <textarea
                       key={reuniao.id}
                       defaultValue={reuniao.participantes ?? ''}
                       onBlur={(e) => atualizarParticipantes(reuniao.id, e.target.value)}
-                      placeholder="Participantes e empresas..."
+                      placeholder="Nomes e empresas..."
                       rows={2}
-                      className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600"
+                      className="w-full resize-none rounded-md border border-transparent px-1.5 py-1 text-sm text-gray-700 transition-colors hover:border-gray-200 focus:border-gray-300 focus:outline-none"
                     />
                   ) : (
-                    <p className="whitespace-pre-wrap text-xs text-gray-500">{reuniao.participantes}</p>
+                    <p className="whitespace-pre-wrap px-1.5 text-sm text-gray-700">{reuniao.participantes}</p>
                   )}
                 </div>
               )}
