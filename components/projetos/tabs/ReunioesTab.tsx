@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import type { Reuniao } from '@/lib/types/database'
 import { formatarData, hojeISO } from '@/lib/utils/data'
@@ -208,36 +209,44 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
                   </button>
                 )}
               </div>
-              {(isEditor || (reuniao.participantes && reuniao.participantes.trim())) && (
-                <div className="mt-2">
-                  <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
-                    Participantes
-                  </p>
-                  {isEditor ? (
-                    <textarea
-                      key={reuniao.id}
-                      defaultValue={reuniao.participantes ?? ''}
-                      onBlur={(e) => atualizarParticipantes(reuniao.id, e.target.value)}
-                      placeholder="Nomes e empresas..."
-                      rows={2}
-                      className="w-full resize-none rounded-md border border-transparent px-1.5 py-1 text-sm text-gray-700 transition-colors hover:border-gray-200 focus:border-gray-300 focus:outline-none"
-                    />
-                  ) : (
-                    <p className="whitespace-pre-wrap px-1.5 text-sm text-gray-700">{reuniao.participantes}</p>
-                  )}
-                </div>
-              )}
-              {(isEditor || (reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo))) && (
-                <div className="mt-2">
-                  <RichTextEditor
-                    value={reuniao.conteudo ?? ''}
-                    editable={isEditor}
-                    mostrarBarra={false}
-                    placeholder={isEditor ? 'Conteúdo da ata...' : undefined}
-                    onBlur={(html) => atualizarConteudo(reuniao.id, html)}
-                  />
-                </div>
-              )}
+              {(() => {
+                const mostrarParticipantes = isEditor || Boolean(reuniao.participantes && reuniao.participantes.trim())
+                const mostrarConteudo = isEditor || Boolean(reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo))
+                return (
+                  <>
+                    {mostrarParticipantes && (
+                      <div className="mt-2">
+                        <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                          Participantes
+                        </p>
+                        {isEditor ? (
+                          <textarea
+                            key={reuniao.id}
+                            defaultValue={reuniao.participantes ?? ''}
+                            onBlur={(e) => atualizarParticipantes(reuniao.id, e.target.value)}
+                            placeholder="Nomes e empresas..."
+                            rows={2}
+                            className="w-full resize-none rounded-md border border-transparent px-1.5 py-1 text-sm text-gray-700 transition-colors hover:border-gray-200 focus:border-gray-300 focus:outline-none"
+                          />
+                        ) : (
+                          <p className="whitespace-pre-wrap px-1.5 text-sm text-gray-700">{reuniao.participantes}</p>
+                        )}
+                      </div>
+                    )}
+                    {mostrarConteudo && (
+                      <div className={clsx('mt-3', mostrarParticipantes && 'border-t border-gray-200 pt-3')}>
+                        <RichTextEditor
+                          value={reuniao.conteudo ?? ''}
+                          editable={isEditor}
+                          mostrarBarra={false}
+                          placeholder={isEditor ? 'Conteúdo da ata...' : undefined}
+                          onBlur={(html) => atualizarConteudo(reuniao.id, html)}
+                        />
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
             </li>
           ))}
         </ul>
