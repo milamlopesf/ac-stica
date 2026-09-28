@@ -32,6 +32,7 @@ export function BibliotecaClient({
   const [filtroRw, setFiltroRw] = useState('')
   const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState('')
   const [filtroEspessuraVidro, setFiltroEspessuraVidro] = useState('')
+  const [filtroComPorta, setFiltroComPorta] = useState('')
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
 
@@ -49,6 +50,7 @@ export function BibliotecaClient({
     if (categoria === 'laudos' && filtroRw && i.rw !== filtroRw) return false
     if (categoria === 'laudos' && filtroTipoInstalacao && i.tipo_instalacao !== filtroTipoInstalacao) return false
     if (categoria === 'laudos' && filtroEspessuraVidro && i.espessura_vidro !== filtroEspessuraVidro) return false
+    if (categoria === 'laudos' && filtroComPorta && i.com_porta !== (filtroComPorta === 'sim')) return false
     return true
   })
   const selecionado = itens.find((i) => i.id === selecionadoId) ?? null
@@ -165,12 +167,22 @@ export function BibliotecaClient({
                 </option>
               ))}
             </select>
-            {(filtroRw || filtroTipoInstalacao || filtroEspessuraVidro) && (
+            <select
+              value={filtroComPorta}
+              onChange={(e) => setFiltroComPorta(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              <option value="">Porta: todos</option>
+              <option value="sim">Com porta</option>
+              <option value="nao">Sem porta</option>
+            </select>
+            {(filtroRw || filtroTipoInstalacao || filtroEspessuraVidro || filtroComPorta) && (
               <button
                 onClick={() => {
                   setFiltroRw('')
                   setFiltroTipoInstalacao('')
                   setFiltroEspessuraVidro('')
+                  setFiltroComPorta('')
                 }}
                 className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
               >
