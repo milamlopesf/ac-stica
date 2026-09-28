@@ -65,6 +65,7 @@ export type Reuniao = {
   projeto_id: string | null
   titulo: string
   data: string
+  participantes: string | null
   conteudo: string | null
   created_at: string
 }
@@ -274,6 +275,7 @@ export type Database = {
           projeto_id?: string | null
           titulo: string
           data: string
+          participantes?: string | null
           conteudo?: string | null
           created_at?: string
         }

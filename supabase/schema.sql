@@ -82,6 +82,7 @@ create table reunioes (
   projeto_id uuid references projetos(id) on delete cascade,
   titulo text not null,
   data date not null,
+  participantes text,
   conteudo text,
   created_at timestamptz default now()
 );

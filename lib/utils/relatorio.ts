@@ -217,6 +217,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
           return `
         <li>
           <p class="item-titulo">${escapeHtml(r.titulo)} <span class="item-data">— ${formatarData(r.data)}</span></p>
+          ${r.participantes ? `<p class="meta">Participantes: ${escapeHtml(r.participantes)}</p>` : ''}
           ${conteudo ? `<p class="texto-conteudo">${paraHtmlComQuebras(conteudo)}</p>` : ''}
         </li>`
         })

@@ -7,20 +7,20 @@ import { formatarData, hojeISO } from '@/lib/utils/data'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { htmlEstaVazio } from '@/lib/utils/texto'
 
-type RascunhoAta = { titulo: string; data: string; conteudo: string }
+type RascunhoAta = { titulo: string; data: string; participantes: string; conteudo: string }
 
 function chaveRascunho(projetoId: string) {
   return `painel-acustica:rascunho-ata:${projetoId}`
 }
 
 function lerRascunho(projetoId: string): RascunhoAta {
-  if (typeof window === 'undefined') return { titulo: '', data: '', conteudo: '' }
+  if (typeof window === 'undefined') return { titulo: '', data: '', participantes: '', conteudo: '' }
   try {
     const bruto = localStorage.getItem(chaveRascunho(projetoId))
-    if (!bruto) return { titulo: '', data: '', conteudo: '' }
-    return { titulo: '', data: '', conteudo: '', ...JSON.parse(bruto) }
+    if (!bruto) return { titulo: '', data: '', participantes: '', conteudo: '' }
+    return { titulo: '', data: '', participantes: '', conteudo: '', ...JSON.parse(bruto) }
   } catch {
-    return { titulo: '', data: '', conteudo: '' }
+    return { titulo: '', data: '', participantes: '', conteudo: '' }
   }
 }
 
@@ -30,21 +30,22 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
   const [carregando, setCarregando] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(() => {
     const r = lerRascunho(projetoId)
-    return Boolean(r.titulo || !htmlEstaVazio(r.conteudo))
+    return Boolean(r.titulo || r.participantes || !htmlEstaVazio(r.conteudo))
   })
   const [titulo, setTitulo] = useState(() => lerRascunho(projetoId).titulo)
   const [data, setData] = useState(() => lerRascunho(projetoId).data || hojeISO())
+  const [participantes, setParticipantes] = useState(() => lerRascunho(projetoId).participantes)
   const [conteudo, setConteudo] = useState(() => lerRascunho(projetoId).conteudo)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    const vazio = !titulo.trim() && htmlEstaVazio(conteudo)
+    const vazio = !titulo.trim() && !participantes.trim() && htmlEstaVazio(conteudo)
     if (vazio) {
       localStorage.removeItem(chaveRascunho(projetoId))
     } else {
-      localStorage.setItem(chaveRascunho(projetoId), JSON.stringify({ titulo, data, conteudo }))
+      localStorage.setItem(chaveRascunho(projetoId), JSON.stringify({ titulo, data, participantes, conteudo }))
     }
-  }, [projetoId, titulo, data, conteudo])
+  }, [projetoId, titulo, data, participantes, conteudo])
 
   useEffect(() => {
     let ativo = true
@@ -74,6 +75,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
         projeto_id: projetoId,
         titulo: titulo.trim(),
         data,
+        participantes: participantes.trim() || null,
         conteudo: htmlEstaVazio(conteudo) ? null : conteudo,
       })
       .select()
@@ -86,6 +88,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     setReunioes((prev) => [nova as Reuniao, ...prev])
     setTitulo('')
     setData(hojeISO())
+    setParticipantes('')
     setConteudo('')
     setMostrarForm(false)
     localStorage.removeItem(chaveRascunho(projetoId))
@@ -94,6 +97,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
   function cancelar() {
     setTitulo('')
     setData(hojeISO())
+    setParticipantes('')
     setConteudo('')
     setMostrarForm(false)
     localStorage.removeItem(chaveRascunho(projetoId))
@@ -116,6 +120,15 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
     setReunioes((prev) => prev.map((r) => (r.id === id ? { ...r, conteudo: valor } : r)))
     const { error } = await supabase.from('reunioes').update({ conteudo: valor }).eq('id', id)
     if (error) alert(`Erro ao salvar ata: ${error.message}`)
+  }
+
+  async function atualizarParticipantes(id: string, novoValor: string) {
+    const reuniao = reunioes.find((r) => r.id === id)
+    const valor = novoValor.trim() || null
+    if (!reuniao || reuniao.participantes === valor) return
+    setReunioes((prev) => prev.map((r) => (r.id === id ? { ...r, participantes: valor } : r)))
+    const { error } = await supabase.from('reunioes').update({ participantes: valor }).eq('id', id)
+    if (error) alert(`Erro ao salvar participantes: ${error.message}`)
   }
 
   if (carregando) return <p className="text-sm text-gray-500">Carregando...</p>
@@ -145,6 +158,13 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
             value={data}
             onChange={(e) => setData(e.target.value)}
             required
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          />
+          <textarea
+            value={participantes}
+            onChange={(e) => setParticipantes(e.target.value)}
+            placeholder="Participantes e empresas (ex: João Silva - AWnet, Maria Souza - Cliente X)"
+            rows={2}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
           />
           <RichTextEditor value={conteudo} onChange={setConteudo} placeholder="Conteúdo da ata..." />
@@ -188,6 +208,22 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
                   </button>
                 )}
               </div>
+              {(isEditor || (reuniao.participantes && reuniao.participantes.trim())) && (
+                <div className="mt-2">
+                  {isEditor ? (
+                    <textarea
+                      key={reuniao.id}
+                      defaultValue={reuniao.participantes ?? ''}
+                      onBlur={(e) => atualizarParticipantes(reuniao.id, e.target.value)}
+                      placeholder="Participantes e empresas..."
+                      rows={2}
+                      className="w-full rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap text-xs text-gray-500">{reuniao.participantes}</p>
+                  )}
+                </div>
+              )}
               {(isEditor || (reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo))) && (
                 <div className="mt-2">
                   <RichTextEditor
