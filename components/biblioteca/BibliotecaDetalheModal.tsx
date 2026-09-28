@@ -232,7 +232,7 @@ export function BibliotecaDetalheModal({
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">RW</label>
+                <label className="text-sm font-medium text-gray-700">Rw</label>
                 <input
                   value={rw}
                   disabled={!isEditor}

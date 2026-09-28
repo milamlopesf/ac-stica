@@ -134,10 +134,10 @@ export function BibliotecaClient({
               onChange={(e) => setFiltroRw(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
             >
-              <option value="">RW: todos</option>
+              <option value="">Rw: todos</option>
               {[...rwsExistentes].sort().map((r) => (
                 <option key={r} value={r}>
-                  RW: {r}
+                  Rw: {r}
                 </option>
               ))}
             </select>
@@ -210,7 +210,7 @@ export function BibliotecaClient({
                       )}
                       {item.rw && (
                         <span>
-                          RW: <span className="font-medium text-gray-700">{item.rw}</span>
+                          Rw: <span className="font-medium text-gray-700">{item.rw}</span>
                         </span>
                       )}
                       {item.tipo_instalacao && (
