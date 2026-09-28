@@ -137,7 +137,7 @@ export function BibliotecaClient({
               <option value="">Rw: todos</option>
               {[...rwsExistentes].sort().map((r) => (
                 <option key={r} value={r}>
-                  Rw: {r}
+                  {r}
                 </option>
               ))}
             </select>
