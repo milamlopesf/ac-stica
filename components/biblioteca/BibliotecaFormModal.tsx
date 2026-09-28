@@ -8,6 +8,7 @@ import {
   extensaoValida,
   MODELOS_LAUDO,
   SUBCATEGORIAS_LAUDO,
+  TIPOS_INSTALACAO_LAUDO,
 } from '@/lib/utils/biblioteca'
 import { sanitizarNomeArquivo } from '@/lib/utils/storage'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
@@ -35,6 +36,8 @@ export function BibliotecaFormModal({
   const [rw, setRw] = useState('')
   const [modelo, setModelo] = useState('')
   const [subcategoria, setSubcategoria] = useState('')
+  const [tipoInstalacao, setTipoInstalacao] = useState('')
+  const [espessuraVidro, setEspessuraVidro] = useState('')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -73,6 +76,8 @@ export function BibliotecaFormModal({
         rw: rw || null,
         modelo: modelo || null,
         subcategoria: subcategoria || null,
+        tipo_instalacao: tipoInstalacao || null,
+        espessura_vidro: espessuraVidro.trim() || null,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -187,6 +192,32 @@ export function BibliotecaFormModal({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Tipo de instalação</label>
+                <select
+                  value={tipoInstalacao}
+                  onChange={(e) => setTipoInstalacao(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  {TIPOS_INSTALACAO_LAUDO.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Espessura do vidro</label>
+                <input
+                  value={espessuraVidro}
+                  onChange={(e) => setEspessuraVidro(e.target.value)}
+                  placeholder="Ex: 8mm, 6+10mm"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                />
               </div>
             </div>
           )}

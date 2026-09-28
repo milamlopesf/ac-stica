@@ -134,6 +134,8 @@ export type ItemBiblioteca = {
   rw: string | null
   modelo: string | null
   subcategoria: string | null
+  tipo_instalacao: string | null
+  espessura_vidro: string | null
   nome_arquivo: string | null
   caminho_storage: string | null
   tamanho_bytes: number | null
@@ -342,6 +344,8 @@ export type Database = {
           rw?: string | null
           modelo?: string | null
           subcategoria?: string | null
+          tipo_instalacao?: string | null
+          espessura_vidro?: string | null
           nome_arquivo?: string | null
           caminho_storage?: string | null
           tamanho_bytes?: number | null

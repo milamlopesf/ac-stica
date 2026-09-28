@@ -29,6 +29,9 @@ export function BibliotecaClient({
   const [itens, setItens] = useState<ItemBiblioteca[]>(itensIniciais)
   const [busca, setBusca] = useState('')
   const [filtroSubcategoria, setFiltroSubcategoria] = useState('')
+  const [filtroRw, setFiltroRw] = useState('')
+  const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState('')
+  const [filtroEspessuraVidro, setFiltroEspessuraVidro] = useState('')
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null)
 
@@ -43,6 +46,9 @@ export function BibliotecaClient({
   const itensFiltrados = itens.filter((i) => {
     if (!i.titulo.toLowerCase().includes(busca.toLowerCase())) return false
     if (categoria === 'laudos' && filtroSubcategoria && i.subcategoria !== filtroSubcategoria) return false
+    if (categoria === 'laudos' && filtroRw && i.rw !== filtroRw) return false
+    if (categoria === 'laudos' && filtroTipoInstalacao && i.tipo_instalacao !== filtroTipoInstalacao) return false
+    if (categoria === 'laudos' && filtroEspessuraVidro && i.espessura_vidro !== filtroEspessuraVidro) return false
     return true
   })
   const selecionado = itens.find((i) => i.id === selecionadoId) ?? null
@@ -53,6 +59,14 @@ export function BibliotecaClient({
   )
   const rwsExistentes = useMemo(
     () => Array.from(new Set(itens.map((i) => i.rw).filter(Boolean))) as string[],
+    [itens]
+  )
+  const tiposInstalacaoExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.tipo_instalacao).filter(Boolean))) as string[],
+    [itens]
+  )
+  const espessurasVidroExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.espessura_vidro).filter(Boolean))) as string[],
     [itens]
   )
 
@@ -106,12 +120,66 @@ export function BibliotecaClient({
         )}
       </div>
 
-      <input
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-        placeholder="Buscar por título..."
-        className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por título..."
+          className="w-full max-w-xs rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        {categoria === 'laudos' && (
+          <>
+            <select
+              value={filtroRw}
+              onChange={(e) => setFiltroRw(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              <option value="">RW: todos</option>
+              {[...rwsExistentes].sort().map((r) => (
+                <option key={r} value={r}>
+                  RW: {r}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filtroTipoInstalacao}
+              onChange={(e) => setFiltroTipoInstalacao(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              <option value="">Tipo de instalação: todos</option>
+              {[...tiposInstalacaoExistentes].sort().map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filtroEspessuraVidro}
+              onChange={(e) => setFiltroEspessuraVidro(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              <option value="">Espessura do vidro: todas</option>
+              {[...espessurasVidroExistentes].sort().map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
+            {(filtroRw || filtroTipoInstalacao || filtroEspessuraVidro) && (
+              <button
+                onClick={() => {
+                  setFiltroRw('')
+                  setFiltroTipoInstalacao('')
+                  setFiltroEspessuraVidro('')
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+              >
+                Limpar filtros
+              </button>
+            )}
+          </>
+        )}
+      </div>
 
       {itensFiltrados.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">Nenhum item encontrado.</p>
@@ -132,20 +200,31 @@ export function BibliotecaClient({
                 {categoria === 'laudos' && item.modelo && (
                   <Badge label={item.modelo} className="border-blue-200 bg-blue-50 text-blue-700" />
                 )}
-                {categoria === 'laudos' && (item.fornecedor || item.rw) && (
-                  <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                    {item.fornecedor && (
-                      <span>
-                        Fornecedor: <span className="font-medium text-gray-700">{item.fornecedor}</span>
-                      </span>
-                    )}
-                    {item.rw && (
-                      <span>
-                        RW: <span className="font-medium text-gray-700">{item.rw}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
+                {categoria === 'laudos' &&
+                  (item.fornecedor || item.rw || item.tipo_instalacao || item.espessura_vidro) && (
+                    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                      {item.fornecedor && (
+                        <span>
+                          Fornecedor: <span className="font-medium text-gray-700">{item.fornecedor}</span>
+                        </span>
+                      )}
+                      {item.rw && (
+                        <span>
+                          RW: <span className="font-medium text-gray-700">{item.rw}</span>
+                        </span>
+                      )}
+                      {item.tipo_instalacao && (
+                        <span>
+                          <span className="font-medium text-gray-700">{item.tipo_instalacao}</span>
+                        </span>
+                      )}
+                      {item.espessura_vidro && (
+                        <span>
+                          Vidro: <span className="font-medium text-gray-700">{item.espessura_vidro}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 {item.caminho_storage ? (
                   <span className="shrink-0 text-xs text-gray-400">
                     {formatarTamanho(item.tamanho_bytes)}

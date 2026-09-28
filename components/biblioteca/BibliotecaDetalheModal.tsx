@@ -6,6 +6,7 @@ import type { ItemBiblioteca } from '@/lib/types/database'
 import {
   MODELOS_LAUDO,
   SUBCATEGORIAS_LAUDO,
+  TIPOS_INSTALACAO_LAUDO,
   TIPOS_ARQUIVO_ACEITOS,
   extensaoValida,
   ehImagem,
@@ -40,6 +41,8 @@ export function BibliotecaDetalheModal({
   const [rw, setRw] = useState(item.rw ?? '')
   const [modelo, setModelo] = useState(item.modelo ?? '')
   const [subcategoria, setSubcategoria] = useState(item.subcategoria ?? '')
+  const [tipoInstalacao, setTipoInstalacao] = useState(item.tipo_instalacao ?? '')
+  const [espessuraVidro, setEspessuraVidro] = useState(item.espessura_vidro ?? '')
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [enviandoArquivo, setEnviandoArquivo] = useState(false)
@@ -56,7 +59,9 @@ export function BibliotecaDetalheModal({
     fornecedor !== (item.fornecedor ?? '') ||
     rw !== (item.rw ?? '') ||
     modelo !== (item.modelo ?? '') ||
-    subcategoria !== (item.subcategoria ?? '')
+    subcategoria !== (item.subcategoria ?? '') ||
+    tipoInstalacao !== (item.tipo_instalacao ?? '') ||
+    espessuraVidro !== (item.espessura_vidro ?? '')
 
   async function salvar() {
     setSalvando(true)
@@ -70,6 +75,8 @@ export function BibliotecaDetalheModal({
         rw: rw || null,
         modelo: modelo || null,
         subcategoria: subcategoria || null,
+        tipo_instalacao: tipoInstalacao || null,
+        espessura_vidro: espessuraVidro.trim() || null,
       })
       .eq('id', item.id)
       .select()
@@ -204,7 +211,8 @@ export function BibliotecaDetalheModal({
             </div>
           )}
 
-          {item.categoria === 'laudos' && (isEditor || fornecedor || rw || modelo || subcategoria) && (
+          {item.categoria === 'laudos' &&
+            (isEditor || fornecedor || rw || modelo || subcategoria || tipoInstalacao || espessuraVidro) && (
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Fornecedor</label>
@@ -272,6 +280,34 @@ export function BibliotecaDetalheModal({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Tipo de instalação</label>
+                <select
+                  value={tipoInstalacao}
+                  disabled={!isEditor}
+                  onChange={(e) => setTipoInstalacao(e.target.value)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                >
+                  <option value="">Selecione...</option>
+                  {TIPOS_INSTALACAO_LAUDO.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Espessura do vidro</label>
+                <input
+                  value={espessuraVidro}
+                  disabled={!isEditor}
+                  onChange={(e) => setEspessuraVidro(e.target.value)}
+                  placeholder="Ex: 8mm, 6+10mm"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                />
               </div>
             </div>
           )}

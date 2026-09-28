@@ -148,6 +148,11 @@ create table biblioteca (
   rw text,
   modelo text,
   subcategoria text,
+  -- só usados na categoria 'laudos': tipo de instalação da vedação ("Junta
+  -- seca" / "Encaixilhado") e espessura do vidro (texto livre, ex: "8mm",
+  -- "6+10mm")
+  tipo_instalacao text,
+  espessura_vidro text,
   -- nulos = item "pendente", cadastrado sem arquivo ainda (upload feito depois)
   nome_arquivo text,
   caminho_storage text,
