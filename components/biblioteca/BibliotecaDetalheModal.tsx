@@ -43,6 +43,10 @@ export function BibliotecaDetalheModal({
   const [subcategoria, setSubcategoria] = useState(item.subcategoria ?? '')
   const [tipoInstalacao, setTipoInstalacao] = useState(item.tipo_instalacao ?? '')
   const [espessuraVidro, setEspessuraVidro] = useState(item.espessura_vidro ?? '')
+  const [comPorta, setComPorta] = useState(item.com_porta)
+  const [portaMaterial, setPortaMaterial] = useState(item.porta_material ?? '')
+  const [portaEspessura, setPortaEspessura] = useState(item.porta_espessura ?? '')
+  const [portaGuilhotina, setPortaGuilhotina] = useState(item.porta_guilhotina)
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [enviandoArquivo, setEnviandoArquivo] = useState(false)
@@ -61,7 +65,11 @@ export function BibliotecaDetalheModal({
     modelo !== (item.modelo ?? '') ||
     subcategoria !== (item.subcategoria ?? '') ||
     tipoInstalacao !== (item.tipo_instalacao ?? '') ||
-    espessuraVidro !== (item.espessura_vidro ?? '')
+    espessuraVidro !== (item.espessura_vidro ?? '') ||
+    comPorta !== item.com_porta ||
+    portaMaterial !== (item.porta_material ?? '') ||
+    portaEspessura !== (item.porta_espessura ?? '') ||
+    portaGuilhotina !== item.porta_guilhotina
 
   async function salvar() {
     setSalvando(true)
@@ -77,6 +85,10 @@ export function BibliotecaDetalheModal({
         subcategoria: subcategoria || null,
         tipo_instalacao: tipoInstalacao || null,
         espessura_vidro: espessuraVidro.trim() || null,
+        com_porta: comPorta,
+        porta_material: comPorta ? portaMaterial.trim() || null : null,
+        porta_espessura: comPorta ? portaEspessura.trim() || null : null,
+        porta_guilhotina: comPorta ? portaGuilhotina : false,
       })
       .eq('id', item.id)
       .select()
@@ -212,7 +224,7 @@ export function BibliotecaDetalheModal({
           )}
 
           {item.categoria === 'laudos' &&
-            (isEditor || fornecedor || rw || modelo || subcategoria || tipoInstalacao || espessuraVidro) && (
+            (isEditor || fornecedor || rw || modelo || subcategoria || tipoInstalacao || espessuraVidro || comPorta) && (
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Fornecedor</label>
@@ -309,6 +321,56 @@ export function BibliotecaDetalheModal({
                   className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
                 />
               </div>
+
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Com porta?</label>
+                <select
+                  value={comPorta ? 'sim' : 'nao'}
+                  disabled={!isEditor}
+                  onChange={(e) => setComPorta(e.target.value === 'sim')}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                >
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </div>
+
+              {comPorta && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Material da porta</label>
+                    <input
+                      value={portaMaterial}
+                      disabled={!isEditor}
+                      onChange={(e) => setPortaMaterial(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Espessura da porta</label>
+                    <input
+                      value={portaEspessura}
+                      disabled={!isEditor}
+                      onChange={(e) => setPortaEspessura(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Guilhotina?</label>
+                    <select
+                      value={portaGuilhotina ? 'sim' : 'nao'}
+                      disabled={!isEditor}
+                      onChange={(e) => setPortaGuilhotina(e.target.value === 'sim')}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
+                    >
+                      <option value="nao">Não</option>
+                      <option value="sim">Sim</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

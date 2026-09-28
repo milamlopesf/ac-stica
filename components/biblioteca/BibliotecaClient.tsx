@@ -200,6 +200,12 @@ export function BibliotecaClient({
                 {categoria === 'laudos' && item.modelo && (
                   <Badge label={item.modelo} className="border-blue-200 bg-blue-50 text-blue-700" />
                 )}
+                {categoria === 'laudos' && item.com_porta && (
+                  <Badge
+                    label={`Com porta${item.porta_guilhotina ? ' · guilhotina' : ''}`}
+                    className="border-purple-200 bg-purple-50 text-purple-700"
+                  />
+                )}
                 {categoria === 'laudos' &&
                   (item.fornecedor || item.rw || item.tipo_instalacao || item.espessura_vidro) && (
                     <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">

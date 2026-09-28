@@ -38,6 +38,10 @@ export function BibliotecaFormModal({
   const [subcategoria, setSubcategoria] = useState('')
   const [tipoInstalacao, setTipoInstalacao] = useState('')
   const [espessuraVidro, setEspessuraVidro] = useState('')
+  const [comPorta, setComPorta] = useState(false)
+  const [portaMaterial, setPortaMaterial] = useState('')
+  const [portaEspessura, setPortaEspessura] = useState('')
+  const [portaGuilhotina, setPortaGuilhotina] = useState(false)
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -78,6 +82,10 @@ export function BibliotecaFormModal({
         subcategoria: subcategoria || null,
         tipo_instalacao: tipoInstalacao || null,
         espessura_vidro: espessuraVidro.trim() || null,
+        com_porta: comPorta,
+        porta_material: comPorta ? portaMaterial.trim() || null : null,
+        porta_espessura: comPorta ? portaEspessura.trim() || null : null,
+        porta_guilhotina: comPorta ? portaGuilhotina : false,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -219,6 +227,52 @@ export function BibliotecaFormModal({
                   className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
+
+              <div className="col-span-2 flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Com porta?</label>
+                <select
+                  value={comPorta ? 'sim' : 'nao'}
+                  onChange={(e) => setComPorta(e.target.value === 'sim')}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  <option value="nao">Não</option>
+                  <option value="sim">Sim</option>
+                </select>
+              </div>
+
+              {comPorta && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Material da porta</label>
+                    <input
+                      value={portaMaterial}
+                      onChange={(e) => setPortaMaterial(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Espessura da porta</label>
+                    <input
+                      value={portaEspessura}
+                      onChange={(e) => setPortaEspessura(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Guilhotina?</label>
+                    <select
+                      value={portaGuilhotina ? 'sim' : 'nao'}
+                      onChange={(e) => setPortaGuilhotina(e.target.value === 'sim')}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    >
+                      <option value="nao">Não</option>
+                      <option value="sim">Sim</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

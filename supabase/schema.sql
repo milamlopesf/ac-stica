@@ -153,6 +153,11 @@ create table biblioteca (
   -- "6+10mm")
   tipo_instalacao text,
   espessura_vidro text,
+  -- porta: só preenchido quando com_porta = true
+  com_porta boolean not null default false,
+  porta_material text,
+  porta_espessura text,
+  porta_guilhotina boolean not null default false,
   -- nulos = item "pendente", cadastrado sem arquivo ainda (upload feito depois)
   nome_arquivo text,
   caminho_storage text,
