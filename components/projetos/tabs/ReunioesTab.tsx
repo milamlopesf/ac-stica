@@ -14,6 +14,10 @@ function chaveRascunho(projetoId: string) {
   return `painel-acustica:rascunho-ata:${projetoId}`
 }
 
+function ordenarPorData(lista: Reuniao[]): Reuniao[] {
+  return [...lista].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
+}
+
 function lerRascunho(projetoId: string): RascunhoAta {
   if (typeof window === 'undefined') return { titulo: '', data: '', participantes: '', conteudo: '' }
   try {
@@ -86,7 +90,7 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
       alert(`Erro ao salvar ata: ${error.message}`)
       return
     }
-    setReunioes((prev) => [nova as Reuniao, ...prev])
+    setReunioes((prev) => ordenarPorData([nova as Reuniao, ...prev]))
     setTitulo('')
     setData(hojeISO())
     setParticipantes('')
