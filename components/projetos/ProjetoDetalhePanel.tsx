@@ -18,8 +18,10 @@ import { HistoricoTab } from './tabs/HistoricoTab'
 import { CronogramaTab } from './tabs/CronogramaTab'
 import { AvaliacaoProjetistaTab } from './tabs/AvaliacaoProjetistaTab'
 import { CalculosTRTab } from './tabs/CalculosTRTab'
+import { FluxoTrabalhoTab } from './tabs/FluxoTrabalhoTab'
 
 type Aba =
+  | 'fluxo'
   | 'cronograma'
   | 'anotacoes'
   | 'avaliacao'
@@ -60,6 +62,7 @@ export function ProjetoDetalhePanel({
   const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
 
   const abas: { id: Aba; label: string }[] = [
+    { id: 'fluxo', label: 'Fluxo de Trabalho' },
     { id: 'cronograma', label: 'Cronograma' },
     { id: 'anotacoes', label: 'Anotações' },
     ...(mostrarAvaliacao ? [{ id: 'avaliacao' as const, label: 'Avaliação do Projetista' }] : []),
@@ -183,6 +186,7 @@ export function ProjetoDetalhePanel({
         </div>
 
         <div className="flex-1 p-5">
+          {aba === 'fluxo' && <FluxoTrabalhoTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} />}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'avaliacao' && mostrarAvaliacao && (

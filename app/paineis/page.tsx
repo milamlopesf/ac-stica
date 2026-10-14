@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireLogin } from '@/lib/supabase/require-login'
 import { PaineisClient } from '@/components/paineis/PaineisClient'
 import { BackupSection } from '@/components/paineis/BackupSection'
+import { FluxoModeloSection } from '@/components/paineis/FluxoModeloSection'
 
 export default async function PaineisPage() {
   const supabase = await createClient()
@@ -24,6 +25,7 @@ export default async function PaineisPage() {
 
       <PaineisClient projetos={lista} />
 
+      {session.isEditor && <FluxoModeloSection />}
       {session.isEditor && <BackupSection />}
     </div>
   )

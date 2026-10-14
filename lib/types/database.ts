@@ -210,6 +210,29 @@ export type SuperficieTR = {
   created_at: string
 }
 
+export type StatusFluxoEtapa = 'pendente' | 'em_andamento' | 'concluido'
+
+export type FluxoModeloEtapa = {
+  id: string
+  nome: string
+  ordem: number
+  sla_dias: number
+  created_at: string
+}
+
+export type FluxoProjetoEtapa = {
+  id: string
+  projeto_id: string
+  nome: string
+  ordem: number
+  sla_dias: number
+  status: StatusFluxoEtapa
+  data_inicio: string | null
+  data_limite: string | null
+  data_conclusao: string | null
+  created_at: string
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -417,6 +440,35 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<SuperficieTR, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      fluxo_modelo_etapas: {
+        Row: FluxoModeloEtapa
+        Insert: {
+          id?: string
+          nome: string
+          ordem: number
+          sla_dias: number
+          created_at?: string
+        }
+        Update: Partial<Omit<FluxoModeloEtapa, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      fluxo_projeto_etapas: {
+        Row: FluxoProjetoEtapa
+        Insert: {
+          id?: string
+          projeto_id: string
+          nome: string
+          ordem: number
+          sla_dias: number
+          status?: StatusFluxoEtapa
+          data_inicio?: string | null
+          data_limite?: string | null
+          data_conclusao?: string | null
+          created_at?: string
+        }
+        Update: Partial<Omit<FluxoProjetoEtapa, 'id' | 'created_at'>>
         Relationships: []
       }
     }
