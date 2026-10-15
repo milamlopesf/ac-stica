@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { CronogramaEtapa, EtapaCronograma } from '@/lib/types/database'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { ETAPAS_CRONOGRAMA } from '@/lib/utils/cores'
+import { proximaEntregaPendente } from '@/lib/utils/cronograma'
 
 type StatusBarra = 'concluido_prazo' | 'concluido_atraso' | 'atrasado' | 'planejado'
 
@@ -101,7 +102,15 @@ function mesesEntre(inicioIso: string, fimIso: string) {
   return meses
 }
 
-export function CronogramaTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
+export function CronogramaTab({
+  projetoId,
+  isEditor,
+  onEntregaAtualizada,
+}: {
+  projetoId: string
+  isEditor: boolean
+  onEntregaAtualizada?: (novaEntrega: string) => void
+}) {
   const supabase = createClient()
   const [etapas, setEtapas] = useState<CronogramaEtapa[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -145,6 +154,13 @@ export function CronogramaTab({ projetoId, isEditor }: { projetoId: string; isEd
     setMostrarForm(false)
   }
 
+  async function sincronizarEntrega(novasEtapas: CronogramaEtapa[]) {
+    const proxima = proximaEntregaPendente(novasEtapas)
+    if (!proxima) return
+    const { error } = await supabase.from('projetos').update({ entrega: proxima }).eq('id', projetoId)
+    if (!error) onEntregaAtualizada?.(proxima)
+  }
+
   async function adicionarEtapa(e: React.FormEvent) {
     e.preventDefault()
     setErro('')
@@ -169,8 +185,10 @@ export function CronogramaTab({ projetoId, isEditor }: { projetoId: string; isEd
       setErro(`Erro ao adicionar etapa: ${error.message}`)
       return
     }
-    setEtapas((prev) => [...prev, data as CronogramaEtapa])
+    const novasEtapas = [...etapas, data as CronogramaEtapa]
+    setEtapas(novasEtapas)
     limparForm()
+    sincronizarEntrega(novasEtapas)
   }
 
   async function excluirEtapa(id: string) {
@@ -180,7 +198,9 @@ export function CronogramaTab({ projetoId, isEditor }: { projetoId: string; isEd
       alert(`Erro ao excluir: ${error.message}`)
       return
     }
-    setEtapas((prev) => prev.filter((e) => e.id !== id))
+    const novasEtapas = etapas.filter((e) => e.id !== id)
+    setEtapas(novasEtapas)
+    sincronizarEntrega(novasEtapas)
   }
 
   const { fases, limiteInicio, limiteFim } = useMemo(() => {

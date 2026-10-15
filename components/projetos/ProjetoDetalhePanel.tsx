@@ -187,7 +187,13 @@ export function ProjetoDetalhePanel({
 
         <div className="flex-1 p-5">
           {aba === 'fluxo' && <FluxoTrabalhoTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} isEditor={isEditor} />}
+          {aba === 'cronograma' && (
+            <CronogramaTab
+              projetoId={projeto.id}
+              isEditor={isEditor}
+              onEntregaAtualizada={(novaEntrega) => onAtualizado({ ...projeto, entrega: novaEntrega })}
+            />
+          )}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'avaliacao' && mostrarAvaliacao && (
             <AvaliacaoProjetistaTab
