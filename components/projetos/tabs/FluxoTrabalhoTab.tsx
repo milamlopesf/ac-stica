@@ -12,6 +12,7 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
   const [etapas, setEtapas] = useState<FluxoProjetoEtapa[]>([])
   const [carregando, setCarregando] = useState(true)
   const [iniciando, setIniciando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const [erro, setErro] = useState('')
   const hoje = hojeISO()
 
@@ -109,6 +110,18 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
     )
   }
 
+  async function excluirFluxo() {
+    if (!confirm('Apagar o fluxo de trabalho deste projeto? Todo o progresso registrado será perdido.')) return
+    setExcluindo(true)
+    const { error } = await supabase.from('fluxo_projeto_etapas').delete().eq('projeto_id', projetoId)
+    setExcluindo(false)
+    if (error) {
+      alert(`Erro ao apagar fluxo: ${error.message}`)
+      return
+    }
+    setEtapas([])
+  }
+
   if (carregando) return <p className="text-sm text-gray-500">Carregando...</p>
 
   if (etapas.length === 0) {
@@ -133,9 +146,21 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-gray-500">
-        {concluidas} de {etapas.length} etapas concluídas
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-500">
+          {concluidas} de {etapas.length} etapas concluídas
+        </p>
+        {isEditor && (
+          <button
+            onClick={excluirFluxo}
+            disabled={excluindo}
+            className="text-sm text-red-600 hover:underline disabled:opacity-60"
+          >
+            {excluindo ? 'Apagando...' : 'Apagar fluxo'}
+          </button>
+        )}
+      </div>
+      {erro && <p className="text-sm text-red-600">{erro}</p>}
 
       <ul className="flex flex-col divide-y divide-gray-100">
         {etapas.map((etapa, i) => {
