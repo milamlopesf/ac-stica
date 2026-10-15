@@ -250,27 +250,39 @@ create index idx_tr_calculo_superficies_calculo on tr_calculo_superficies(calcul
 -- 2c. FLUXO DE TRABALHO (etapas com SLA, por projeto)
 -- ============================================================================
 --
--- Molde global: a sequência padrão de etapas que todo projeto segue ao
--- iniciar o fluxo, com o prazo (SLA, em dias) de cada uma. Editável em
--- Painéis (só editor).
+-- Tipos de fluxo de trabalho (moldes nomeados) — ex: "Relatório de Medições
+-- Acústicas", "Relatório de Consultoria Acústica". Editável em Painéis (só
+-- editor).
+create table fluxo_modelos (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  created_at timestamptz default now()
+);
+
+-- Etapas de cada tipo de fluxo, com o prazo (SLA, em dias) de cada uma.
 create table fluxo_modelo_etapas (
   id uuid primary key default gen_random_uuid(),
+  modelo_id uuid not null references fluxo_modelos(id) on delete cascade,
   nome text not null,
   ordem int not null,
   sla_dias int not null check (sla_dias > 0),
   created_at timestamptz default now()
 );
 
--- Instância do fluxo em um projeto: uma cópia (snapshot) do molde no
--- momento em que o fluxo foi iniciado — editar o molde depois não muda
--- fluxos já em andamento. Só a primeira etapa pendente fica "em_andamento"
--- de cada vez; concluir uma etapa ativa a próxima automaticamente.
--- data_limite = data_inicio + sla_dias; usada para marcar "Atrasado" na
--- tela quando ainda não concluída e já passou do prazo (só visual, sem
--- notificação por fora do painel).
+create index idx_fluxo_modelo_etapas_modelo on fluxo_modelo_etapas(modelo_id);
+
+-- Instância do fluxo em um projeto: uma cópia (snapshot) das etapas do tipo
+-- de fluxo escolhido no momento em que o fluxo foi iniciado — editar o
+-- molde depois não muda fluxos já em andamento. Só a primeira etapa
+-- pendente fica "em_andamento" de cada vez; concluir uma etapa ativa a
+-- próxima automaticamente. data_limite = data_inicio + sla_dias; usada
+-- para marcar "Atrasado" na tela quando ainda não concluída e já passou do
+-- prazo (só visual, sem notificação por fora do painel).
 create table fluxo_projeto_etapas (
   id uuid primary key default gen_random_uuid(),
   projeto_id uuid not null references projetos(id) on delete cascade,
+  modelo_id uuid references fluxo_modelos(id) on delete set null,
+  modelo_nome text,
   nome text not null,
   ordem int not null,
   sla_dias int not null,
@@ -301,6 +313,7 @@ alter table biblioteca enable row level security;
 alter table tr_materiais enable row level security;
 alter table tr_calculos enable row level security;
 alter table tr_calculo_superficies enable row level security;
+alter table fluxo_modelos enable row level security;
 alter table fluxo_modelo_etapas enable row level security;
 alter table fluxo_projeto_etapas enable row level security;
 
@@ -424,6 +437,16 @@ create policy "editor insere" on tr_calculo_superficies for insert
 create policy "editor atualiza" on tr_calculo_superficies for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on tr_calculo_superficies for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- fluxo_modelos
+create policy "leitura autenticada" on fluxo_modelos for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on fluxo_modelos for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on fluxo_modelos for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on fluxo_modelos for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- fluxo_modelo_etapas

@@ -212,8 +212,15 @@ export type SuperficieTR = {
 
 export type StatusFluxoEtapa = 'pendente' | 'em_andamento' | 'concluido'
 
+export type FluxoModelo = {
+  id: string
+  nome: string
+  created_at: string
+}
+
 export type FluxoModeloEtapa = {
   id: string
+  modelo_id: string
   nome: string
   ordem: number
   sla_dias: number
@@ -223,6 +230,8 @@ export type FluxoModeloEtapa = {
 export type FluxoProjetoEtapa = {
   id: string
   projeto_id: string
+  modelo_id: string | null
+  modelo_nome: string | null
   nome: string
   ordem: number
   sla_dias: number
@@ -442,10 +451,21 @@ export type Database = {
         Update: Partial<Omit<SuperficieTR, 'id' | 'created_at'>>
         Relationships: []
       }
+      fluxo_modelos: {
+        Row: FluxoModelo
+        Insert: {
+          id?: string
+          nome: string
+          created_at?: string
+        }
+        Update: Partial<Omit<FluxoModelo, 'id' | 'created_at'>>
+        Relationships: []
+      }
       fluxo_modelo_etapas: {
         Row: FluxoModeloEtapa
         Insert: {
           id?: string
+          modelo_id: string
           nome: string
           ordem: number
           sla_dias: number
@@ -459,6 +479,8 @@ export type Database = {
         Insert: {
           id?: string
           projeto_id: string
+          modelo_id?: string | null
+          modelo_nome?: string | null
           nome: string
           ordem: number
           sla_dias: number

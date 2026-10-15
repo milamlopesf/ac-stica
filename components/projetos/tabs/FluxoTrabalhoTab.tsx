@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
-import type { FluxoModeloEtapa, FluxoProjetoEtapa } from '@/lib/types/database'
+import type { FluxoModelo, FluxoModeloEtapa, FluxoProjetoEtapa } from '@/lib/types/database'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { etapaAtrasada, somarDias } from '@/lib/utils/fluxo'
 
 export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
   const supabase = createClient()
   const [etapas, setEtapas] = useState<FluxoProjetoEtapa[]>([])
+  const [tipos, setTipos] = useState<FluxoModelo[]>([])
+  const [tipoSelecionadoId, setTipoSelecionadoId] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [iniciando, setIniciando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
@@ -18,28 +20,37 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
 
   useEffect(() => {
     let ativo = true
-    supabase
-      .from('fluxo_projeto_etapas')
-      .select('*')
-      .eq('projeto_id', projetoId)
-      .order('ordem', { ascending: true })
-      .then(({ data }) => {
-        if (ativo) {
-          setEtapas((data as FluxoProjetoEtapa[]) ?? [])
-          setCarregando(false)
-        }
-      })
+    Promise.all([
+      supabase
+        .from('fluxo_projeto_etapas')
+        .select('*')
+        .eq('projeto_id', projetoId)
+        .order('ordem', { ascending: true }),
+      supabase.from('fluxo_modelos').select('*').order('created_at', { ascending: true }),
+    ]).then(([{ data: e }, { data: m }]) => {
+      if (!ativo) return
+      setEtapas((e as FluxoProjetoEtapa[]) ?? [])
+      const listaTipos = (m as FluxoModelo[]) ?? []
+      setTipos(listaTipos)
+      setTipoSelecionadoId((atual) => atual || listaTipos[0]?.id || '')
+      setCarregando(false)
+    })
     return () => {
       ativo = false
     }
   }, [projetoId, supabase])
 
   async function iniciarFluxo() {
+    if (!tipoSelecionadoId) {
+      setErro('Nenhum tipo de fluxo cadastrado ainda. Configure em Painéis.')
+      return
+    }
     setErro('')
     setIniciando(true)
     const { data: modelo, error: erroModelo } = await supabase
       .from('fluxo_modelo_etapas')
       .select('*')
+      .eq('modelo_id', tipoSelecionadoId)
       .order('ordem', { ascending: true })
     if (erroModelo) {
       setIniciando(false)
@@ -49,12 +60,15 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
     const etapasModelo = (modelo as FluxoModeloEtapa[]) ?? []
     if (etapasModelo.length === 0) {
       setIniciando(false)
-      setErro('Nenhuma etapa cadastrada no molde de fluxo de trabalho ainda. Configure em Painéis.')
+      setErro('Este tipo de fluxo ainda não tem etapas cadastradas. Configure em Painéis.')
       return
     }
 
+    const tipoNome = tipos.find((t) => t.id === tipoSelecionadoId)?.nome ?? null
     const payload = etapasModelo.map((m, i) => ({
       projeto_id: projetoId,
+      modelo_id: tipoSelecionadoId,
+      modelo_nome: tipoNome,
       nome: m.nome,
       ordem: m.ordem,
       sla_dias: m.sla_dias,
@@ -128,26 +142,50 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-500">Nenhum fluxo de trabalho iniciado para este projeto.</p>
+        {isEditor && tipos.length === 0 && (
+          <p className="text-sm text-gray-500">
+            Nenhum tipo de fluxo cadastrado ainda. Configure em Painéis.
+          </p>
+        )}
         {erro && <p className="text-sm text-red-600">{erro}</p>}
-        {isEditor && (
-          <button
-            onClick={iniciarFluxo}
-            disabled={iniciando}
-            className="self-start rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-          >
-            {iniciando ? 'Iniciando...' : 'Iniciar fluxo de trabalho'}
-          </button>
+        {isEditor && tipos.length > 0 && (
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Tipo de fluxo</label>
+              <select
+                value={tipoSelecionadoId}
+                onChange={(e) => setTipoSelecionadoId(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                {tipos.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={iniciarFluxo}
+              disabled={iniciando}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {iniciando ? 'Iniciando...' : 'Iniciar fluxo de trabalho'}
+            </button>
+          </div>
         )}
       </div>
     )
   }
 
   const concluidas = etapas.filter((e) => e.status === 'concluido').length
+  const tipoAtivoNome = etapas[0]?.modelo_nome
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
+          {tipoAtivoNome && <span className="font-medium text-gray-700">{tipoAtivoNome}</span>}
+          {tipoAtivoNome && ' · '}
           {concluidas} de {etapas.length} etapas concluídas
         </p>
         {isEditor && (
