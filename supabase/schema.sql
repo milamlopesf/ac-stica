@@ -28,6 +28,7 @@ create table projetos (
   etapa text not null check (etapa in ('DNN','EP','AP','EX','OBRA','GARANTIA')),
   status text not null check (status in ('A Fazer','Em Andamento','Aguardando Terceiros','Concluído','Atrasado')),
   entrega date,
+  solicitado_em date,
   diretor text,
   gerente text,
   projetista text,

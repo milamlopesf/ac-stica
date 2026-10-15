@@ -1,4 +1,4 @@
-import type { Etapa, StatusProjeto, StatusAtividade, Prioridade, NotaAvaliacao } from '@/lib/types/database'
+import type { Etapa, StatusProjeto, StatusAtividade, Prioridade, NotaAvaliacao, EtapaCronograma } from '@/lib/types/database'
 
 interface CorConfig {
   label: string
@@ -57,6 +57,19 @@ export const ORDEM_PRIORIDADE: Record<Prioridade, number> = {
 }
 
 export const ETAPAS: Etapa[] = ['DNN', 'EP', 'AP', 'EX', 'OBRA', 'GARANTIA']
+
+export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
+  'EV',
+  'EP1',
+  'EP2',
+  'AP',
+  'BÁSICO',
+  'PRÉ-EX',
+  'EX',
+  'LIB. OBRA',
+  'PROJ. LEGAL',
+  'APROV. COND.',
+]
 export const STATUS_PROJETO: StatusProjeto[] = [
   'A Fazer',
   'Em Andamento',

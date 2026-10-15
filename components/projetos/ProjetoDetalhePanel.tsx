@@ -114,8 +114,8 @@ export function ProjetoDetalhePanel({
             )}
             <dl className="mt-1 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-500">
               <div>
-                <dt className="inline">Entrega: </dt>
-                <dd className="inline font-medium text-gray-700">{formatarData(projeto.entrega)}</dd>
+                <dt className="inline">Solicitado em: </dt>
+                <dd className="inline font-medium text-gray-700">{formatarData(projeto.solicitado_em)}</dd>
               </div>
               <div>
                 <dt className="inline">Diretor: </dt>
@@ -187,7 +187,7 @@ export function ProjetoDetalhePanel({
 
         <div className="flex-1 p-5">
           {aba === 'fluxo' && <FluxoTrabalhoTab projetoId={projeto.id} isEditor={isEditor} />}
-          {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} />}
+          {aba === 'cronograma' && <CronogramaTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'anotacoes' && <AnotacoesTab projetoId={projeto.id} isEditor={isEditor} />}
           {aba === 'avaliacao' && mostrarAvaliacao && (
             <AvaliacaoProjetistaTab

@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { CronogramaEtapa } from '@/lib/types/database'
+import type { CronogramaEtapa, EtapaCronograma } from '@/lib/types/database'
 import { formatarData, hojeISO } from '@/lib/utils/data'
+import { ETAPAS_CRONOGRAMA } from '@/lib/utils/cores'
 
 type StatusBarra = 'concluido_prazo' | 'concluido_atraso' | 'atrasado' | 'planejado'
 
@@ -100,10 +101,19 @@ function mesesEntre(inicioIso: string, fimIso: string) {
   return meses
 }
 
-export function CronogramaTab({ projetoId }: { projetoId: string }) {
+export function CronogramaTab({ projetoId, isEditor }: { projetoId: string; isEditor: boolean }) {
   const supabase = createClient()
   const [etapas, setEtapas] = useState<CronogramaEtapa[]>([])
   const [carregando, setCarregando] = useState(true)
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [fase, setFase] = useState('Única')
+  const [etapa, setEtapa] = useState<EtapaCronograma>('EV')
+  const [aprovacaoPlanejado, setAprovacaoPlanejado] = useState('')
+  const [aprovacaoRealizado, setAprovacaoRealizado] = useState('')
+  const [publicacaoPlanejado, setPublicacaoPlanejado] = useState('')
+  const [publicacaoRealizado, setPublicacaoRealizado] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
   const hoje = hojeISO()
 
   useEffect(() => {
@@ -124,6 +134,54 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
       ativo = false
     }
   }, [projetoId, supabase])
+
+  function limparForm() {
+    setFase('Única')
+    setEtapa('EV')
+    setAprovacaoPlanejado('')
+    setAprovacaoRealizado('')
+    setPublicacaoPlanejado('')
+    setPublicacaoRealizado('')
+    setMostrarForm(false)
+  }
+
+  async function adicionarEtapa(e: React.FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setEnviando(true)
+    const ordem = etapas.filter((x) => x.fase === fase).length
+    const { data, error } = await supabase
+      .from('cronograma_etapas')
+      .insert({
+        projeto_id: projetoId,
+        fase: fase.trim() || 'Única',
+        etapa,
+        ordem,
+        aprovacao_planejado: aprovacaoPlanejado || null,
+        aprovacao_realizado: aprovacaoRealizado || null,
+        publicacao_planejado: publicacaoPlanejado || null,
+        publicacao_realizado: publicacaoRealizado || null,
+      })
+      .select()
+      .single()
+    setEnviando(false)
+    if (error) {
+      setErro(`Erro ao adicionar etapa: ${error.message}`)
+      return
+    }
+    setEtapas((prev) => [...prev, data as CronogramaEtapa])
+    limparForm()
+  }
+
+  async function excluirEtapa(id: string) {
+    if (!confirm('Remover esta etapa do cronograma?')) return
+    const { error } = await supabase.from('cronograma_etapas').delete().eq('id', id)
+    if (error) {
+      alert(`Erro ao excluir: ${error.message}`)
+      return
+    }
+    setEtapas((prev) => prev.filter((e) => e.id !== id))
+  }
 
   const { fases, limiteInicio, limiteFim } = useMemo(() => {
     const porFase = new Map<string, CronogramaEtapa[]>()
@@ -147,13 +205,117 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
     return { fases: Array.from(porFase.entries()), limiteInicio: inicio, limiteFim: fim }
   }, [etapas, hoje])
 
+  const formAdicionar = isEditor && (
+    <div className="flex flex-col gap-2">
+      {!mostrarForm ? (
+        <button
+          onClick={() => setMostrarForm(true)}
+          className="self-start rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          + Adicionar etapa manualmente
+        </button>
+      ) : (
+        <form
+          onSubmit={adicionarEtapa}
+          className="flex flex-col gap-2 rounded-md border border-gray-200 p-3"
+        >
+          {erro && <p className="text-sm text-red-600">{erro}</p>}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Fase</label>
+              <input
+                value={fase}
+                onChange={(e) => setFase(e.target.value)}
+                placeholder="Única"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Etapa</label>
+              <select
+                value={etapa}
+                onChange={(e) => setEtapa(e.target.value as EtapaCronograma)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                {ETAPAS_CRONOGRAMA.map((e) => (
+                  <option key={e} value={e}>
+                    {e}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Aprovação planejada</label>
+              <input
+                type="date"
+                value={aprovacaoPlanejado}
+                onChange={(e) => setAprovacaoPlanejado(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Aprovação realizada</label>
+              <input
+                type="date"
+                value={aprovacaoRealizado}
+                onChange={(e) => setAprovacaoRealizado(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Publicação planejada</label>
+              <input
+                type="date"
+                value={publicacaoPlanejado}
+                onChange={(e) => setPublicacaoPlanejado(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">Publicação realizada</label>
+              <input
+                type="date"
+                value={publicacaoRealizado}
+                onChange={(e) => setPublicacaoRealizado(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={limparForm}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={enviando}
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              Salvar
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+
   if (carregando) return <p className="text-sm text-gray-500">Carregando...</p>
 
   if (etapas.length === 0 || !limiteInicio || !limiteFim) {
     return (
-      <p className="py-6 text-center text-sm text-gray-500">
-        Nenhum cronograma importado para este projeto ainda.
-      </p>
+      <div className="flex flex-col gap-4">
+        {formAdicionar}
+        <p className="py-6 text-center text-sm text-gray-500">
+          Nenhum cronograma importado para este projeto ainda.
+        </p>
+      </div>
     )
   }
 
@@ -176,6 +338,8 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {formAdicionar}
+
       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
         {(Object.keys(LABEL_STATUS) as StatusBarra[]).map((s) => (
           <span key={s} className="flex items-center gap-1.5">
@@ -280,6 +444,15 @@ export function CronogramaTab({ projetoId }: { projetoId: string }) {
                     <span className="w-4 shrink-0">
                       {barra && <IconeStatus status={barra.status} />}
                     </span>
+                    {isEditor && (
+                      <button
+                        onClick={() => excluirEtapa(e.id)}
+                        className="shrink-0 text-gray-300 hover:text-red-600"
+                        aria-label={`Remover etapa ${e.etapa}`}
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 )
               })}

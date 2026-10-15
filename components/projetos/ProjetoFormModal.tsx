@@ -61,6 +61,7 @@ export function ProjetoFormModal({
   const [etapa, setEtapa] = useState<Etapa>(projeto?.etapa ?? 'DNN')
   const [status, setStatus] = useState<StatusProjeto>(projeto?.status ?? 'A Fazer')
   const [entrega, setEntrega] = useState(() => (projeto ? (projeto.entrega ?? '') : hojeISO()))
+  const [solicitadoEm, setSolicitadoEm] = useState(projeto?.solicitado_em ?? '')
   const [diretor, setDiretor] = useState(projeto?.diretor ?? '')
   const [gerente, setGerente] = useState(projeto?.gerente ?? '')
   const [projetista, setProjetista] = useState(projeto?.projetista ?? '')
@@ -80,6 +81,7 @@ export function ProjetoFormModal({
       etapa,
       status,
       entrega: entrega || null,
+      solicitado_em: solicitadoEm || null,
       diretor: diretor || null,
       gerente: gerente || null,
       projetista: projetista || null,
@@ -173,14 +175,25 @@ export function ProjetoFormModal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Data de entrega</label>
-            <input
-              type="date"
-              value={entrega ?? ''}
-              onChange={(e) => setEntrega(e.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Data de entrega</label>
+              <input
+                type="date"
+                value={entrega ?? ''}
+                onChange={(e) => setEntrega(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Solicitado em</label>
+              <input
+                type="date"
+                value={solicitadoEm ?? ''}
+                onChange={(e) => setSolicitadoEm(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -19,6 +19,7 @@ export type Projeto = {
   etapa: Etapa
   status: StatusProjeto
   entrega: string | null
+  solicitado_em: string | null
   diretor: string | null
   gerente: string | null
   projetista: string | null
@@ -253,6 +254,7 @@ export type Database = {
           etapa: Etapa
           status: StatusProjeto
           entrega?: string | null
+          solicitado_em?: string | null
           diretor?: string | null
           gerente?: string | null
           projetista?: string | null
