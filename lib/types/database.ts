@@ -216,6 +216,7 @@ export type StatusFluxoEtapa = 'pendente' | 'em_andamento' | 'concluido'
 export type FluxoModelo = {
   id: string
   nome: string
+  sla_dias: number
   created_at: string
 }
 
@@ -224,7 +225,6 @@ export type FluxoModeloEtapa = {
   modelo_id: string
   nome: string
   ordem: number
-  sla_dias: number
   created_at: string
 }
 
@@ -235,10 +235,10 @@ export type FluxoProjetoEtapa = {
   modelo_nome: string | null
   nome: string
   ordem: number
-  sla_dias: number
+  sla_dias_total: number
+  data_limite_total: string | null
   status: StatusFluxoEtapa
   data_inicio: string | null
-  data_limite: string | null
   data_conclusao: string | null
   created_at: string
 }
@@ -458,6 +458,7 @@ export type Database = {
         Insert: {
           id?: string
           nome: string
+          sla_dias: number
           created_at?: string
         }
         Update: Partial<Omit<FluxoModelo, 'id' | 'created_at'>>
@@ -470,7 +471,6 @@ export type Database = {
           modelo_id: string
           nome: string
           ordem: number
-          sla_dias: number
           created_at?: string
         }
         Update: Partial<Omit<FluxoModeloEtapa, 'id' | 'created_at'>>
@@ -485,10 +485,10 @@ export type Database = {
           modelo_nome?: string | null
           nome: string
           ordem: number
-          sla_dias: number
+          sla_dias_total: number
+          data_limite_total?: string | null
           status?: StatusFluxoEtapa
           data_inicio?: string | null
-          data_limite?: string | null
           data_conclusao?: string | null
           created_at?: string
         }

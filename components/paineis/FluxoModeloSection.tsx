@@ -12,8 +12,8 @@ export function FluxoModeloSection() {
   const [modeloSelecionadoId, setModeloSelecionadoId] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [nomeEtapa, setNomeEtapa] = useState('')
-  const [slaDias, setSlaDias] = useState('')
   const [novoTipoNome, setNovoTipoNome] = useState('')
+  const [novoTipoSla, setNovoTipoSla] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -36,18 +36,21 @@ export function FluxoModeloSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const modeloSelecionado = modelos.find((m) => m.id === modeloSelecionadoId) ?? null
+
   const etapasDoTipo = etapas
     .filter((e) => e.modelo_id === modeloSelecionadoId)
     .sort((a, b) => a.ordem - b.ordem)
 
   async function criarTipo(e: React.FormEvent) {
     e.preventDefault()
-    if (!novoTipoNome.trim()) return
+    const sla = parseInt(novoTipoSla, 10)
+    if (!novoTipoNome.trim() || !(sla > 0)) return
     setErro('')
     setEnviando(true)
     const { data, error } = await supabase
       .from('fluxo_modelos')
-      .insert({ nome: novoTipoNome.trim() })
+      .insert({ nome: novoTipoNome.trim(), sla_dias: sla })
       .select()
       .single()
     setEnviando(false)
@@ -59,6 +62,7 @@ export function FluxoModeloSection() {
     setModelos((prev) => [...prev, novo])
     setModeloSelecionadoId(novo.id)
     setNovoTipoNome('')
+    setNovoTipoSla('')
   }
 
   async function excluirTipo(id: string) {
@@ -73,16 +77,27 @@ export function FluxoModeloSection() {
     setModeloSelecionadoId((atual) => (atual === id ? null : atual))
   }
 
+  async function atualizarSlaTipo(id: string, novoValor: string) {
+    const sla = parseInt(novoValor, 10)
+    if (!(sla > 0)) return
+    const anterior = modelos
+    setModelos((prev) => prev.map((m) => (m.id === id ? { ...m, sla_dias: sla } : m)))
+    const { error } = await supabase.from('fluxo_modelos').update({ sla_dias: sla }).eq('id', id)
+    if (error) {
+      alert(`Erro ao salvar SLA total: ${error.message}`)
+      setModelos(anterior)
+    }
+  }
+
   async function adicionarEtapa(e: React.FormEvent) {
     e.preventDefault()
-    const sla = parseInt(slaDias, 10)
-    if (!nomeEtapa.trim() || !(sla > 0) || !modeloSelecionadoId) return
+    if (!nomeEtapa.trim() || !modeloSelecionadoId) return
     setErro('')
     setEnviando(true)
     const ordem = etapasDoTipo.length ? Math.max(...etapasDoTipo.map((e) => e.ordem)) + 1 : 1
     const { data, error } = await supabase
       .from('fluxo_modelo_etapas')
-      .insert({ modelo_id: modeloSelecionadoId, nome: nomeEtapa.trim(), ordem, sla_dias: sla })
+      .insert({ modelo_id: modeloSelecionadoId, nome: nomeEtapa.trim(), ordem })
       .select()
       .single()
     setEnviando(false)
@@ -92,19 +107,6 @@ export function FluxoModeloSection() {
     }
     setEtapas((prev) => [...prev, data as FluxoModeloEtapa])
     setNomeEtapa('')
-    setSlaDias('')
-  }
-
-  async function atualizarSla(id: string, novoValor: string) {
-    const sla = parseInt(novoValor, 10)
-    if (!(sla > 0)) return
-    const anterior = etapas
-    setEtapas((prev) => prev.map((e) => (e.id === id ? { ...e, sla_dias: sla } : e)))
-    const { error } = await supabase.from('fluxo_modelo_etapas').update({ sla_dias: sla }).eq('id', id)
-    if (error) {
-      alert(`Erro ao salvar SLA: ${error.message}`)
-      setEtapas(anterior)
-    }
   }
 
   async function mover(index: number, direcao: -1 | 1) {
@@ -143,8 +145,8 @@ export function FluxoModeloSection() {
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h2 className="mb-1 text-lg font-semibold text-gray-900">Tipos de fluxo de trabalho</h2>
       <p className="mb-4 text-sm text-gray-500">
-        Cada tipo tem sua própria sequência de etapas (com prazo em dias). Alterar aqui não muda
-        fluxos já em andamento em projetos.
+        Cada tipo tem sua própria sequência de etapas e um prazo (SLA) único para o fluxo inteiro.
+        Alterar aqui não muda fluxos já em andamento em projetos.
       </p>
 
       {erro && (
@@ -186,6 +188,14 @@ export function FluxoModeloSection() {
             placeholder="Novo tipo de fluxo"
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
           />
+          <input
+            type="number"
+            min={1}
+            value={novoTipoSla}
+            onChange={(e) => setNovoTipoSla(e.target.value)}
+            placeholder="SLA total (dias)"
+            className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          />
           <button
             type="submit"
             disabled={enviando}
@@ -196,10 +206,22 @@ export function FluxoModeloSection() {
         </form>
       </div>
 
-      {!modeloSelecionadoId ? (
+      {!modeloSelecionadoId || !modeloSelecionado ? (
         <p className="text-sm text-gray-500">Cadastre um tipo de fluxo acima pra começar.</p>
       ) : (
         <>
+          <div className="mb-4 flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">SLA total deste fluxo (dias):</label>
+            <input
+              type="number"
+              min={1}
+              defaultValue={modeloSelecionado.sla_dias}
+              key={modeloSelecionado.id}
+              onBlur={(e) => atualizarSlaTipo(modeloSelecionado.id, e.target.value)}
+              className="w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
+            />
+          </div>
+
           {etapasDoTipo.length === 0 ? (
             <p className="mb-4 text-sm text-gray-500">Nenhuma etapa cadastrada neste tipo ainda.</p>
           ) : (
@@ -226,16 +248,6 @@ export function FluxoModeloSection() {
                   </div>
                   <span className="w-6 shrink-0 text-sm text-gray-400">{i + 1}.</span>
                   <span className="flex-1 text-sm font-medium text-gray-800">{etapa.nome}</span>
-                  <div className="flex shrink-0 items-center gap-1 text-sm text-gray-600">
-                    <input
-                      type="number"
-                      min={1}
-                      defaultValue={etapa.sla_dias}
-                      onBlur={(e) => atualizarSla(etapa.id, e.target.value)}
-                      className="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm"
-                    />
-                    <span>dias de SLA</span>
-                  </div>
                   <button
                     onClick={() => excluirEtapa(etapa.id)}
                     className="shrink-0 text-gray-400 hover:text-red-600"
@@ -256,17 +268,6 @@ export function FluxoModeloSection() {
                 onChange={(e) => setNomeEtapa(e.target.value)}
                 placeholder="Ex: Exportar dados"
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">SLA (dias)</label>
-              <input
-                type="number"
-                min={1}
-                value={slaDias}
-                onChange={(e) => setSlaDias(e.target.value)}
-                placeholder="Ex: 3"
-                className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
               />
             </div>
             <button

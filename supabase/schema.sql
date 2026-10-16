@@ -252,21 +252,22 @@ create index idx_tr_calculo_superficies_calculo on tr_calculo_superficies(calcul
 -- ============================================================================
 --
 -- Tipos de fluxo de trabalho (moldes nomeados) — ex: "Relatório de Medições
--- Acústicas", "Relatório de Consultoria Acústica". Editável em Painéis (só
--- editor).
+-- Acústicas", "Relatório de Consultoria Acústica". sla_dias é o prazo TOTAL
+-- do fluxo (não por etapa). Editável em Painéis (só editor).
 create table fluxo_modelos (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
+  sla_dias int not null check (sla_dias > 0),
   created_at timestamptz default now()
 );
 
--- Etapas de cada tipo de fluxo, com o prazo (SLA, em dias) de cada uma.
+-- Etapas de cada tipo de fluxo — só a ordem/sequência; o prazo é único pro
+-- fluxo inteiro (fluxo_modelos.sla_dias), não por etapa.
 create table fluxo_modelo_etapas (
   id uuid primary key default gen_random_uuid(),
   modelo_id uuid not null references fluxo_modelos(id) on delete cascade,
   nome text not null,
   ordem int not null,
-  sla_dias int not null check (sla_dias > 0),
   created_at timestamptz default now()
 );
 
@@ -276,9 +277,10 @@ create index idx_fluxo_modelo_etapas_modelo on fluxo_modelo_etapas(modelo_id);
 -- de fluxo escolhido no momento em que o fluxo foi iniciado — editar o
 -- molde depois não muda fluxos já em andamento. Só a primeira etapa
 -- pendente fica "em_andamento" de cada vez; concluir uma etapa ativa a
--- próxima automaticamente. data_limite = data_inicio + sla_dias; usada
--- para marcar "Atrasado" na tela quando ainda não concluída e já passou do
--- prazo (só visual, sem notificação por fora do painel).
+-- próxima automaticamente. sla_dias_total/data_limite_total são do fluxo
+-- como um todo (mesmo valor em todas as linhas da instância) — usados para
+-- marcar "Atrasado" na tela quando o fluxo ainda não foi concluído e já
+-- passou do prazo total (só visual, sem notificação por fora do painel).
 create table fluxo_projeto_etapas (
   id uuid primary key default gen_random_uuid(),
   projeto_id uuid not null references projetos(id) on delete cascade,
@@ -286,10 +288,10 @@ create table fluxo_projeto_etapas (
   modelo_nome text,
   nome text not null,
   ordem int not null,
-  sla_dias int not null,
+  sla_dias_total int not null,
+  data_limite_total date,
   status text not null default 'pendente' check (status in ('pendente', 'em_andamento', 'concluido')),
   data_inicio date,
-  data_limite date,
   data_conclusao date,
   created_at timestamptz default now()
 );
