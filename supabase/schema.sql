@@ -274,13 +274,16 @@ create table fluxo_modelo_etapas (
 create index idx_fluxo_modelo_etapas_modelo on fluxo_modelo_etapas(modelo_id);
 
 -- Instância do fluxo em um projeto: uma cópia (snapshot) das etapas do tipo
--- de fluxo escolhido no momento em que o fluxo foi iniciado — editar o
--- molde depois não muda fluxos já em andamento. Só a primeira etapa
+-- de fluxo escolhido no momento em que o fluxo foi iniciado (ou agendado) —
+-- editar o molde depois não muda fluxos já em andamento. Só a primeira etapa
 -- pendente fica "em_andamento" de cada vez; concluir uma etapa ativa a
 -- próxima automaticamente. sla_dias_total/data_limite_total são do fluxo
 -- como um todo (mesmo valor em todas as linhas da instância) — usados para
 -- marcar "Atrasado" na tela quando o fluxo ainda não foi concluído e já
 -- passou do prazo total (só visual, sem notificação por fora do painel).
+-- data_inicio_agendada: quando o fluxo foi agendado em vez de iniciado na
+-- hora, guarda a data prevista de início (mesmo valor em todas as linhas);
+-- a 1a etapa só vira "em_andamento" quando essa data chega.
 create table fluxo_projeto_etapas (
   id uuid primary key default gen_random_uuid(),
   projeto_id uuid not null references projetos(id) on delete cascade,
@@ -290,6 +293,7 @@ create table fluxo_projeto_etapas (
   ordem int not null,
   sla_dias_total int not null,
   data_limite_total date,
+  data_inicio_agendada date,
   status text not null default 'pendente' check (status in ('pendente', 'em_andamento', 'concluido')),
   data_inicio date,
   data_conclusao date,

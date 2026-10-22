@@ -237,6 +237,7 @@ export type FluxoProjetoEtapa = {
   ordem: number
   sla_dias_total: number
   data_limite_total: string | null
+  data_inicio_agendada: string | null
   status: StatusFluxoEtapa
   data_inicio: string | null
   data_conclusao: string | null
@@ -487,6 +488,7 @@ export type Database = {
           ordem: number
           sla_dias_total: number
           data_limite_total?: string | null
+          data_inicio_agendada?: string | null
           status?: StatusFluxoEtapa
           data_inicio?: string | null
           data_conclusao?: string | null
