@@ -15,6 +15,7 @@ import { ProjetoFormModal } from './ProjetoFormModal'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 
 type Visualizacao = 'lista' | 'grade'
+type Ordenacao = 'padrao' | 'alfabetica'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
 
 // Ordem de prioridade pedida: A Fazer, Atrasado (calculado pela data de
@@ -47,6 +48,7 @@ export function ProjetosClient({
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [filtroAtrasado, setFiltroAtrasado] = useState(false)
   const [filtroVinculado, setFiltroVinculado] = useState(false)
+  const [ordenacao, setOrdenacao] = useState<Ordenacao>('padrao')
   const [selecionadoId, setSelecionadoId] = useState<string | null>(() => searchParams.get('projeto'))
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
@@ -119,6 +121,7 @@ export function ProjetosClient({
         return true
       })
       .sort((a, b) => {
+        if (ordenacao === 'alfabetica') return a.nome.localeCompare(b.nome, 'pt-BR')
         const grupoA = grupoOrdenacaoStatus(a, hoje)
         const grupoB = grupoOrdenacaoStatus(b, hoje)
         if (grupoA !== grupoB) return grupoA - grupoB
@@ -138,6 +141,7 @@ export function ProjetosClient({
     filtroGerente,
     filtroProjetista,
     filtroVinculado,
+    ordenacao,
   ])
 
   function handleProjetoCriado(novo: Projeto) {
@@ -363,6 +367,14 @@ export function ProjetosClient({
           <IconVinculo className="h-3.5 w-3.5" />
           Só vinculados
         </button>
+        <select
+          value={ordenacao}
+          onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
+          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
+        >
+          <option value="padrao">Ordenar: padrão</option>
+          <option value="alfabetica">Ordenar: A-Z</option>
+        </select>
       </div>
 
       {projetosFiltrados.length === 0 ? (
