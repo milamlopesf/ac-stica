@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { formatarData } from '@/lib/utils/data'
@@ -14,7 +15,62 @@ export const GRID_COLUNAS =
   'md:grid-cols-[14px_minmax(0,1fr)_82px_160px_88px_128px_128px_24px_16px] ' +
   'lg:grid-cols-[14px_minmax(0,1fr)_82px_160px_88px_128px_128px_112px_24px_16px]'
 
-export function ProjetosListaHeader() {
+export type ColunaOrdenavel = 'nome' | 'etapa' | 'status' | 'entrega' | 'diretor' | 'gerente' | 'projetista'
+
+export type OrdenarPor = { campo: ColunaOrdenavel; direcao: 'asc' | 'desc' } | null
+
+function IconOrdenar({ estado }: { estado: 'inativo' | 'asc' | 'desc' }) {
+  if (estado === 'inativo') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3 w-3 shrink-0 text-gray-300">
+        <path d="M8 9l4-4 4 4M8 15l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-3 w-3 shrink-0 text-teal-700">
+      {estado === 'asc' ? (
+        <path d="M6 15l6-6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  )
+}
+
+function BotaoCabecalho({
+  label,
+  campo,
+  ordenarPor,
+  onOrdenar,
+  className,
+}: {
+  label: string
+  campo: ColunaOrdenavel
+  ordenarPor: OrdenarPor
+  onOrdenar: (campo: ColunaOrdenavel) => void
+  className?: string
+}) {
+  const ativo = ordenarPor?.campo === campo
+  return (
+    <button
+      onClick={() => onOrdenar(campo)}
+      className={clsx('flex items-center gap-1 text-left hover:text-gray-600', className)}
+      title={`Ordenar por ${label.toLowerCase()}`}
+    >
+      {label}
+      <IconOrdenar estado={ativo ? ordenarPor!.direcao : 'inativo'} />
+    </button>
+  )
+}
+
+export function ProjetosListaHeader({
+  ordenarPor,
+  onOrdenar,
+}: {
+  ordenarPor: OrdenarPor
+  onOrdenar: (campo: ColunaOrdenavel) => void
+}) {
   return (
     <div
       className={
@@ -23,13 +79,31 @@ export function ProjetosListaHeader() {
       }
     >
       <span />
-      <span>Projeto</span>
-      <span>Etapa</span>
-      <span>Status</span>
-      <span>Entrega</span>
-      <span className="hidden md:inline">Diretor</span>
-      <span className="hidden md:inline">Gerente</span>
-      <span className="hidden lg:inline">Projetista</span>
+      <BotaoCabecalho label="Projeto" campo="nome" ordenarPor={ordenarPor} onOrdenar={onOrdenar} />
+      <BotaoCabecalho label="Etapa" campo="etapa" ordenarPor={ordenarPor} onOrdenar={onOrdenar} />
+      <BotaoCabecalho label="Status" campo="status" ordenarPor={ordenarPor} onOrdenar={onOrdenar} />
+      <BotaoCabecalho label="Entrega" campo="entrega" ordenarPor={ordenarPor} onOrdenar={onOrdenar} />
+      <BotaoCabecalho
+        label="Diretor"
+        campo="diretor"
+        ordenarPor={ordenarPor}
+        onOrdenar={onOrdenar}
+        className="hidden md:flex"
+      />
+      <BotaoCabecalho
+        label="Gerente"
+        campo="gerente"
+        ordenarPor={ordenarPor}
+        onOrdenar={onOrdenar}
+        className="hidden md:flex"
+      />
+      <BotaoCabecalho
+        label="Projetista"
+        campo="projetista"
+        ordenarPor={ordenarPor}
+        onOrdenar={onOrdenar}
+        className="hidden lg:flex"
+      />
       <span />
       <span />
     </div>

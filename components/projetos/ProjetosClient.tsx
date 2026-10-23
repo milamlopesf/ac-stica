@@ -9,13 +9,12 @@ import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
 import { ProjetoCard } from './ProjetoCard'
-import { ProjetoListItem, ProjetosListaHeader } from './ProjetoListItem'
+import { ProjetoListItem, ProjetosListaHeader, type ColunaOrdenavel, type OrdenarPor } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 
 type Visualizacao = 'lista' | 'grade'
-type Ordenacao = 'padrao' | 'alfabetica'
 const CHAVE_VISUALIZACAO = 'painel-acustica:projetos-visualizacao'
 
 // Ordem de prioridade pedida: A Fazer, Atrasado (calculado pela data de
@@ -48,7 +47,15 @@ export function ProjetosClient({
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [filtroAtrasado, setFiltroAtrasado] = useState(false)
   const [filtroVinculado, setFiltroVinculado] = useState(false)
-  const [ordenacao, setOrdenacao] = useState<Ordenacao>('padrao')
+  const [ordenarPor, setOrdenarPor] = useState<OrdenarPor>(null)
+
+  function alternarOrdenacao(campo: ColunaOrdenavel) {
+    setOrdenarPor((atual) => {
+      if (!atual || atual.campo !== campo) return { campo, direcao: 'asc' }
+      if (atual.direcao === 'asc') return { campo, direcao: 'desc' }
+      return null
+    })
+  }
   const [selecionadoId, setSelecionadoId] = useState<string | null>(() => searchParams.get('projeto'))
   const [modalNovoAberto, setModalNovoAberto] = useState(false)
   const [visualizacao, setVisualizacao] = useState<Visualizacao>(() => {
@@ -121,7 +128,33 @@ export function ProjetosClient({
         return true
       })
       .sort((a, b) => {
-        if (ordenacao === 'alfabetica') return a.nome.localeCompare(b.nome, 'pt-BR')
+        if (ordenarPor) {
+          const dir = ordenarPor.direcao === 'asc' ? 1 : -1
+          switch (ordenarPor.campo) {
+            case 'nome':
+              return dir * a.nome.localeCompare(b.nome, 'pt-BR')
+            case 'etapa':
+              return dir * (ETAPAS.indexOf(a.etapa) - ETAPAS.indexOf(b.etapa))
+            case 'status':
+              return dir * (STATUS_PROJETO.indexOf(a.status) - STATUS_PROJETO.indexOf(b.status))
+            case 'entrega': {
+              if (!a.entrega && !b.entrega) return 0
+              if (!a.entrega) return 1
+              if (!b.entrega) return -1
+              return dir * a.entrega.localeCompare(b.entrega)
+            }
+            case 'diretor':
+            case 'gerente':
+            case 'projetista': {
+              const va = a[ordenarPor.campo]
+              const vb = b[ordenarPor.campo]
+              if (!va && !vb) return 0
+              if (!va) return 1
+              if (!vb) return -1
+              return dir * va.localeCompare(vb, 'pt-BR')
+            }
+          }
+        }
         const grupoA = grupoOrdenacaoStatus(a, hoje)
         const grupoB = grupoOrdenacaoStatus(b, hoje)
         if (grupoA !== grupoB) return grupoA - grupoB
@@ -141,7 +174,7 @@ export function ProjetosClient({
     filtroGerente,
     filtroProjetista,
     filtroVinculado,
-    ordenacao,
+    ordenarPor,
   ])
 
   function handleProjetoCriado(novo: Projeto) {
@@ -367,21 +400,13 @@ export function ProjetosClient({
           <IconVinculo className="h-3.5 w-3.5" />
           Só vinculados
         </button>
-        <select
-          value={ordenacao}
-          onChange={(e) => setOrdenacao(e.target.value as Ordenacao)}
-          className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700"
-        >
-          <option value="padrao">Ordenar: padrão</option>
-          <option value="alfabetica">Ordenar: A-Z</option>
-        </select>
       </div>
 
       {projetosFiltrados.length === 0 ? (
         <p className="py-12 text-center text-sm text-gray-500">Nenhum projeto encontrado.</p>
       ) : visualizacao === 'lista' ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <ProjetosListaHeader />
+          <ProjetosListaHeader ordenarPor={ordenarPor} onOrdenar={alternarOrdenacao} />
           <div className="divide-y divide-gray-100">
             {projetosFiltrados.map((projeto) => (
               <ProjetoListItem
