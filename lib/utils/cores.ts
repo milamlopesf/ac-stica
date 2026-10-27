@@ -105,6 +105,7 @@ export const DIRETORES = [
   'Gilberto Gambagorte',
   'Guedes Alavarse',
   'Guilherme Titton',
+  'Gustavo Carmezini',
   'Gustavo Vaughan',
   'Henrique Fernandes',
   'Ivan Patricio',
