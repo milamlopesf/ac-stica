@@ -318,7 +318,7 @@ export function BibliotecaFormModal({
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Número de placas</label>
+                    <label className="text-sm font-medium text-gray-700">Nº de placas (de cada lado)</label>
                     <input
                       value={numeroPlacas}
                       onChange={(e) => setNumeroPlacas(e.target.value)}
