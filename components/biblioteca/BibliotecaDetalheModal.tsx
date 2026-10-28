@@ -24,6 +24,10 @@ export function BibliotecaDetalheModal({
   isEditor,
   fornecedoresExistentes = [],
   rwsExistentes = [],
+  espessurasMontanteExistentes = [],
+  numerosPlacasExistentes = [],
+  tiposLaExistentes = [],
+  espessurasLaExistentes = [],
   onFechar,
   onAtualizado,
   onExcluido,
@@ -32,6 +36,10 @@ export function BibliotecaDetalheModal({
   isEditor: boolean
   fornecedoresExistentes?: string[]
   rwsExistentes?: string[]
+  espessurasMontanteExistentes?: string[]
+  numerosPlacasExistentes?: string[]
+  tiposLaExistentes?: string[]
+  espessurasLaExistentes?: string[]
   onFechar: () => void
   onAtualizado: (item: ItemBiblioteca) => void
   onExcluido: (id: string) => void
@@ -411,9 +419,15 @@ export function BibliotecaDetalheModal({
                       value={espessuraMontante}
                       disabled={!isEditor}
                       onChange={(e) => setEspessuraMontante(e.target.value)}
-                      placeholder="Ex: 70mm"
+                      list="espessuras-montante-existentes-detalhe"
+                      placeholder="Digite ou escolha"
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
                     />
+                    <datalist id="espessuras-montante-existentes-detalhe">
+                      {espessurasMontanteExistentes.map((e) => (
+                        <option key={e} value={e} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -422,9 +436,15 @@ export function BibliotecaDetalheModal({
                       value={numeroPlacas}
                       disabled={!isEditor}
                       onChange={(e) => setNumeroPlacas(e.target.value)}
-                      placeholder="Ex: 2x1"
+                      list="numeros-placas-existentes-detalhe"
+                      placeholder="Digite ou escolha"
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
                     />
+                    <datalist id="numeros-placas-existentes-detalhe">
+                      {numerosPlacasExistentes.map((n) => (
+                        <option key={n} value={n} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -433,9 +453,15 @@ export function BibliotecaDetalheModal({
                       value={tipoLa}
                       disabled={!isEditor}
                       onChange={(e) => setTipoLa(e.target.value)}
-                      placeholder="Ex: Lã de vidro"
+                      list="tipos-la-existentes-detalhe"
+                      placeholder="Digite ou escolha"
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
                     />
+                    <datalist id="tipos-la-existentes-detalhe">
+                      {tiposLaExistentes.map((t) => (
+                        <option key={t} value={t} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -444,9 +470,15 @@ export function BibliotecaDetalheModal({
                       value={espessuraLa}
                       disabled={!isEditor}
                       onChange={(e) => setEspessuraLa(e.target.value)}
-                      placeholder="Ex: 50mm"
+                      list="espessuras-la-existentes-detalhe"
+                      placeholder="Digite ou escolha"
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:border-transparent disabled:bg-transparent disabled:px-0"
                     />
+                    <datalist id="espessuras-la-existentes-detalhe">
+                      {espessurasLaExistentes.map((e) => (
+                        <option key={e} value={e} />
+                      ))}
+                    </datalist>
                   </div>
                 </>
               )}

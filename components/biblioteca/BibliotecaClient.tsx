@@ -77,6 +77,22 @@ export function BibliotecaClient({
     () => Array.from(new Set(itens.map((i) => i.espessura_vidro).filter(Boolean))) as string[],
     [itens]
   )
+  const espessurasMontanteExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.espessura_montante).filter(Boolean))) as string[],
+    [itens]
+  )
+  const numerosPlacasExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.numero_placas).filter(Boolean))) as string[],
+    [itens]
+  )
+  const tiposLaExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.tipo_la).filter(Boolean))) as string[],
+    [itens]
+  )
+  const espessurasLaExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.espessura_la).filter(Boolean))) as string[],
+    [itens]
+  )
 
   function handleCriado(novo: ItemBiblioteca) {
     setItens((prev) => [...prev, novo].sort((a, b) => a.titulo.localeCompare(b.titulo)))
@@ -312,6 +328,10 @@ export function BibliotecaClient({
           categoria={categoria}
           fornecedoresExistentes={fornecedoresExistentes}
           rwsExistentes={rwsExistentes}
+          espessurasMontanteExistentes={espessurasMontanteExistentes}
+          numerosPlacasExistentes={numerosPlacasExistentes}
+          tiposLaExistentes={tiposLaExistentes}
+          espessurasLaExistentes={espessurasLaExistentes}
           onFechar={() => setModalNovoAberto(false)}
           onSalvo={handleCriado}
         />
@@ -323,6 +343,10 @@ export function BibliotecaClient({
           isEditor={isEditor}
           fornecedoresExistentes={fornecedoresExistentes}
           rwsExistentes={rwsExistentes}
+          espessurasMontanteExistentes={espessurasMontanteExistentes}
+          numerosPlacasExistentes={numerosPlacasExistentes}
+          tiposLaExistentes={tiposLaExistentes}
+          espessurasLaExistentes={espessurasLaExistentes}
           onFechar={() => setSelecionadoId(null)}
           onAtualizado={handleAtualizado}
           onExcluido={handleExcluido}
