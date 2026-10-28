@@ -8,6 +8,17 @@ export const CATEGORIAS_BIBLIOTECA: Record<CategoriaBiblioteca, { titulo: string
 
 export const MODELOS_LAUDO = ['DPT fixa', 'DPT retrátil', 'Drywall']
 
+// Cada modelo pertence a um dos dois grupos de campos específicos do
+// formulário de Laudos/Medições: DPT (tipo de instalação, espessura do
+// vidro, porta) ou Drywall (montante, placas, lã).
+export function ehModeloDPT(modelo: string) {
+  return modelo.startsWith('DPT')
+}
+
+export function ehModeloDrywall(modelo: string) {
+  return modelo === 'Drywall'
+}
+
 export const SUBCATEGORIAS_LAUDO = ['Vedações', 'Revestimentos', 'HVAC']
 
 export const TIPOS_INSTALACAO_LAUDO = ['Junta seca', 'Encaixilhado']

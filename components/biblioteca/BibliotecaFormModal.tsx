@@ -9,6 +9,8 @@ import {
   MODELOS_LAUDO,
   SUBCATEGORIAS_LAUDO,
   TIPOS_INSTALACAO_LAUDO,
+  ehModeloDPT,
+  ehModeloDrywall,
 } from '@/lib/utils/biblioteca'
 import { sanitizarNomeArquivo } from '@/lib/utils/storage'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
@@ -42,9 +44,16 @@ export function BibliotecaFormModal({
   const [portaMaterial, setPortaMaterial] = useState('')
   const [portaEspessura, setPortaEspessura] = useState('')
   const [portaGuilhotina, setPortaGuilhotina] = useState(false)
+  const [espessuraMontante, setEspessuraMontante] = useState('')
+  const [numeroPlacas, setNumeroPlacas] = useState('')
+  const [tipoLa, setTipoLa] = useState('')
+  const [espessuraLa, setEspessuraLa] = useState('')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+
+  const ehDPT = ehModeloDPT(modelo)
+  const ehDrywall = ehModeloDrywall(modelo)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -80,12 +89,16 @@ export function BibliotecaFormModal({
         rw: rw || null,
         modelo: modelo || null,
         subcategoria: subcategoria || null,
-        tipo_instalacao: tipoInstalacao || null,
-        espessura_vidro: espessuraVidro.trim() || null,
-        com_porta: comPorta,
-        porta_material: comPorta ? portaMaterial.trim() || null : null,
-        porta_espessura: comPorta ? portaEspessura.trim() || null : null,
-        porta_guilhotina: comPorta ? portaGuilhotina : false,
+        tipo_instalacao: ehDPT ? tipoInstalacao || null : null,
+        espessura_vidro: ehDPT ? espessuraVidro.trim() || null : null,
+        com_porta: ehDPT ? comPorta : false,
+        porta_material: ehDPT && comPorta ? portaMaterial.trim() || null : null,
+        porta_espessura: ehDPT && comPorta ? portaEspessura.trim() || null : null,
+        porta_guilhotina: ehDPT && comPorta ? portaGuilhotina : false,
+        espessura_montante: ehDrywall ? espessuraMontante.trim() || null : null,
+        numero_placas: ehDrywall ? numeroPlacas.trim() || null : null,
+        tipo_la: ehDrywall ? tipoLa.trim() || null : null,
+        espessura_la: ehDrywall ? espessuraLa.trim() || null : null,
         nome_arquivo: arquivo.name,
         caminho_storage: caminho,
         tamanho_bytes: arquivo.size,
@@ -202,74 +215,122 @@ export function BibliotecaFormModal({
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Tipo de instalação</label>
-                <select
-                  value={tipoInstalacao}
-                  onChange={(e) => setTipoInstalacao(e.target.value)}
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                >
-                  <option value="">Selecione...</option>
-                  {TIPOS_INSTALACAO_LAUDO.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Espessura do vidro</label>
-                <input
-                  value={espessuraVidro}
-                  onChange={(e) => setEspessuraVidro(e.target.value)}
-                  placeholder="Ex: 8mm, 6+10mm"
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                />
-              </div>
-
-              <div className="col-span-2 flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Com porta?</label>
-                <select
-                  value={comPorta ? 'sim' : 'nao'}
-                  onChange={(e) => setComPorta(e.target.value === 'sim')}
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                >
-                  <option value="nao">Não</option>
-                  <option value="sim">Sim</option>
-                </select>
-              </div>
-
-              {comPorta && (
+              {ehDPT && (
                 <>
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Material da porta</label>
-                    <input
-                      value={portaMaterial}
-                      onChange={(e) => setPortaMaterial(e.target.value)}
-                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Espessura da porta</label>
-                    <input
-                      value={portaEspessura}
-                      onChange={(e) => setPortaEspessura(e.target.value)}
-                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Guilhotina?</label>
+                    <label className="text-sm font-medium text-gray-700">Tipo de instalação</label>
                     <select
-                      value={portaGuilhotina ? 'sim' : 'nao'}
-                      onChange={(e) => setPortaGuilhotina(e.target.value === 'sim')}
+                      value={tipoInstalacao}
+                      onChange={(e) => setTipoInstalacao(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    >
+                      <option value="">Selecione...</option>
+                      {TIPOS_INSTALACAO_LAUDO.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Espessura do vidro</label>
+                    <input
+                      value={espessuraVidro}
+                      onChange={(e) => setEspessuraVidro(e.target.value)}
+                      placeholder="Ex: 8mm, 6+10mm"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="col-span-2 flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Com porta?</label>
+                    <select
+                      value={comPorta ? 'sim' : 'nao'}
+                      onChange={(e) => setComPorta(e.target.value === 'sim')}
                       className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
                     >
                       <option value="nao">Não</option>
                       <option value="sim">Sim</option>
                     </select>
+                  </div>
+
+                  {comPorta && (
+                    <>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700">Material da porta</label>
+                        <input
+                          value={portaMaterial}
+                          onChange={(e) => setPortaMaterial(e.target.value)}
+                          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700">Espessura da porta</label>
+                        <input
+                          value={portaEspessura}
+                          onChange={(e) => setPortaEspessura(e.target.value)}
+                          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-sm font-medium text-gray-700">Guilhotina?</label>
+                        <select
+                          value={portaGuilhotina ? 'sim' : 'nao'}
+                          onChange={(e) => setPortaGuilhotina(e.target.value === 'sim')}
+                          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                        >
+                          <option value="nao">Não</option>
+                          <option value="sim">Sim</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {ehDrywall && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Espessura do montante</label>
+                    <input
+                      value={espessuraMontante}
+                      onChange={(e) => setEspessuraMontante(e.target.value)}
+                      placeholder="Ex: 70mm"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Número de placas</label>
+                    <input
+                      value={numeroPlacas}
+                      onChange={(e) => setNumeroPlacas(e.target.value)}
+                      placeholder="Ex: 2x1"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Tipo de lã</label>
+                    <input
+                      value={tipoLa}
+                      onChange={(e) => setTipoLa(e.target.value)}
+                      placeholder="Ex: Lã de vidro"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Espessura da lã</label>
+                    <input
+                      value={espessuraLa}
+                      onChange={(e) => setEspessuraLa(e.target.value)}
+                      placeholder="Ex: 50mm"
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
                   </div>
                 </>
               )}

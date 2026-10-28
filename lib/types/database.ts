@@ -141,6 +141,10 @@ export type ItemBiblioteca = {
   porta_material: string | null
   porta_espessura: string | null
   porta_guilhotina: boolean
+  espessura_montante: string | null
+  numero_placas: string | null
+  tipo_la: string | null
+  espessura_la: string | null
   nome_arquivo: string | null
   caminho_storage: string | null
   tamanho_bytes: number | null
@@ -389,6 +393,10 @@ export type Database = {
           porta_material?: string | null
           porta_espessura?: string | null
           porta_guilhotina?: boolean
+          espessura_montante?: string | null
+          numero_placas?: string | null
+          tipo_la?: string | null
+          espessura_la?: string | null
           nome_arquivo?: string | null
           caminho_storage?: string | null
           tamanho_bytes?: number | null

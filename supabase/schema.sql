@@ -149,16 +149,24 @@ create table biblioteca (
   rw text,
   modelo text,
   subcategoria text,
-  -- só usados na categoria 'laudos': tipo de instalação da vedação ("Junta
-  -- seca" / "Encaixilhado") e espessura do vidro (texto livre, ex: "8mm",
-  -- "6+10mm")
+  -- campos específicos por modelo (modelo começando com "DPT" ou "Drywall",
+  -- ver MODELOS_LAUDO em lib/utils/biblioteca.ts) — só um dos dois grupos é
+  -- preenchido por vez, de acordo com o modelo escolhido no formulário.
+  -- DPT: tipo de instalação da vedação ("Junta seca" / "Encaixilhado") e
+  -- espessura do vidro (texto livre, ex: "8mm", "6+10mm")
   tipo_instalacao text,
   espessura_vidro text,
-  -- porta: só preenchido quando com_porta = true
+  -- porta: só preenchido quando com_porta = true (grupo DPT)
   com_porta boolean not null default false,
   porta_material text,
   porta_espessura text,
   porta_guilhotina boolean not null default false,
+  -- Drywall: espessura do montante, número (abreviado) de placas, tipo e
+  -- espessura da lã — todos texto livre
+  espessura_montante text,
+  numero_placas text,
+  tipo_la text,
+  espessura_la text,
   -- nulos = item "pendente", cadastrado sem arquivo ainda (upload feito depois)
   nome_arquivo text,
   caminho_storage text,

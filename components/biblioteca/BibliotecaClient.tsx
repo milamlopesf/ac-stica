@@ -238,7 +238,14 @@ export function BibliotecaClient({
                   />
                 )}
                 {categoria === 'laudos' &&
-                  (item.fornecedor || item.rw || item.tipo_instalacao || item.espessura_vidro) && (
+                  (item.fornecedor ||
+                    item.rw ||
+                    item.tipo_instalacao ||
+                    item.espessura_vidro ||
+                    item.espessura_montante ||
+                    item.numero_placas ||
+                    item.tipo_la ||
+                    item.espessura_la) && (
                     <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                       {item.fornecedor && (
                         <span>
@@ -258,6 +265,26 @@ export function BibliotecaClient({
                       {item.espessura_vidro && (
                         <span>
                           Vidro: <span className="font-medium text-gray-700">{item.espessura_vidro}</span>
+                        </span>
+                      )}
+                      {item.espessura_montante && (
+                        <span>
+                          Montante: <span className="font-medium text-gray-700">{item.espessura_montante}</span>
+                        </span>
+                      )}
+                      {item.numero_placas && (
+                        <span>
+                          Placas: <span className="font-medium text-gray-700">{item.numero_placas}</span>
+                        </span>
+                      )}
+                      {item.tipo_la && (
+                        <span>
+                          <span className="font-medium text-gray-700">{item.tipo_la}</span>
+                        </span>
+                      )}
+                      {item.espessura_la && (
+                        <span>
+                          Lã: <span className="font-medium text-gray-700">{item.espessura_la}</span>
                         </span>
                       )}
                     </div>
