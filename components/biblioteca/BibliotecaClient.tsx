@@ -29,6 +29,7 @@ export function BibliotecaClient({
   const [itens, setItens] = useState<ItemBiblioteca[]>(itensIniciais)
   const [busca, setBusca] = useState('')
   const [filtroSubcategoria, setFiltroSubcategoria] = useState('')
+  const [filtroModelo, setFiltroModelo] = useState('')
   const [filtroRw, setFiltroRw] = useState('')
   const [filtroTipoInstalacao, setFiltroTipoInstalacao] = useState('')
   const [filtroEspessuraVidro, setFiltroEspessuraVidro] = useState('')
@@ -47,6 +48,7 @@ export function BibliotecaClient({
   const itensFiltrados = itens.filter((i) => {
     if (!i.titulo.toLowerCase().includes(busca.toLowerCase())) return false
     if (categoria === 'laudos' && filtroSubcategoria && i.subcategoria !== filtroSubcategoria) return false
+    if (categoria === 'laudos' && filtroModelo && i.modelo !== filtroModelo) return false
     if (categoria === 'laudos' && filtroRw && i.rw !== filtroRw) return false
     if (categoria === 'laudos' && filtroTipoInstalacao && i.tipo_instalacao !== filtroTipoInstalacao) return false
     if (categoria === 'laudos' && filtroEspessuraVidro && i.espessura_vidro !== filtroEspessuraVidro) return false
@@ -57,6 +59,10 @@ export function BibliotecaClient({
 
   const fornecedoresExistentes = useMemo(
     () => Array.from(new Set(itens.map((i) => i.fornecedor).filter(Boolean))) as string[],
+    [itens]
+  )
+  const modelosExistentes = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.modelo).filter(Boolean))) as string[],
     [itens]
   )
   const rwsExistentes = useMemo(
@@ -132,6 +138,18 @@ export function BibliotecaClient({
         {categoria === 'laudos' && (
           <>
             <select
+              value={filtroModelo}
+              onChange={(e) => setFiltroModelo(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              <option value="">Modelo: todos</option>
+              {[...modelosExistentes].sort().map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
               value={filtroRw}
               onChange={(e) => setFiltroRw(e.target.value)}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
@@ -176,9 +194,10 @@ export function BibliotecaClient({
               <option value="sim">Com porta</option>
               <option value="nao">Sem porta</option>
             </select>
-            {(filtroRw || filtroTipoInstalacao || filtroEspessuraVidro || filtroComPorta) && (
+            {(filtroModelo || filtroRw || filtroTipoInstalacao || filtroEspessuraVidro || filtroComPorta) && (
               <button
                 onClick={() => {
+                  setFiltroModelo('')
                   setFiltroRw('')
                   setFiltroTipoInstalacao('')
                   setFiltroEspessuraVidro('')
