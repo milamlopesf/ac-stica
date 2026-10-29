@@ -15,21 +15,28 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import clsx from 'clsx'
-import type { Atividade, Projeto } from '@/lib/types/database'
+import type { Atividade, CronogramaEtapa, Projeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS_ATIVIDADE } from '@/lib/utils/cores'
+import { hojeISO } from '@/lib/utils/data'
+import { statusCronograma, COR_STATUS_CRONOGRAMA, LABEL_STATUS_CRONOGRAMA } from '@/lib/utils/cronograma'
 import { Badge } from '@/components/ui/Badge'
+
+export type CronogramaEtapaComProjeto = CronogramaEtapa & { projetos: { nome: string } | null }
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export function CalendarioClient({
   projetos,
   atividades,
+  cronograma,
 }: {
   projetos: Projeto[]
   atividades: Atividade[]
+  cronograma: CronogramaEtapaComProjeto[]
 }) {
   const [mesAtual, setMesAtual] = useState(() => new Date())
   const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null)
+  const hoje = hojeISO()
 
   const dias = useMemo(() => {
     const inicio = startOfWeek(startOfMonth(mesAtual), { weekStartsOn: 0 })
@@ -47,8 +54,13 @@ export function CalendarioClient({
     )
   }
 
+  function cronogramaNoDia(dia: Date) {
+    return cronograma.filter((c) => c.data_fim && isSameDay(new Date(`${c.data_fim}T00:00:00`), dia))
+  }
+
   const projetosDoDiaSelecionado = diaSelecionado ? projetosNoDia(diaSelecionado) : []
   const atividadesDoDiaSelecionado = diaSelecionado ? atividadesNoDia(diaSelecionado) : []
+  const cronogramaDoDiaSelecionado = diaSelecionado ? cronogramaNoDia(diaSelecionado) : []
 
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-[600px] flex-col gap-6">
@@ -96,8 +108,9 @@ export function CalendarioClient({
           const noMes = isSameMonth(dia, mesAtual)
           const entregas = projetosNoDia(dia)
           const vencimentos = atividadesNoDia(dia)
-          const hoje = isSameDay(dia, new Date())
-          const totalItens = entregas.length + vencimentos.length
+          const etapasCronograma = cronogramaNoDia(dia)
+          const ehHoje = isSameDay(dia, new Date())
+          const totalItens = entregas.length + vencimentos.length + etapasCronograma.length
 
           return (
             <button
@@ -112,7 +125,7 @@ export function CalendarioClient({
               <span
                 className={clsx(
                   'flex h-6 w-6 items-center justify-center rounded-full text-xs',
-                  hoje ? 'bg-blue-600 font-semibold text-white' : noMes ? 'text-gray-700' : 'text-gray-300'
+                  ehHoje ? 'bg-blue-600 font-semibold text-white' : noMes ? 'text-gray-700' : 'text-gray-300'
                 )}
               >
                 {format(dia, 'd')}
@@ -142,6 +155,20 @@ export function CalendarioClient({
                     ✓ {a.texto}
                   </span>
                 ))}
+                {etapasCronograma.slice(0, 2).map((c) => {
+                  const status = statusCronograma(c, hoje)
+                  const cor = COR_STATUS_CRONOGRAMA[status]
+                  return (
+                    <span
+                      key={c.id}
+                      className="truncate rounded px-1 py-0.5 text-[10px] font-medium"
+                      style={{ backgroundColor: `${cor}22`, color: cor }}
+                      title={`Cronograma: ${c.projetos?.nome ?? ''} · ${c.fase} (${c.etapa}) · ${LABEL_STATUS_CRONOGRAMA[status]}`}
+                    >
+                      📅 {c.projetos?.nome ?? c.fase}
+                    </span>
+                  )
+                })}
                 {totalItens > 4 && (
                   <span className="text-[10px] text-gray-400">+{totalItens - 4} mais</span>
                 )}
@@ -173,7 +200,9 @@ export function CalendarioClient({
               </button>
             </div>
 
-            {projetosDoDiaSelecionado.length === 0 && atividadesDoDiaSelecionado.length === 0 ? (
+            {projetosDoDiaSelecionado.length === 0 &&
+            atividadesDoDiaSelecionado.length === 0 &&
+            cronogramaDoDiaSelecionado.length === 0 ? (
               <p className="text-sm text-gray-500">Nada agendado para este dia.</p>
             ) : (
               <div className="flex flex-col gap-4">
@@ -207,6 +236,30 @@ export function CalendarioClient({
                           {a.texto}
                         </li>
                       ))}
+                    </ul>
+                  </div>
+                )}
+                {cronogramaDoDiaSelecionado.length > 0 && (
+                  <div>
+                    <h3 className="mb-2 text-xs font-semibold uppercase text-gray-400">
+                      Cronograma
+                    </h3>
+                    <ul className="flex flex-col gap-2">
+                      {cronogramaDoDiaSelecionado.map((c) => {
+                        const status = statusCronograma(c, hoje)
+                        const cor = COR_STATUS_CRONOGRAMA[status]
+                        return (
+                          <li key={c.id} className="flex items-center gap-2 text-sm">
+                            <span
+                              className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap"
+                              style={{ backgroundColor: `${cor}1a`, borderColor: `${cor}55`, color: cor }}
+                            >
+                              {LABEL_STATUS_CRONOGRAMA[status]}
+                            </span>
+                            {c.projetos?.nome ?? ''} · {c.fase} ({c.etapa})
+                          </li>
+                        )
+                      })}
                     </ul>
                   </div>
                 )}

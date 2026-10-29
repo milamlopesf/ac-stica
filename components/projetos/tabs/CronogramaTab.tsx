@@ -5,23 +5,13 @@ import { createClient } from '@/lib/supabase/client'
 import type { CronogramaEtapa, EtapaCronograma } from '@/lib/types/database'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { ETAPAS_CRONOGRAMA } from '@/lib/utils/cores'
-import { proximaEntregaPendente } from '@/lib/utils/cronograma'
-
-type StatusBarra = 'concluido_prazo' | 'concluido_atraso' | 'atrasado' | 'planejado'
-
-const COR_STATUS: Record<StatusBarra, string> = {
-  concluido_prazo: '#22c55e',
-  concluido_atraso: '#f59e0b',
-  atrasado: '#ef4444',
-  planejado: '#94a3b8',
-}
-
-const LABEL_STATUS: Record<StatusBarra, string> = {
-  concluido_prazo: 'Concluída no prazo',
-  concluido_atraso: 'Concluída em atraso',
-  atrasado: 'Atrasada',
-  planejado: 'Planejada',
-}
+import {
+  proximaEntregaPendente,
+  statusCronograma,
+  COR_STATUS_CRONOGRAMA as COR_STATUS,
+  LABEL_STATUS_CRONOGRAMA as LABEL_STATUS,
+  type StatusCronograma as StatusBarra,
+} from '@/lib/utils/cronograma'
 
 function menorData(...datas: (string | null)[]): string | null {
   const validas = datas.filter((d): d is string => Boolean(d)).sort()
@@ -39,17 +29,7 @@ function calcularBarra(etapa: CronogramaEtapa, hoje: string) {
 
   if (!inicio || !fim) return null
 
-  let status: StatusBarra = 'planejado'
-  if (etapa.concluido) {
-    status =
-      etapa.data_fim && etapa.data_conclusao && etapa.data_conclusao > etapa.data_fim
-        ? 'concluido_atraso'
-        : 'concluido_prazo'
-  } else if (etapa.data_fim && etapa.data_fim < hoje) {
-    status = 'atrasado'
-  }
-
-  return { inicio, fim: fim < inicio ? inicio : fim, status }
+  return { inicio, fim: fim < inicio ? inicio : fim, status: statusCronograma(etapa, hoje) }
 }
 
 function IconeStatus({ status }: { status: StatusBarra }) {
