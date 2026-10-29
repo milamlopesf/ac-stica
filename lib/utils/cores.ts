@@ -58,18 +58,7 @@ export const ORDEM_PRIORIDADE: Record<Prioridade, number> = {
 
 export const ETAPAS: Etapa[] = ['DNN', 'EP', 'AP', 'EX', 'OBRA', 'GARANTIA']
 
-export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = [
-  'EV',
-  'EP1',
-  'EP2',
-  'AP',
-  'BÁSICO',
-  'PRÉ-EX',
-  'EX',
-  'LIB. OBRA',
-  'PROJ. LEGAL',
-  'APROV. COND.',
-]
+export const ETAPAS_CRONOGRAMA: EtapaCronograma[] = ['EP1', 'EP2', 'AP', 'EX']
 export const STATUS_PROJETO: StatusProjeto[] = [
   'A Fazer',
   'Em Andamento',

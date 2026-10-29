@@ -91,17 +91,7 @@ export type HistoricoProjeto = {
   created_at: string
 }
 
-export type EtapaCronograma =
-  | 'EV'
-  | 'EP1'
-  | 'EP2'
-  | 'AP'
-  | 'BÁSICO'
-  | 'PRÉ-EX'
-  | 'EX'
-  | 'LIB. OBRA'
-  | 'PROJ. LEGAL'
-  | 'APROV. COND.'
+export type EtapaCronograma = 'EP1' | 'EP2' | 'AP' | 'EX'
 
 export type CronogramaEtapa = {
   id: string
@@ -109,10 +99,10 @@ export type CronogramaEtapa = {
   fase: string
   etapa: EtapaCronograma
   ordem: number
-  aprovacao_planejado: string | null
-  aprovacao_realizado: string | null
-  publicacao_planejado: string | null
-  publicacao_realizado: string | null
+  data_inicio: string | null
+  data_fim: string | null
+  concluido: boolean
+  data_conclusao: string | null
   created_at: string
 }
 
@@ -368,10 +358,10 @@ export type Database = {
           fase?: string
           etapa: EtapaCronograma
           ordem?: number
-          aprovacao_planejado?: string | null
-          aprovacao_realizado?: string | null
-          publicacao_planejado?: string | null
-          publicacao_realizado?: string | null
+          data_inicio?: string | null
+          data_fim?: string | null
+          concluido?: boolean
+          data_conclusao?: string | null
           created_at?: string
         }
         Update: Partial<Omit<CronogramaEtapa, 'id' | 'created_at'>>

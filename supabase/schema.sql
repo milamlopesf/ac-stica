@@ -110,20 +110,19 @@ create table projeto_historico (
 );
 
 -- Cronograma de etapas por projeto (aba "Cronograma" / Gantt). Cada linha é
--- uma etapa (EV, EP1, EP2, AP, BÁSICO, PRÉ-EX, EX, LIB. OBRA, PROJ. LEGAL,
--- APROV. COND.) de uma fase do projeto, com datas planejadas/realizadas de
--- Aprovação e de Publicação/Entrega. Importado em lote do relatório
--- "Entregas de Arquitetura" — sem tela própria de edição por enquanto.
+-- uma etapa (EP1, EP2, AP, EX) de uma fase do projeto, com data inicial,
+-- data final e se já foi concluída (data_conclusao é preenchida
+-- automaticamente quando marcada concluída, editável depois pra corrigir).
 create table cronograma_etapas (
   id uuid primary key default gen_random_uuid(),
   projeto_id uuid not null references projetos(id) on delete cascade,
   fase text not null default 'Única',
   etapa text not null,
   ordem int not null default 0,
-  aprovacao_planejado date,
-  aprovacao_realizado date,
-  publicacao_planejado date,
-  publicacao_realizado date,
+  data_inicio date,
+  data_fim date,
+  concluido boolean not null default false,
+  data_conclusao date,
   created_at timestamptz default now()
 );
 

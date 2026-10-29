@@ -34,21 +34,18 @@ function maiorData(...datas: (string | null)[]): string | null {
 }
 
 function calcularBarra(etapa: CronogramaEtapa, hoje: string) {
-  const inicio =
-    menorData(etapa.aprovacao_planejado, etapa.aprovacao_realizado) ??
-    menorData(etapa.publicacao_planejado, etapa.publicacao_realizado)
-  const fim =
-    maiorData(etapa.publicacao_planejado, etapa.publicacao_realizado) ?? inicio
+  const inicio = etapa.data_inicio ?? etapa.data_fim
+  const fim = etapa.data_fim ?? etapa.data_inicio
 
   if (!inicio || !fim) return null
 
   let status: StatusBarra = 'planejado'
-  if (etapa.publicacao_realizado) {
+  if (etapa.concluido) {
     status =
-      etapa.publicacao_planejado && etapa.publicacao_realizado > etapa.publicacao_planejado
+      etapa.data_fim && etapa.data_conclusao && etapa.data_conclusao > etapa.data_fim
         ? 'concluido_atraso'
         : 'concluido_prazo'
-  } else if (etapa.publicacao_planejado && etapa.publicacao_planejado < hoje) {
+  } else if (etapa.data_fim && etapa.data_fim < hoje) {
     status = 'atrasado'
   }
 
@@ -116,11 +113,9 @@ export function CronogramaTab({
   const [carregando, setCarregando] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [fase, setFase] = useState('Única')
-  const [etapa, setEtapa] = useState<EtapaCronograma>('EV')
-  const [aprovacaoPlanejado, setAprovacaoPlanejado] = useState('')
-  const [aprovacaoRealizado, setAprovacaoRealizado] = useState('')
-  const [publicacaoPlanejado, setPublicacaoPlanejado] = useState('')
-  const [publicacaoRealizado, setPublicacaoRealizado] = useState('')
+  const [etapa, setEtapa] = useState<EtapaCronograma>(ETAPAS_CRONOGRAMA[0])
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const hoje = hojeISO()
@@ -146,11 +141,9 @@ export function CronogramaTab({
 
   function limparForm() {
     setFase('Única')
-    setEtapa('EV')
-    setAprovacaoPlanejado('')
-    setAprovacaoRealizado('')
-    setPublicacaoPlanejado('')
-    setPublicacaoRealizado('')
+    setEtapa(ETAPAS_CRONOGRAMA[0])
+    setDataInicio('')
+    setDataFim('')
     setMostrarForm(false)
   }
 
@@ -173,10 +166,8 @@ export function CronogramaTab({
         fase: fase.trim() || 'Única',
         etapa,
         ordem,
-        aprovacao_planejado: aprovacaoPlanejado || null,
-        aprovacao_realizado: aprovacaoRealizado || null,
-        publicacao_planejado: publicacaoPlanejado || null,
-        publicacao_realizado: publicacaoRealizado || null,
+        data_inicio: dataInicio || null,
+        data_fim: dataFim || null,
       })
       .select()
       .single()
@@ -201,6 +192,34 @@ export function CronogramaTab({
     const novasEtapas = etapas.filter((e) => e.id !== id)
     setEtapas(novasEtapas)
     sincronizarEntrega(novasEtapas)
+  }
+
+  async function alternarConcluido(etapaAlvo: CronogramaEtapa) {
+    const payload = { concluido: !etapaAlvo.concluido, data_conclusao: !etapaAlvo.concluido ? hoje : null }
+    const anterior = etapas
+    const novasEtapas = etapas.map((e) => (e.id === etapaAlvo.id ? { ...e, ...payload } : e))
+    setEtapas(novasEtapas)
+    const { error } = await supabase.from('cronograma_etapas').update(payload).eq('id', etapaAlvo.id)
+    if (error) {
+      alert(`Erro ao atualizar: ${error.message}`)
+      setEtapas(anterior)
+      return
+    }
+    sincronizarEntrega(novasEtapas)
+  }
+
+  async function editarDataConclusao(etapaAlvo: CronogramaEtapa, novaData: string) {
+    if (!novaData || novaData === etapaAlvo.data_conclusao) return
+    const anterior = etapas
+    setEtapas((prev) => prev.map((e) => (e.id === etapaAlvo.id ? { ...e, data_conclusao: novaData } : e)))
+    const { error } = await supabase
+      .from('cronograma_etapas')
+      .update({ data_conclusao: novaData })
+      .eq('id', etapaAlvo.id)
+    if (error) {
+      alert(`Erro ao corrigir data: ${error.message}`)
+      setEtapas(anterior)
+    }
   }
 
   const { fases, limiteInicio, limiteFim } = useMemo(() => {
@@ -267,40 +286,20 @@ export function CronogramaTab({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">Aprovação planejada</label>
+              <label className="text-xs font-medium text-gray-600">Data inicial</label>
               <input
                 type="date"
-                value={aprovacaoPlanejado}
-                onChange={(e) => setAprovacaoPlanejado(e.target.value)}
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">Aprovação realizada</label>
+              <label className="text-xs font-medium text-gray-600">Data final</label>
               <input
                 type="date"
-                value={aprovacaoRealizado}
-                onChange={(e) => setAprovacaoRealizado(e.target.value)}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">Publicação planejada</label>
-              <input
-                type="date"
-                value={publicacaoPlanejado}
-                onChange={(e) => setPublicacaoPlanejado(e.target.value)}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-600">Publicação realizada</label>
-              <input
-                type="date"
-                value={publicacaoRealizado}
-                onChange={(e) => setPublicacaoRealizado(e.target.value)}
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
               />
             </div>
@@ -357,7 +356,7 @@ export function CronogramaTab({
   }))
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {formAdicionar}
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
@@ -374,14 +373,12 @@ export function CronogramaTab({
       </div>
 
       {fases.map(([nomeFase, etapasFase]) => (
-        <div key={nomeFase} className="flex flex-col gap-2">
-          {fases.length > 1 && (
-            <h4 className="text-sm font-semibold text-gray-800">{nomeFase}</h4>
-          )}
+        <div key={nomeFase} className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium text-gray-500">{nomeFase}</p>
 
           <div className="relative">
             {/* grade vertical de meses, cobrindo cabeçalho + linhas */}
-            <div className="pointer-events-none absolute inset-0 ml-28 mr-6">
+            <div className="pointer-events-none absolute inset-0 ml-24 mr-6">
               {faixasMes.map((m, i) => (
                 <div
                   key={m.iso}
@@ -391,7 +388,7 @@ export function CronogramaTab({
               ))}
             </div>
 
-            <div className="relative mb-2 ml-28 mr-6 flex h-6 items-center rounded-sm bg-slate-100 text-[11px] font-medium text-slate-500">
+            <div className="relative mb-1.5 ml-24 mr-6 flex h-6 items-center rounded-sm bg-slate-100 text-[11px] font-medium text-slate-500">
               {faixasMes.map((m) => (
                 <span
                   key={m.iso}
@@ -403,13 +400,21 @@ export function CronogramaTab({
               ))}
             </div>
 
-            <div className="relative flex flex-col gap-3">
+            <div className="relative flex flex-col gap-2">
               {etapasFase.map((e) => {
                 const barra = calcularBarra(e, hoje)
                 const meio = barra ? (pct(barra.inicio) + pct(barra.fim)) / 2 : 0
                 return (
                   <div key={e.id} className="flex items-center gap-2">
-                    <span className="w-28 shrink-0 truncate text-xs font-medium text-gray-600" title={e.etapa}>
+                    <input
+                      type="checkbox"
+                      checked={e.concluido}
+                      disabled={!isEditor}
+                      onChange={() => alternarConcluido(e)}
+                      title="Concluída?"
+                      className="h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-blue-600 disabled:opacity-60"
+                    />
+                    <span className="w-20 shrink-0 truncate text-xs font-medium text-gray-600" title={e.etapa}>
                       {e.etapa}
                     </span>
                     <div className="flex-1">
@@ -447,10 +452,9 @@ export function CronogramaTab({
                           style={{ color: COR_STATUS[barra.status] }}
                           title={[
                             LABEL_STATUS[barra.status],
-                            e.aprovacao_planejado && `Aprovação planejada: ${formatarData(e.aprovacao_planejado)}`,
-                            e.aprovacao_realizado && `Aprovação realizada: ${formatarData(e.aprovacao_realizado)}`,
-                            e.publicacao_planejado && `Publicação planejada: ${formatarData(e.publicacao_planejado)}`,
-                            e.publicacao_realizado && `Publicação realizada: ${formatarData(e.publicacao_realizado)}`,
+                            e.data_inicio && `Data inicial: ${formatarData(e.data_inicio)}`,
+                            e.data_fim && `Data final: ${formatarData(e.data_fim)}`,
+                            e.concluido && e.data_conclusao && `Concluída em: ${formatarData(e.data_conclusao)}`,
                           ]
                             .filter(Boolean)
                             .join('\n')}
@@ -461,6 +465,16 @@ export function CronogramaTab({
                         </div>
                       )}
                     </div>
+                    {e.concluido && (
+                      <input
+                        type="date"
+                        value={e.data_conclusao ?? ''}
+                        disabled={!isEditor}
+                        onChange={(ev) => editarDataConclusao(e, ev.target.value)}
+                        title="Concluída em"
+                        className="w-32 shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-[11px] disabled:border-transparent disabled:bg-transparent"
+                      />
+                    )}
                     <span className="w-4 shrink-0">
                       {barra && <IconeStatus status={barra.status} />}
                     </span>
