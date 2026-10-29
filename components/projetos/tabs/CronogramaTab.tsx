@@ -116,6 +116,7 @@ export function CronogramaTab({
   const [etapa, setEtapa] = useState<EtapaCronograma>(ETAPAS_CRONOGRAMA[0])
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [responsavel, setResponsavel] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const hoje = hojeISO()
@@ -144,6 +145,7 @@ export function CronogramaTab({
     setEtapa(ETAPAS_CRONOGRAMA[0])
     setDataInicio('')
     setDataFim('')
+    setResponsavel('')
     setMostrarForm(false)
   }
 
@@ -168,6 +170,7 @@ export function CronogramaTab({
         ordem,
         data_inicio: dataInicio || null,
         data_fim: dataFim || null,
+        responsavel: responsavel.trim() || null,
       })
       .select()
       .single()
@@ -304,6 +307,14 @@ export function CronogramaTab({
               />
             </div>
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-600">Responsável</label>
+            <input
+              value={responsavel}
+              onChange={(e) => setResponsavel(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            />
+          </div>
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -417,6 +428,14 @@ export function CronogramaTab({
                     <span className="w-20 shrink-0 truncate text-xs font-medium text-gray-600" title={e.etapa}>
                       {e.etapa}
                     </span>
+                    {e.responsavel && (
+                      <span
+                        className="w-24 shrink-0 truncate text-xs text-gray-400"
+                        title={`Responsável: ${e.responsavel}`}
+                      >
+                        {e.responsavel}
+                      </span>
+                    )}
                     <div className="flex-1">
                       <div className="relative h-4">
                         {pctHoje >= 0 && pctHoje <= 100 && (
@@ -455,6 +474,7 @@ export function CronogramaTab({
                             e.data_inicio && `Data inicial: ${formatarData(e.data_inicio)}`,
                             e.data_fim && `Data final: ${formatarData(e.data_fim)}`,
                             e.concluido && e.data_conclusao && `Concluída em: ${formatarData(e.data_conclusao)}`,
+                            e.responsavel && `Responsável: ${e.responsavel}`,
                           ]
                             .filter(Boolean)
                             .join('\n')}

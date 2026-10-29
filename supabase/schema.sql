@@ -123,6 +123,7 @@ create table cronograma_etapas (
   data_fim date,
   concluido boolean not null default false,
   data_conclusao date,
+  responsavel text,
   created_at timestamptz default now()
 );
 

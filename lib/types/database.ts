@@ -103,6 +103,7 @@ export type CronogramaEtapa = {
   data_fim: string | null
   concluido: boolean
   data_conclusao: string | null
+  responsavel: string | null
   created_at: string
 }
 
@@ -362,6 +363,7 @@ export type Database = {
           data_fim?: string | null
           concluido?: boolean
           data_conclusao?: string | null
+          responsavel?: string | null
           created_at?: string
         }
         Update: Partial<Omit<CronogramaEtapa, 'id' | 'created_at'>>
