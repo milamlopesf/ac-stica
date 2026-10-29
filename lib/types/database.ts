@@ -91,7 +91,7 @@ export type HistoricoProjeto = {
   created_at: string
 }
 
-export type EtapaCronograma = 'EP1' | 'EP2' | 'AP' | 'EX'
+export type EtapaCronograma = 'EP1' | 'EP2' | 'AP' | 'EX' | 'OBRA' | 'GARANTIAS'
 
 export type CronogramaEtapa = {
   id: string
