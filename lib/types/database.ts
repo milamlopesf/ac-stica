@@ -232,16 +232,23 @@ export type FluxoModeloEtapa = {
   created_at: string
 }
 
-export type FluxoProjetoEtapa = {
+export type FluxoInstancia = {
   id: string
   projeto_id: string
   modelo_id: string | null
-  modelo_nome: string | null
   nome: string
-  ordem: number
   sla_dias_total: number
   data_limite_total: string | null
   data_inicio_agendada: string | null
+  created_at: string
+}
+
+export type FluxoProjetoEtapa = {
+  id: string
+  instancia_id: string
+  projeto_id: string
+  nome: string
+  ordem: number
   status: StatusFluxoEtapa
   data_inicio: string | null
   data_conclusao: string | null
@@ -485,18 +492,29 @@ export type Database = {
         Update: Partial<Omit<FluxoModeloEtapa, 'id' | 'created_at'>>
         Relationships: []
       }
-      fluxo_projeto_etapas: {
-        Row: FluxoProjetoEtapa
+      fluxo_instancias: {
+        Row: FluxoInstancia
         Insert: {
           id?: string
           projeto_id: string
           modelo_id?: string | null
-          modelo_nome?: string | null
           nome: string
-          ordem: number
           sla_dias_total: number
           data_limite_total?: string | null
           data_inicio_agendada?: string | null
+          created_at?: string
+        }
+        Update: Partial<Omit<FluxoInstancia, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      fluxo_projeto_etapas: {
+        Row: FluxoProjetoEtapa
+        Insert: {
+          id?: string
+          instancia_id: string
+          projeto_id: string
+          nome: string
+          ordem: number
           status?: StatusFluxoEtapa
           data_inicio?: string | null
           data_conclusao?: string | null

@@ -1,11 +1,10 @@
-import type { FluxoProjetoEtapa } from '@/lib/types/database'
+import type { FluxoInstancia, FluxoProjetoEtapa } from '@/lib/types/database'
 
-/** O prazo é único para o fluxo inteiro (mesmo valor em todas as etapas da instância). */
-export function fluxoAtrasado(etapas: FluxoProjetoEtapa[], hoje: string) {
-  const dataLimite = etapas[0]?.data_limite_total
-  if (!dataLimite) return false
+/** O prazo é único para o fluxo inteiro (fluxo_instancias.data_limite_total). */
+export function fluxoAtrasado(instancia: FluxoInstancia, etapas: FluxoProjetoEtapa[], hoje: string) {
+  if (!instancia.data_limite_total) return false
   const concluido = etapas.length > 0 && etapas.every((e) => e.status === 'concluido')
-  return dataLimite < hoje && !concluido
+  return instancia.data_limite_total < hoje && !concluido
 }
 
 /** Soma dias a uma data no formato ISO (YYYY-MM-DD), em UTC pra evitar problema de fuso. */

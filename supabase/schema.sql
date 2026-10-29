@@ -281,33 +281,49 @@ create table fluxo_modelo_etapas (
 
 create index idx_fluxo_modelo_etapas_modelo on fluxo_modelo_etapas(modelo_id);
 
--- Instância do fluxo em um projeto: uma cópia (snapshot) das etapas do tipo
--- de fluxo escolhido no momento em que o fluxo foi iniciado (ou agendado) —
--- editar o molde depois não muda fluxos já em andamento. Só a primeira etapa
--- pendente fica "em_andamento" de cada vez; concluir uma etapa ativa a
--- próxima automaticamente. sla_dias_total/data_limite_total são do fluxo
--- como um todo (mesmo valor em todas as linhas da instância) — usados para
--- marcar "Atrasado" na tela quando o fluxo ainda não foi concluído e já
+-- Instância de um fluxo de trabalho em um projeto. Um projeto pode ter
+-- VÁRIAS instâncias ao mesmo tempo (ex: duas vistorias do mesmo tipo em
+-- momentos diferentes) — cada uma com seu próprio nome (começa com o nome
+-- do tipo escolhido, editável depois pra diferenciar de outra instância do
+-- mesmo tipo). sla_dias_total/data_limite_total são o prazo do fluxo como
+-- um todo (snapshot do molde no momento em que foi iniciado/agendado) —
+-- usados pra marcar "Atrasado" quando o fluxo ainda não foi concluído e já
 -- passou do prazo total (só visual, sem notificação por fora do painel).
 -- data_inicio_agendada: quando o fluxo foi agendado em vez de iniciado na
--- hora, guarda a data prevista de início (mesmo valor em todas as linhas);
--- a 1a etapa só vira "em_andamento" quando essa data chega.
-create table fluxo_projeto_etapas (
+-- hora, guarda a data prevista de início; a 1a etapa só vira "em_andamento"
+-- quando essa data chega.
+create table fluxo_instancias (
   id uuid primary key default gen_random_uuid(),
   projeto_id uuid not null references projetos(id) on delete cascade,
   modelo_id uuid references fluxo_modelos(id) on delete set null,
-  modelo_nome text,
   nome text not null,
-  ordem int not null,
   sla_dias_total int not null,
   data_limite_total date,
   data_inicio_agendada date,
+  created_at timestamptz default now()
+);
+
+create index idx_fluxo_instancias_projeto on fluxo_instancias(projeto_id);
+
+-- Etapas de cada instância — cópia (snapshot) das etapas do tipo de fluxo
+-- escolhido; editar o molde depois não muda fluxos já em andamento. Só a
+-- primeira etapa pendente fica "em_andamento" de cada vez; concluir uma
+-- etapa ativa a próxima automaticamente. data_conclusao é editável mesmo
+-- depois de concluída, pra corrigir a data caso tenha esquecido de marcar
+-- na hora certa.
+create table fluxo_projeto_etapas (
+  id uuid primary key default gen_random_uuid(),
+  instancia_id uuid not null references fluxo_instancias(id) on delete cascade,
+  projeto_id uuid not null references projetos(id) on delete cascade,
+  nome text not null,
+  ordem int not null,
   status text not null default 'pendente' check (status in ('pendente', 'em_andamento', 'concluido')),
   data_inicio date,
   data_conclusao date,
   created_at timestamptz default now()
 );
 
+create index idx_fluxo_projeto_etapas_instancia on fluxo_projeto_etapas(instancia_id);
 create index idx_fluxo_projeto_etapas_projeto on fluxo_projeto_etapas(projeto_id);
 
 
@@ -330,6 +346,7 @@ alter table tr_calculos enable row level security;
 alter table tr_calculo_superficies enable row level security;
 alter table fluxo_modelos enable row level security;
 alter table fluxo_modelo_etapas enable row level security;
+alter table fluxo_instancias enable row level security;
 alter table fluxo_projeto_etapas enable row level security;
 
 
@@ -472,6 +489,16 @@ create policy "editor insere" on fluxo_modelo_etapas for insert
 create policy "editor atualiza" on fluxo_modelo_etapas for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on fluxo_modelo_etapas for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- fluxo_instancias
+create policy "leitura autenticada" on fluxo_instancias for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on fluxo_instancias for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on fluxo_instancias for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on fluxo_instancias for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- fluxo_projeto_etapas
