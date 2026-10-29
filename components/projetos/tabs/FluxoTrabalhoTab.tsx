@@ -382,7 +382,9 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
 
       {erro && <p className="text-sm text-red-600">{erro}</p>}
 
-      {instancias.map((instancia) => {
+      {[...instancias]
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))
+        .map((instancia) => {
         const etapasDaInstancia = etapas
           .filter((e) => e.instancia_id === instancia.id)
           .sort((a, b) => a.ordem - b.ordem)
@@ -393,11 +395,19 @@ export function FluxoTrabalhoTab({ projetoId, isEditor }: { projetoId: string; i
           return (
             <div key={instancia.id} className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">{instancia.nome}</span>
-                  {' · '}
-                  agendado para iniciar em {formatarData(instancia.data_inicio_agendada)}
-                </p>
+                <div className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
+                  {isEditor ? (
+                    <input
+                      key={instancia.id}
+                      defaultValue={instancia.nome}
+                      onBlur={(e) => renomearInstancia(instancia, e.target.value)}
+                      className="min-w-[10rem] rounded border border-transparent bg-transparent px-1 py-0.5 font-medium text-gray-700 hover:border-gray-300 focus:border-blue-400 focus:bg-white focus:outline-none"
+                    />
+                  ) : (
+                    <span className="font-medium text-gray-700">{instancia.nome}</span>
+                  )}
+                  <span>· agendado para iniciar em {formatarData(instancia.data_inicio_agendada)}</span>
+                </div>
                 {isEditor && (
                   <button
                     onClick={() => excluirFluxo(instancia, true)}
