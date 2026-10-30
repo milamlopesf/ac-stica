@@ -107,8 +107,8 @@ export function CronogramaTab({
       .from('cronograma_etapas')
       .select('*')
       .eq('projeto_id', projetoId)
-      .order('fase', { ascending: true })
-      .order('ordem', { ascending: true })
+      .order('etapa', { ascending: true })
+      .order('data_inicio', { ascending: true, nullsFirst: false })
       .then(({ data }) => {
         if (ativo) {
           setEtapas((data as CronogramaEtapa[]) ?? [])
@@ -140,7 +140,7 @@ export function CronogramaTab({
     e.preventDefault()
     setErro('')
     setEnviando(true)
-    const ordem = etapas.filter((x) => x.fase === fase).length
+    const ordem = etapas.filter((x) => x.etapa === etapa).length
     const { data, error } = await supabase
       .from('cronograma_etapas')
       .insert({
@@ -205,14 +205,14 @@ export function CronogramaTab({
     }
   }
 
-  const { fases, limiteInicio, limiteFim } = useMemo(() => {
-    const porFase = new Map<string, CronogramaEtapa[]>()
+  const { grupos, limiteInicio, limiteFim } = useMemo(() => {
+    const porEtapa = new Map<EtapaCronograma, CronogramaEtapa[]>()
     let inicio: string | null = null
     let fim: string | null = null
 
     for (const e of etapas) {
-      if (!porFase.has(e.fase)) porFase.set(e.fase, [])
-      porFase.get(e.fase)!.push(e)
+      if (!porEtapa.has(e.etapa)) porEtapa.set(e.etapa, [])
+      porEtapa.get(e.etapa)!.push(e)
 
       const b = calcularBarra(e, hoje)
       if (b) {
@@ -224,7 +224,12 @@ export function CronogramaTab({
     inicio = menorData(inicio, hoje)
     fim = maiorData(fim, hoje)
 
-    return { fases: Array.from(porFase.entries()), limiteInicio: inicio, limiteFim: fim }
+    const grupos = ETAPAS_CRONOGRAMA.filter((et) => porEtapa.has(et)).map(
+      (et) =>
+        [et, porEtapa.get(et)!.sort((a, b) => (a.data_inicio ?? '').localeCompare(b.data_inicio ?? ''))] as const
+    )
+
+    return { grupos, limiteInicio: inicio, limiteFim: fim }
   }, [etapas, hoje])
 
   const formAdicionar = isEditor && (
@@ -363,13 +368,13 @@ export function CronogramaTab({
         </span>
       </div>
 
-      {fases.map(([nomeFase, etapasFase]) => (
-        <div key={nomeFase} className="flex flex-col gap-1.5">
-          <p className="text-xs font-medium text-gray-500">{nomeFase}</p>
+      {grupos.map(([etapaGrupo, etapasDoGrupo]) => (
+        <div key={etapaGrupo} className="flex flex-col gap-1.5">
+          <h4 className="text-sm font-semibold text-gray-800">{etapaGrupo}</h4>
 
           <div className="relative">
             {/* grade vertical de meses, cobrindo cabeçalho + linhas */}
-            <div className="pointer-events-none absolute inset-0 ml-24 mr-6">
+            <div className="pointer-events-none absolute inset-0 ml-40 mr-6">
               {faixasMes.map((m, i) => (
                 <div
                   key={m.iso}
@@ -379,7 +384,7 @@ export function CronogramaTab({
               ))}
             </div>
 
-            <div className="relative mb-1.5 ml-24 mr-6 flex h-6 items-center rounded-sm bg-slate-100 text-[11px] font-medium text-slate-500">
+            <div className="relative mb-1.5 ml-40 mr-6 flex h-6 items-center rounded-sm bg-slate-100 text-[11px] font-medium text-slate-500">
               {faixasMes.map((m) => (
                 <span
                   key={m.iso}
@@ -392,7 +397,7 @@ export function CronogramaTab({
             </div>
 
             <div className="relative flex flex-col gap-2">
-              {etapasFase.map((e) => {
+              {etapasDoGrupo.map((e) => {
                 const barra = calcularBarra(e, hoje)
                 const meio = barra ? (pct(barra.inicio) + pct(barra.fim)) / 2 : 0
                 return (
@@ -405,8 +410,8 @@ export function CronogramaTab({
                       title="Concluída?"
                       className="h-3.5 w-3.5 shrink-0 rounded border-gray-300 text-blue-600 disabled:opacity-60"
                     />
-                    <span className="w-20 shrink-0 truncate text-xs font-medium text-gray-600" title={e.etapa}>
-                      {e.etapa}
+                    <span className="w-36 shrink-0 truncate text-xs font-medium text-gray-600" title={e.fase}>
+                      {e.fase}
                     </span>
                     {e.responsavel && (
                       <span
@@ -482,7 +487,7 @@ export function CronogramaTab({
                       <button
                         onClick={() => excluirEtapa(e.id)}
                         className="shrink-0 text-gray-300 hover:text-red-600"
-                        aria-label={`Remover etapa ${e.etapa}`}
+                        aria-label={`Remover etapa ${e.fase}`}
                       >
                         ✕
                       </button>
