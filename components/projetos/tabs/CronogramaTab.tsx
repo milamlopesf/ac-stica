@@ -464,7 +464,10 @@ export function CronogramaTab({
                             .filter(Boolean)
                             .join('\n')}
                         >
-                          <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${meio}%` }}>
+                          <span
+                            className="absolute whitespace-nowrap"
+                            style={{ left: `clamp(0px, calc(${meio}% - 60px), calc(100% - 120px))` }}
+                          >
                             {formatarData(barra.inicio)} – {formatarData(barra.fim)}
                           </span>
                         </div>
