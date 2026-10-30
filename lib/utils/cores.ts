@@ -78,6 +78,7 @@ export const PROJETISTAS_ACUSTICOS = [
 ]
 
 export const DIRETORES = [
+  'Adriana Lourido',
   'Alexandre Costa',
   'Alexandre Mirandez',
   'Andre Vergara',
