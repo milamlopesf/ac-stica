@@ -16,6 +16,16 @@ function iconePara(nomeArquivo: string | null) {
   return /\.(xls|xlsx)$/i.test(nomeArquivo) ? '📊' : /\.(jpe?g|png|webp)$/i.test(nomeArquivo) ? '🖼️' : '📄'
 }
 
+const LOGOS_FORNECEDOR: Record<string, string> = {
+  abatex: '/logos/abatex.png',
+  marcetex: '/logos/marcetex.png',
+}
+
+function logoFornecedor(fornecedor: string | null) {
+  if (!fornecedor) return null
+  return LOGOS_FORNECEDOR[fornecedor.trim().toLowerCase()] ?? null
+}
+
 export function BibliotecaClient({
   categoria,
   itensIniciais,
@@ -239,7 +249,19 @@ export function BibliotecaClient({
               className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md"
             >
               <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
-                <span className="shrink-0 text-xl">{item.ferramenta === 'calculo_tr' ? '🧮' : iconePara(item.nome_arquivo)}</span>
+                {item.ferramenta === 'calculo_tr' ? (
+                  <span className="shrink-0 text-xl">🧮</span>
+                ) : logoFornecedor(item.fornecedor) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoFornecedor(item.fornecedor)!}
+                    alt={item.fornecedor ?? ''}
+                    title={item.fornecedor ?? undefined}
+                    className="h-6 w-6 shrink-0 rounded object-contain"
+                  />
+                ) : (
+                  <span className="shrink-0 text-xl">{iconePara(item.nome_arquivo)}</span>
+                )}
                 <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900">{item.titulo}</h3>
                 {item.ferramenta === 'calculo_tr' && (
                   <Badge label="Ferramenta interativa" className="border-green-200 bg-green-50 text-green-700" />
