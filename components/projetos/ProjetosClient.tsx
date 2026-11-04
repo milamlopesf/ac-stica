@@ -45,7 +45,6 @@ export function ProjetosClient({
   const [filtroDiretor, setFiltroDiretor] = useState('')
   const [filtroGerente, setFiltroGerente] = useState('')
   const [filtroProjetista, setFiltroProjetista] = useState('')
-  const [filtroAtrasado, setFiltroAtrasado] = useState(false)
   const [filtroVinculado, setFiltroVinculado] = useState(false)
   const [ordenarPor, setOrdenarPor] = useState<OrdenarPor>(null)
 
@@ -109,18 +108,12 @@ export function ProjetosClient({
     return mapa
   }, [projetos])
 
-  const contagemAtrasados = useMemo(
-    () => projetos.filter((p) => estaAtrasado(p, hoje)).length,
-    [projetos, hoje]
-  )
-
   const projetosFiltrados = useMemo(() => {
     return projetos
       .filter((p) => {
         if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase())) return false
         if (filtroEtapa && p.etapa !== filtroEtapa) return false
         if (filtroStatus && p.status !== filtroStatus) return false
-        if (filtroAtrasado && !estaAtrasado(p, hoje)) return false
         if (filtroDiretor && p.diretor !== filtroDiretor) return false
         if (filtroGerente && p.gerente !== filtroGerente) return false
         if (filtroProjetista && p.projetista !== filtroProjetista) return false
@@ -168,7 +161,6 @@ export function ProjetosClient({
     busca,
     filtroEtapa,
     filtroStatus,
-    filtroAtrasado,
     hoje,
     filtroDiretor,
     filtroGerente,
@@ -211,7 +203,10 @@ export function ProjetosClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900">Projetos</h1>
+        <div className="flex items-baseline gap-2">
+          <h1 className="text-2xl font-semibold text-gray-900">Projetos</h1>
+          <span className="text-sm text-gray-400">{projetos.length} no total</span>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-md border border-gray-300 p-0.5">
             <button
@@ -244,61 +239,24 @@ export function ProjetosClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <button
-          onClick={() => {
-            setFiltroStatus('')
-            setFiltroAtrasado(false)
-          }}
-          className={clsx(
-            'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
-            !filtroStatus && !filtroAtrasado
-              ? 'border-teal-400 ring-1 ring-teal-400'
-              : 'border-gray-200 hover:border-gray-300'
-          )}
-        >
-          <span className="text-3xl font-bold text-gray-900">{projetos.length}</span>
-          <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">
-            Total de projetos
-          </span>
-        </button>
-
-        {STATUS_PROJETO.filter((status) => status !== 'A Fazer').map((status) => {
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {STATUS_PROJETO.filter((status) => status !== 'Atrasado').map((status) => {
           const cor = CORES_STATUS[status]
-
-          if (status === 'Atrasado') {
-            const ativo = filtroAtrasado
-            return (
-              <button
-                key={status}
-                onClick={() => setFiltroAtrasado(!ativo)}
-                title="Projetos com entrega vencida e que não estão concluídos"
-                className={clsx(
-                  'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
-                  ativo ? 'border-teal-400 ring-1 ring-teal-400' : 'border-gray-200 hover:border-gray-300'
-                )}
-              >
-                <span className="text-3xl font-bold" style={{ color: cor.hex }}>
-                  {contagemAtrasados}
-                </span>
-                <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">
-                  {cor.label}
-                </span>
-              </button>
-            )
-          }
-
           const ativo = filtroStatus === status
           return (
             <button
               key={status}
               onClick={() => setFiltroStatus(ativo ? '' : status)}
               className={clsx(
-                'flex flex-col items-start gap-1 rounded-xl border bg-white p-4 text-left transition',
-                ativo ? 'border-teal-400 ring-1 ring-teal-400' : 'border-gray-200 hover:border-gray-300'
+                'flex flex-col items-start gap-1 rounded-lg border-t-4 bg-white px-4 py-3 text-left shadow-sm transition',
+                ativo ? 'ring-1' : 'hover:shadow-md'
               )}
+              style={{
+                borderTopColor: cor.hex,
+                ...(ativo ? { boxShadow: `0 0 0 1px ${cor.hex}` } : {}),
+              }}
             >
-              <span className="text-3xl font-bold" style={{ color: cor.hex }}>
+              <span className="text-2xl font-bold" style={{ color: cor.hex }}>
                 {contagemPorStatus[status] ?? 0}
               </span>
               <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase">

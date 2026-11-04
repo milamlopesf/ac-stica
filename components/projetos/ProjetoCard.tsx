@@ -1,7 +1,9 @@
+import clsx from 'clsx'
 import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
-import { formatarData } from '@/lib/utils/data'
+import { formatarData, hojeISO } from '@/lib/utils/data'
 import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
+import { estaAtrasado } from '@/lib/utils/projetos'
 import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
@@ -19,6 +21,8 @@ export function ProjetoCard({
   onClick: () => void
   onAtualizarCampo?: (campo: 'etapa' | 'status', valor: string) => void
 }) {
+  const atrasado = estaAtrasado(projeto, hojeISO())
+
   return (
     <div
       role="button"
@@ -30,7 +34,13 @@ export function ProjetoCard({
           onClick()
         }
       }}
-      className="flex cursor-pointer flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md"
+      title={atrasado ? 'Entrega atrasada' : undefined}
+      className={clsx(
+        'flex cursor-pointer flex-col gap-3 rounded-lg border-l-4 bg-white p-4 text-left shadow-sm transition hover:shadow-md',
+        atrasado
+          ? 'border-y border-r border-y-gray-200 border-r-gray-200 border-l-red-500 bg-red-50/30'
+          : 'border border-gray-200 hover:border-blue-300'
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className="line-clamp-2 font-medium text-gray-900">{projeto.nome}</h3>

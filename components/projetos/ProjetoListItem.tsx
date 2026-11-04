@@ -1,8 +1,9 @@
 import clsx from 'clsx'
 import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
 import { CORES_ETAPA, CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
-import { formatarData } from '@/lib/utils/data'
+import { formatarData, hojeISO } from '@/lib/utils/data'
 import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
+import { estaAtrasado } from '@/lib/utils/projetos'
 import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
@@ -124,6 +125,7 @@ export function ProjetoListItem({
   onAtualizarCampo?: (campo: 'etapa' | 'status', valor: string) => void
 }) {
   const corStatus = CORES_STATUS[projeto.status]
+  const atrasado = estaAtrasado(projeto, hojeISO())
 
   return (
     <div
@@ -136,10 +138,12 @@ export function ProjetoListItem({
           onClick()
         }
       }}
-      className={
-        GRID_COLUNAS +
-        ' cursor-pointer px-4 py-3 text-left transition hover:bg-gray-50'
-      }
+      title={atrasado ? 'Entrega atrasada' : undefined}
+      className={clsx(
+        GRID_COLUNAS,
+        'cursor-pointer border-l-4 px-4 py-3 text-left transition hover:bg-gray-50',
+        atrasado ? 'border-l-red-500 bg-red-50/40' : 'border-l-transparent'
+      )}
     >
       <span
         className="h-2.5 w-2.5 shrink-0 rounded-full"
