@@ -45,7 +45,13 @@ export function CalendarioClient({
   }, [mesAtual])
 
   function projetosNoDia(dia: Date) {
-    return projetos.filter((p) => p.entrega && isSameDay(new Date(`${p.entrega}T00:00:00`), dia))
+    // Projetos cuja Entrega já aparece como um item do Cronograma neste mesmo
+    // dia são omitidos aqui pra não duplicar (a Entrega é sincronizada
+    // automaticamente com a etapa de cronograma pendente mais próxima).
+    const idsComCronograma = new Set(cronogramaNoDia(dia).map((c) => c.projeto_id))
+    return projetos.filter(
+      (p) => p.entrega && isSameDay(new Date(`${p.entrega}T00:00:00`), dia) && !idsComCronograma.has(p.id)
+    )
   }
 
   function atividadesNoDia(dia: Date) {
