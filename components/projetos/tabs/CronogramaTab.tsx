@@ -205,6 +205,23 @@ export function CronogramaTab({
     }
   }
 
+  async function adiarEtapa(etapaAlvo: CronogramaEtapa, novaData: string) {
+    if (!novaData || novaData === etapaAlvo.data_fim) return
+    const anterior = etapas
+    const novasEtapas = etapas.map((e) => (e.id === etapaAlvo.id ? { ...e, data_fim: novaData } : e))
+    setEtapas(novasEtapas)
+    const { error } = await supabase
+      .from('cronograma_etapas')
+      .update({ data_fim: novaData })
+      .eq('id', etapaAlvo.id)
+    if (error) {
+      alert(`Erro ao adiar etapa: ${error.message}`)
+      setEtapas(anterior)
+      return
+    }
+    sincronizarEntrega(novasEtapas)
+  }
+
   const { grupos, limiteInicio, limiteFim } = useMemo(() => {
     const porEtapa = new Map<EtapaCronograma, CronogramaEtapa[]>()
     let inicio: string | null = null
@@ -473,7 +490,7 @@ export function CronogramaTab({
                         </div>
                       )}
                     </div>
-                    {e.concluido && (
+                    {e.concluido ? (
                       <input
                         type="date"
                         value={e.data_conclusao ?? ''}
@@ -482,6 +499,16 @@ export function CronogramaTab({
                         title="Concluída em"
                         className="w-32 shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-[11px] disabled:border-transparent disabled:bg-transparent"
                       />
+                    ) : (
+                      isEditor && (
+                        <input
+                          type="date"
+                          value={e.data_fim ?? ''}
+                          onChange={(ev) => adiarEtapa(e, ev.target.value)}
+                          title="Adiar para"
+                          className="w-32 shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-[11px]"
+                        />
+                      )
                     )}
                     <span className="w-4 shrink-0">
                       {barra && <IconeStatus status={barra.status} />}
