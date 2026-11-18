@@ -36,13 +36,27 @@ function htmlRodape() {
   return `<footer><div class="marca-footer"><img src="${urlLogoAthie()}" alt="Athié Wohnrath" /></div></footer>`
 }
 
+function blobParaDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader()
+    leitor.onload = () => resolve(String(leitor.result))
+    leitor.onerror = () => reject(leitor.error)
+    leitor.readAsDataURL(blob)
+  })
+}
+
+// Baixa a logo e embute como data URL (em vez de uma URL assinada) porque o
+// relatório abre numa janela separada (window.open + document.write), e essa
+// janela não consegue buscar uma URL assinada do Supabase de forma
+// confiável — o data URL não depende de nenhuma requisição de rede extra.
 async function urlLogoCliente(
   supabase: ReturnType<typeof createClient>,
   caminho: string | null
 ): Promise<string | null> {
   if (!caminho) return null
-  const { data } = await supabase.storage.from('logos-clientes').createSignedUrl(caminho, 300)
-  return data?.signedUrl ?? null
+  const { data, error } = await supabase.storage.from('logos-clientes').download(caminho)
+  if (error || !data) return null
+  return blobParaDataUrl(data)
 }
 
 function htmlCabecalhoTitulo(nome: string, logoClienteUrl: string | null) {

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 import { LogoClienteProjeto } from './LogoClienteProjeto'
+import { LogoClienteThumb } from './LogoClienteThumb'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
@@ -97,9 +98,13 @@ export function ProjetoDetalhePanel({
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5">
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-3">
+              <LogoClienteThumb
+                caminho={projeto.logo_cliente_storage}
+                className="h-10 w-10 shrink-0 rounded border border-gray-100 object-contain"
+              />
               <h2 className="text-xl font-semibold text-gray-900">{projeto.nome}</h2>
-              <LogoClienteProjeto projeto={projeto} isEditor={isEditor} onAtualizado={onAtualizado} />
             </div>
+            <LogoClienteProjeto projeto={projeto} isEditor={isEditor} onAtualizado={onAtualizado} />
             <div className="flex flex-wrap gap-2">
               <Badge label={corEtapa.label} className={corEtapa.badge} />
               <Badge label={corStatus.label} className={corStatus.badge} />

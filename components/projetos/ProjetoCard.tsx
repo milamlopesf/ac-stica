@@ -7,6 +7,7 @@ import { estaAtrasado } from '@/lib/utils/projetos'
 import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
+import { LogoClienteThumb } from './LogoClienteThumb'
 
 export function ProjetoCard({
   projeto,
@@ -43,7 +44,13 @@ export function ProjetoCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="line-clamp-2 font-medium text-gray-900">{projeto.nome}</h3>
+        <div className="flex min-w-0 items-start gap-2">
+          <LogoClienteThumb
+            caminho={projeto.logo_cliente_storage}
+            className="h-7 w-7 shrink-0 rounded border border-gray-100 object-contain"
+          />
+          <h3 className="line-clamp-2 font-medium text-gray-900">{projeto.nome}</h3>
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation()
