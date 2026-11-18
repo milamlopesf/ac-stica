@@ -7,6 +7,7 @@ import { formatarData, hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
 import { formatarTamanho } from '@/lib/utils/storage'
 import { htmlEstaVazio, textoComQuebras } from '@/lib/utils/texto'
+import { LOGO_ATHIE_WOHNRATH_BASE64 } from '@/lib/utils/logoAthieBase64'
 
 function escapeHtml(valor: string) {
   return valor
@@ -28,12 +29,8 @@ function formatarDataHora(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-function urlLogoAthie() {
-  return `${window.location.origin}/logos/athie-wohnrath.png`
-}
-
 function htmlRodape() {
-  return `<footer><div class="marca-footer"><img src="${urlLogoAthie()}" alt="Athié Wohnrath" /></div></footer>`
+  return `<footer><div class="marca-footer"><img src="${LOGO_ATHIE_WOHNRATH_BASE64}" alt="Athié Wohnrath" /></div></footer>`
 }
 
 function blobParaDataUrl(blob: Blob): Promise<string> {
