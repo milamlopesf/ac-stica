@@ -58,6 +58,16 @@ function IconPaineis(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function IconReuniao(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 9.5h4.5M8 13h8M8 16.5h5" strokeLinecap="round" />
+      <path d="m15.5 8.5 1 1 2-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function IconCobertura(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
@@ -73,6 +83,7 @@ export function NavLinks({ isEditor }: { isEditor: boolean }) {
   const links = [
     { href: '/projetos', label: 'Projetos', icon: IconProjetos, apenasEditor: false },
     { href: '/calendario', label: 'Calendário', icon: IconCalendario, apenasEditor: true },
+    { href: '/reuniao-consultores', label: 'Reunião Consultores', icon: IconReuniao, apenasEditor: true },
     { href: '/normas', label: 'Normas/Manuais', icon: IconLivro, apenasEditor: false },
     { href: '/planilhas', label: 'Planilhas de Cálculo', icon: IconPlanilha, apenasEditor: true },
     { href: '/laudos', label: 'Laudos/Medições', icon: IconLaudo, apenasEditor: false },

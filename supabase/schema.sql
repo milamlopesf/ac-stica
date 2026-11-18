@@ -129,6 +129,30 @@ create table cronograma_etapas (
 
 create index idx_cronograma_projeto on cronograma_etapas(projeto_id);
 
+-- Reunião Consultores: atas e listas de tarefas da reunião semanal com a
+-- diretoria, independente de projeto.
+create table reunioes_consultores (
+  id uuid primary key default gen_random_uuid(),
+  data date not null,
+  titulo text not null,
+  participantes text,
+  pauta text,
+  created_at timestamptz default now()
+);
+
+create table reunioes_consultores_tarefas (
+  id uuid primary key default gen_random_uuid(),
+  reuniao_id uuid not null references reunioes_consultores(id) on delete cascade,
+  texto text not null,
+  responsavel text,
+  concluido boolean not null default false,
+  concluido_em date,
+  ordem int not null default 0,
+  created_at timestamptz default now()
+);
+
+create index idx_reunioes_consultores_tarefas_reuniao on reunioes_consultores_tarefas(reuniao_id);
+
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -339,6 +363,8 @@ alter table reunioes enable row level security;
 alter table anexos enable row level security;
 alter table projeto_historico enable row level security;
 alter table cronograma_etapas enable row level security;
+alter table reunioes_consultores enable row level security;
+alter table reunioes_consultores_tarefas enable row level security;
 alter table profiles enable row level security;
 alter table biblioteca enable row level security;
 alter table tr_materiais enable row level security;
@@ -429,6 +455,26 @@ create policy "editor insere" on cronograma_etapas for insert
 create policy "editor atualiza" on cronograma_etapas for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on cronograma_etapas for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- reunioes_consultores
+create policy "leitura autenticada" on reunioes_consultores for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on reunioes_consultores for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on reunioes_consultores for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on reunioes_consultores for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- reunioes_consultores_tarefas
+create policy "leitura autenticada" on reunioes_consultores_tarefas for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on reunioes_consultores_tarefas for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on reunioes_consultores_tarefas for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on reunioes_consultores_tarefas for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- biblioteca

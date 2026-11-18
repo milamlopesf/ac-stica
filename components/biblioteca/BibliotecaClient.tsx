@@ -52,6 +52,10 @@ export function BibliotecaClient({
       router.push('/planilhas/calculo-tr')
       return
     }
+    if (item.ferramenta === 'vistoria_whatsapp') {
+      router.push('/planilhas/vistoria-whatsapp')
+      return
+    }
     setSelecionadoId(item.id)
   }
 
@@ -251,6 +255,8 @@ export function BibliotecaClient({
               <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                 {item.ferramenta === 'calculo_tr' ? (
                   <span className="shrink-0 text-xl">🧮</span>
+                ) : item.ferramenta === 'vistoria_whatsapp' ? (
+                  <span className="shrink-0 text-xl">📋</span>
                 ) : logoFornecedor(item.fornecedor) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -263,7 +269,7 @@ export function BibliotecaClient({
                   <span className="shrink-0 text-xl">{iconePara(item.nome_arquivo)}</span>
                 )}
                 <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900">{item.titulo}</h3>
-                {item.ferramenta === 'calculo_tr' && (
+                {(item.ferramenta === 'calculo_tr' || item.ferramenta === 'vistoria_whatsapp') && (
                   <Badge label="Ferramenta interativa" className="border-green-200 bg-green-50 text-green-700" />
                 )}
                 {categoria === 'laudos' && item.modelo && (
@@ -332,7 +338,8 @@ export function BibliotecaClient({
                     {formatarTamanho(item.tamanho_bytes)}
                   </span>
                 ) : (
-                  item.ferramenta !== 'calculo_tr' && (
+                  item.ferramenta !== 'calculo_tr' &&
+                  item.ferramenta !== 'vistoria_whatsapp' && (
                     <Badge label="Pendente de arquivo" className="border-amber-200 bg-amber-50 text-amber-700" />
                   )
                 )}

@@ -107,6 +107,26 @@ export type CronogramaEtapa = {
   created_at: string
 }
 
+export type ReuniaoConsultores = {
+  id: string
+  data: string
+  titulo: string
+  participantes: string | null
+  pauta: string | null
+  created_at: string
+}
+
+export type TarefaReuniaoConsultores = {
+  id: string
+  reuniao_id: string
+  texto: string
+  responsavel: string | null
+  concluido: boolean
+  concluido_em: string | null
+  ordem: number
+  created_at: string
+}
+
 export type Profile = {
   id: string
   email: string | null
@@ -115,7 +135,7 @@ export type Profile = {
 
 export type CategoriaBiblioteca = 'normas' | 'planilhas' | 'laudos'
 
-export type FerramentaBiblioteca = 'calculo_tr'
+export type FerramentaBiblioteca = 'calculo_tr' | 'vistoria_whatsapp'
 
 export type ItemBiblioteca = {
   id: string
@@ -367,6 +387,34 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<CronogramaEtapa, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      reunioes_consultores: {
+        Row: ReuniaoConsultores
+        Insert: {
+          id?: string
+          data: string
+          titulo: string
+          participantes?: string | null
+          pauta?: string | null
+          created_at?: string
+        }
+        Update: Partial<Omit<ReuniaoConsultores, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      reunioes_consultores_tarefas: {
+        Row: TarefaReuniaoConsultores
+        Insert: {
+          id?: string
+          reuniao_id: string
+          texto: string
+          responsavel?: string | null
+          concluido?: boolean
+          concluido_em?: string | null
+          ordem?: number
+          created_at?: string
+        }
+        Update: Partial<Omit<TarefaReuniaoConsultores, 'id' | 'created_at'>>
         Relationships: []
       }
       profiles: {

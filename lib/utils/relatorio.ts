@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Projeto } from '@/lib/types/database'
+import type { Projeto, ReuniaoConsultores, TarefaReuniaoConsultores } from '@/lib/types/database'
+import type { ItemVistoria } from '@/lib/utils/vistoria'
+import { prepararFotoVistoria } from '@/lib/utils/vistoriaArquivos'
 import { CORES_ETAPA, CORES_STATUS, CORES_STATUS_ATIVIDADE, CORES_NOTA_AVALIACAO } from '@/lib/utils/cores'
 import { formatarData, hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
 import { formatarTamanho } from '@/lib/utils/storage'
-import { textoComQuebras } from '@/lib/utils/texto'
+import { htmlEstaVazio, textoComQuebras } from '@/lib/utils/texto'
 
 function escapeHtml(valor: string) {
   return valor
@@ -326,6 +328,75 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
   janela.document.close()
 }
 
+export function emitirAtaConsultores(reuniao: ReuniaoConsultores, tarefas: TarefaReuniaoConsultores[]) {
+  const janela = window.open('', '_blank')
+  if (!janela) {
+    alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
+    return
+  }
+
+  const concluidas = tarefas.filter((t) => t.concluido).length
+
+  const listaTarefas = tarefas.length
+    ? tarefas
+        .map(
+          (t) => `
+        <li>
+          <p class="item-titulo">${t.concluido ? '☑' : '☐'} ${escapeHtml(t.texto)}</p>
+          ${t.responsavel ? `<p class="meta"><span>Responsável: ${escapeHtml(t.responsavel)}</span></p>` : ''}
+        </li>`
+        )
+        .join('')
+    : '<li class="vazio">Nenhuma tarefa registrada.</li>'
+
+  const pauta = reuniao.pauta && !htmlEstaVazio(reuniao.pauta) ? reuniao.pauta : ''
+  const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+
+  const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Ata · ${escapeHtml(reuniao.titulo)}</title>
+<style>${ESTILO_RELATORIO}</style>
+</head>
+<body>
+  <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
+  <header>
+    <span class="marca">PAINEL ACÚSTICA · REUNIÃO CONSULTORES</span>
+    <span class="item-data">Gerado em ${geradoEm}</span>
+  </header>
+  <h1>${escapeHtml(reuniao.titulo)}</h1>
+  <p class="subtitulo">${formatarData(reuniao.data)}</p>
+
+  ${
+    reuniao.participantes
+      ? `<table class="info"><tr><th>Participantes</th><td>${escapeHtml(reuniao.participantes)}</td></tr></table>`
+      : ''
+  }
+
+  ${
+    pauta
+      ? `<section>
+    <h2>Ata</h2>
+    <div class="texto-conteudo">${pauta}</div>
+  </section>`
+      : ''
+  }
+
+  <section>
+    <h2>Tarefas (${concluidas}/${tarefas.length})</h2>
+    <ul>${listaTarefas}</ul>
+  </section>
+
+  <footer>Painel Acústica</footer>
+</body>
+</html>`
+
+  janela.document.open()
+  janela.document.write(html)
+  janela.document.close()
+}
+
 export type CampoAgrupamento = 'etapa' | 'status' | 'diretor' | 'gerente' | 'projetista'
 
 const LABEL_CAMPO: Record<CampoAgrupamento, string> = {
@@ -434,6 +505,79 @@ export function emitirRelatorioGeral(
   </section>
 
   ${tabelaGrupos}
+
+  <footer>Painel Acústica</footer>
+</body>
+</html>`
+
+  janela.document.open()
+  janela.document.write(html)
+  janela.document.close()
+}
+
+export async function emitirRelatorioVistoria(params: {
+  nomeProjeto: string
+  data: string
+  itens: ItemVistoria[]
+  fotosPorNome: Map<string, Blob>
+}) {
+  const { nomeProjeto, data, itens, fotosPorNome } = params
+  const janela = window.open('', '_blank')
+  if (!janela) {
+    alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
+    return
+  }
+  janela.document.write(
+    '<p style="font-family: sans-serif; padding: 24px; color: #6b7280;">Gerando relatório...</p>'
+  )
+
+  const listaItens = (
+    await Promise.all(
+      itens.map(async (it) => {
+        const fotosHtml = (
+          await Promise.all(
+            it.fotos.map(async (nome) => {
+              const blob = fotosPorNome.get(nome)
+              if (!blob) return ''
+              const preparada = await prepararFotoVistoria(blob)
+              if (!preparada) return ''
+              return `<img src="data:image/jpeg;base64,${preparada.base64}" style="max-width:260px;max-height:260px;border-radius:6px;margin:4px 6px 4px 0;" />`
+            })
+          )
+        ).join('')
+
+        return `
+        <li>
+          <p class="item-titulo">${escapeHtml(it.ambiente)}${it.andar ? ` <span class="item-data">— ${escapeHtml(it.andar)}</span>` : ''}</p>
+          <p class="meta"><span class="tag" style="background:#0f766e">${escapeHtml(it.item)}</span></p>
+          ${it.descricao ? `<p class="texto-conteudo">${paraHtmlComQuebras(it.descricao)}</p>` : ''}
+          ${fotosHtml ? `<div style="margin-top:8px;">${fotosHtml}</div>` : ''}
+        </li>`
+      })
+    )
+  ).join('')
+
+  const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+
+  const html = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Vistoria Acústica · ${escapeHtml(nomeProjeto)}</title>
+<style>${ESTILO_RELATORIO}</style>
+</head>
+<body>
+  <div class="acoes"><button onclick="window.print()">Imprimir / Salvar PDF</button></div>
+  <header>
+    <span class="marca">PAINEL ACÚSTICA · VISTORIA ACÚSTICA</span>
+    <span class="item-data">Gerado em ${geradoEm}</span>
+  </header>
+  <h1>${escapeHtml(nomeProjeto)}</h1>
+  <p class="subtitulo">${data ? `Vistoria de ${escapeHtml(data)}` : 'Vistoria acústica'} · ${itens.length} ocorrência(s)</p>
+
+  <section>
+    <ul>${listaItens}</ul>
+  </section>
 
   <footer>Painel Acústica</footer>
 </body>
