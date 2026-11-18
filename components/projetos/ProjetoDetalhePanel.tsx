@@ -10,6 +10,7 @@ import { emitirRelatorioProjeto } from '@/lib/utils/relatorio'
 import { Badge } from '@/components/ui/Badge'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
+import { LogoClienteProjeto } from './LogoClienteProjeto'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
@@ -95,7 +96,10 @@ export function ProjetoDetalhePanel({
       >
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-5">
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold text-gray-900">{projeto.nome}</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-semibold text-gray-900">{projeto.nome}</h2>
+              <LogoClienteProjeto projeto={projeto} isEditor={isEditor} onAtualizado={onAtualizado} />
+            </div>
             <div className="flex flex-wrap gap-2">
               <Badge label={corEtapa.label} className={corEtapa.badge} />
               <Badge label={corStatus.label} className={corStatus.badge} />

@@ -34,6 +34,7 @@ create table projetos (
   projetista text,
   projeto_vinculado_id uuid references projetos(id) on delete set null
     constraint projetos_vinculado_nao_self check (projeto_vinculado_id is distinct from id),
+  logo_cliente_storage text,
   created_at timestamptz default now()
 );
 
@@ -620,6 +621,25 @@ using (
 )
 with check (
   bucket_id = 'editor-imagens'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+);
+
+-- Bucket "logos-clientes": logo do cliente de cada projeto, mostrada perto
+-- do nome do projeto nos relatórios em PDF.
+insert into storage.buckets (id, name, public) values ('logos-clientes', 'logos-clientes', false);
+
+create policy "Leitura autenticada logos-clientes"
+on storage.objects for select
+using (bucket_id = 'logos-clientes' and exists (select 1 from profiles where id = auth.uid()));
+
+create policy "Editores gerenciam logos-clientes"
+on storage.objects for all
+using (
+  bucket_id = 'logos-clientes'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+)
+with check (
+  bucket_id = 'logos-clientes'
   and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
 );
 

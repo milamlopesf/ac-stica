@@ -28,6 +28,30 @@ function formatarDataHora(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+function urlLogoAthie() {
+  return `${window.location.origin}/logos/athie-wohnrath.png`
+}
+
+function htmlRodape() {
+  return `<footer><div class="marca-footer"><img src="${urlLogoAthie()}" alt="Athié Wohnrath" /></div></footer>`
+}
+
+async function urlLogoCliente(
+  supabase: ReturnType<typeof createClient>,
+  caminho: string | null
+): Promise<string | null> {
+  if (!caminho) return null
+  const { data } = await supabase.storage.from('logos-clientes').createSignedUrl(caminho, 300)
+  return data?.signedUrl ?? null
+}
+
+function htmlCabecalhoTitulo(nome: string, logoClienteUrl: string | null) {
+  return `<div class="cabecalho-titulo">
+    <h1>${escapeHtml(nome)}</h1>
+    ${logoClienteUrl ? `<img class="logo-cliente" src="${logoClienteUrl}" alt="Logo do cliente" />` : ''}
+  </div>`
+}
+
 const ESTILO_RELATORIO = `
   * { box-sizing: border-box; }
   body {
@@ -46,6 +70,8 @@ const ESTILO_RELATORIO = `
     margin-bottom: 24px;
   }
   header .marca { font-size: 13px; color: #0f766e; font-weight: 700; letter-spacing: 0.02em; }
+  .cabecalho-titulo { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .cabecalho-titulo .logo-cliente { height: 38px; max-width: 170px; object-fit: contain; }
   h1 { font-size: 22px; margin: 4px 0 0; }
   .subtitulo { color: #6b7280; font-size: 13px; margin: 4px 0 0; }
   .badges { margin: 8px 0 20px; }
@@ -94,7 +120,16 @@ const ESTILO_RELATORIO = `
   }
   .meta { font-size: 12px; color: #6b7280; margin: 2px 0 0; }
   .meta span + span::before { content: '·'; margin: 0 6px; color: #d1d5db; }
-  footer { margin-top: 40px; font-size: 11px; color: #9ca3af; text-align: right; }
+  footer { margin-top: 40px; }
+  footer .marca-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f766e;
+    border-radius: 8px;
+    padding: 14px 0;
+  }
+  footer .marca-footer img { height: 24px; display: block; }
   .acoes { margin-bottom: 24px; }
   .acoes button {
     background: #0f766e;
@@ -151,6 +186,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     vinculado,
     { data: acoes },
     { data: avaliacoes },
+    logoClienteUrl,
   ] = await Promise.all([
     supabase
       .from('notas')
@@ -182,6 +218,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
           .eq('projeto_id', projeto.id)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: null as { nota: string; diagnostico: string | null; created_at: string }[] | null }),
+    urlLogoCliente(supabase, projeto.logo_cliente_storage),
   ])
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
@@ -282,7 +319,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     <span class="marca">PAINEL ACÚSTICA · RELATÓRIO DE PROJETO</span>
     <span class="item-data">Gerado em ${geradoEm}</span>
   </header>
-  <h1>${escapeHtml(projeto.nome)}</h1>
+  ${htmlCabecalhoTitulo(projeto.nome, logoClienteUrl)}
   <div class="badges">
     <span class="badge" style="background:${corEtapa.hex}">${escapeHtml(corEtapa.label)}</span>
     <span class="badge" style="background:${corStatus.hex}">${escapeHtml(corStatus.label)}</span>
@@ -319,7 +356,7 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     <ul>${listaAnexos}</ul>
   </section>
 
-  <footer>Painel Acústica</footer>
+  ${htmlRodape()}
 </body>
 </html>`
 
@@ -388,7 +425,7 @@ export function emitirAtaConsultores(reuniao: ReuniaoConsultores, tarefas: Taref
     <ul>${listaTarefas}</ul>
   </section>
 
-  <footer>Painel Acústica</footer>
+  ${htmlRodape()}
 </body>
 </html>`
 
@@ -506,7 +543,7 @@ export function emitirRelatorioGeral(
 
   ${tabelaGrupos}
 
-  <footer>Painel Acústica</footer>
+  ${htmlRodape()}
 </body>
 </html>`
 
@@ -520,8 +557,9 @@ export async function emitirRelatorioVistoria(params: {
   data: string
   itens: ItemVistoria[]
   fotosPorNome: Map<string, Blob>
+  logoClienteStorage?: string | null
 }) {
-  const { nomeProjeto, data, itens, fotosPorNome } = params
+  const { nomeProjeto, data, itens, fotosPorNome, logoClienteStorage = null } = params
   const janela = window.open('', '_blank')
   if (!janela) {
     alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
@@ -530,6 +568,9 @@ export async function emitirRelatorioVistoria(params: {
   janela.document.write(
     '<p style="font-family: sans-serif; padding: 24px; color: #6b7280;">Gerando relatório...</p>'
   )
+
+  const supabase = createClient()
+  const logoClienteUrl = await urlLogoCliente(supabase, logoClienteStorage)
 
   const listaItens = (
     await Promise.all(
@@ -572,14 +613,14 @@ export async function emitirRelatorioVistoria(params: {
     <span class="marca">PAINEL ACÚSTICA · VISTORIA ACÚSTICA</span>
     <span class="item-data">Gerado em ${geradoEm}</span>
   </header>
-  <h1>${escapeHtml(nomeProjeto)}</h1>
+  ${htmlCabecalhoTitulo(nomeProjeto, logoClienteUrl)}
   <p class="subtitulo">${data ? `Vistoria de ${escapeHtml(data)}` : 'Vistoria acústica'} · ${itens.length} ocorrência(s)</p>
 
   <section>
     <ul>${listaItens}</ul>
   </section>
 
-  <footer>Painel Acústica</footer>
+  ${htmlRodape()}
 </body>
 </html>`
 

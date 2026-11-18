@@ -205,6 +205,7 @@ export function VistoriaWhatsAppClient({ projetosIniciais }: { projetosIniciais:
       data: resultado.data,
       itens: resultado.itens,
       fotosPorNome: resultado.fotos,
+      logoClienteStorage: projetoSelecionado?.logo_cliente_storage ?? null,
     })
   }
 

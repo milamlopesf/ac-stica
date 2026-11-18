@@ -24,6 +24,7 @@ export type Projeto = {
   gerente: string | null
   projetista: string | null
   projeto_vinculado_id: string | null
+  logo_cliente_storage: string | null
   created_at: string
 }
 
@@ -282,6 +283,7 @@ export type Database = {
           gerente?: string | null
           projetista?: string | null
           projeto_vinculado_id?: string | null
+          logo_cliente_storage?: string | null
           created_at?: string
         }
         Update: Partial<Omit<Projeto, 'id' | 'created_at'>>
