@@ -206,48 +206,82 @@ export function VistoriaWhatsAppClient({ projetosIniciais }: { projetosIniciais:
       )}
 
       {!resultado ? (
-        <div className="flex max-w-xl flex-col gap-5 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">1. Projeto vinculado</p>
-            <ProjetoPickerTR
-              projetos={projetos}
-              projetoId={projetoId}
-              onChange={setProjetoId}
-              onProjetoCriado={(novo) => setProjetos((prev) => [...prev, novo])}
-            />
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-gray-700">2. Conversa do WhatsApp</p>
-            <label
+        <div className="max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-start gap-4 p-6 sm:p-7">
+            <span
               className={clsx(
-                'flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-8 text-center text-sm',
-                projetoId
-                  ? 'border-gray-300 text-gray-500 hover:bg-gray-50'
-                  : 'cursor-not-allowed border-gray-200 text-gray-300'
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                projetoId ? 'bg-teal-700 text-white' : 'bg-teal-50 text-teal-700'
               )}
             >
-              {processando ? (
-                'Lendo a conversa...'
-              ) : (
-                <>
-                  <span className="font-medium">Clique para selecionar o .zip exportado do WhatsApp</span>
-                  <span className="text-xs text-gray-400">
-                    (ou selecione o .txt da conversa junto com as fotos)
-                  </span>
-                </>
-              )}
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".zip,.txt,image/*"
-                multiple
-                disabled={!projetoId || processando}
-                onChange={handleArquivos}
-                className="hidden"
+              1
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="mb-2 text-sm font-semibold text-gray-900">Projeto vinculado</p>
+              <p className="mb-3 text-sm text-gray-500">
+                A planilha gerada fica salva como anexo deste projeto.
+              </p>
+              <ProjetoPickerTR
+                projetos={projetos}
+                projetoId={projetoId}
+                onChange={setProjetoId}
+                onProjetoCriado={(novo) => setProjetos((prev) => [...prev, novo])}
+                mostrarRotulo={false}
               />
-            </label>
-            {!projetoId && <p className="mt-1.5 text-xs text-amber-600">Escolha o projeto antes de subir a conversa.</p>}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 p-6 sm:p-7">
+            <div className="flex items-start gap-4">
+              <span
+                className={clsx(
+                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                  projetoId ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 text-gray-400'
+                )}
+              >
+                2
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={clsx('mb-3 text-sm font-semibold', projetoId ? 'text-gray-900' : 'text-gray-400')}>
+                  Conversa do WhatsApp
+                </p>
+
+                <label
+                  className={clsx(
+                    'flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition-colors',
+                    projetoId
+                      ? 'cursor-pointer border-teal-200 bg-teal-50/40 hover:border-teal-300 hover:bg-teal-50'
+                      : 'cursor-not-allowed border-gray-200 bg-gray-50'
+                  )}
+                >
+                  <span className={clsx('text-2xl', !projetoId && 'opacity-40')}>📎</span>
+                  {processando ? (
+                    <span className="text-sm font-medium text-gray-600">Lendo a conversa...</span>
+                  ) : (
+                    <>
+                      <span className={clsx('text-sm font-medium', projetoId ? 'text-teal-800' : 'text-gray-400')}>
+                        Clique para selecionar o .zip exportado do WhatsApp
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        (ou selecione o .txt da conversa junto com as fotos)
+                      </span>
+                    </>
+                  )}
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    accept=".zip,.txt,image/*"
+                    multiple
+                    disabled={!projetoId || processando}
+                    onChange={handleArquivos}
+                    className="hidden"
+                  />
+                </label>
+                {!projetoId && (
+                  <p className="mt-2 text-xs text-amber-600">Escolha o projeto antes de subir a conversa.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : (

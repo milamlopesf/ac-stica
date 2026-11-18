@@ -9,11 +9,13 @@ export function ProjetoPickerTR({
   projetoId,
   onChange,
   onProjetoCriado,
+  mostrarRotulo = true,
 }: {
   projetos: Projeto[]
   projetoId: string
   onChange: (id: string) => void
   onProjetoCriado: (projeto: Projeto) => void
+  mostrarRotulo?: boolean
 }) {
   const supabase = createClient()
   const [criandoNovo, setCriandoNovo] = useState(false)
@@ -83,7 +85,7 @@ export function ProjetoPickerTR({
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">Projeto vinculado</label>
+      {mostrarRotulo && <label className="text-sm font-medium text-gray-700">Projeto vinculado</label>}
       <div className="flex gap-2">
         <select
           value={projetoId}
