@@ -70,7 +70,7 @@ export function ProjetoDetalhePanel({
     ...(mostrarAvaliacao ? [{ id: 'avaliacao' as const, label: 'Avaliação do Projetista' }] : []),
     { id: 'reunioes', label: 'Atas de Reunião' },
     { id: 'anexos', label: 'Anexos' },
-    { id: 'calculos_tr', label: 'Cálculos de TR' },
+    { id: 'calculos_tr', label: 'Cálculos' },
     { id: 'historico', label: 'Histórico' },
   ]
 
