@@ -24,6 +24,28 @@ export type ResultadoParseVistoria = {
   itens: ItemVistoria[]
 }
 
+function numeroExtraido(texto: string): number {
+  const m = /\d+/.exec(texto)
+  return m ? parseInt(m[0], 10) : Infinity
+}
+
+// Mantém as ocorrências sempre organizadas por andar (do menor pro maior) e,
+// dentro do mesmo andar, por número de sala/ambiente (do menor pro maior).
+// Ambientes sem número (ex: "Copa") ficam no fim do andar, em ordem alfabética.
+export function ordenarItensVistoria(itens: ItemVistoria[]): ItemVistoria[] {
+  return [...itens].sort((a, b) => {
+    const andarA = numeroExtraido(a.andar)
+    const andarB = numeroExtraido(b.andar)
+    if (andarA !== andarB) return andarA - andarB
+
+    const salaA = numeroExtraido(a.ambiente)
+    const salaB = numeroExtraido(b.ambiente)
+    if (salaA !== salaB) return salaA - salaB
+
+    return a.ambiente.localeCompare(b.ambiente)
+  })
+}
+
 const LRM = '‎'
 
 function stripChars(s: string, ch: string): string {
@@ -180,6 +202,6 @@ export function parseWhatsAppVistoria(
   return {
     data: datasOrdenadas[datasOrdenadas.length - 1] ?? '',
     autores: Array.from(autores).sort(),
-    itens,
+    itens: ordenarItensVistoria(itens),
   }
 }
