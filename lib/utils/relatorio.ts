@@ -42,6 +42,31 @@ function blobParaDataUrl(blob: Blob): Promise<string> {
   })
 }
 
+// Baixa a foto da pessoa (cadastro de equipe, casado pelo nome) e embute
+// como data URL, pelo mesmo motivo da logo do cliente acima.
+async function dataUrlFotoPessoa(
+  supabase: ReturnType<typeof createClient>,
+  nome: string | null
+): Promise<string | null> {
+  if (!nome) return null
+  const { data: pessoa } = await supabase
+    .from('pessoas_equipe')
+    .select('foto_storage')
+    .ilike('nome', nome)
+    .maybeSingle()
+  if (!pessoa?.foto_storage) return null
+  const { data, error } = await supabase.storage.from('fotos-equipe').download(pessoa.foto_storage)
+  if (error || !data) return null
+  return blobParaDataUrl(data)
+}
+
+function linhaInfoPessoa(label: string, nome: string | null, fotoUrl: string | null) {
+  const foto = fotoUrl
+    ? `<img src="${fotoUrl}" alt="" style="width:20px;height:20px;border-radius:999px;object-fit:cover;vertical-align:middle;margin-right:6px;" />`
+    : ''
+  return `<tr><th>${escapeHtml(label)}</th><td>${foto}${escapeHtml(nome || '—')}</td></tr>`
+}
+
 // Baixa a logo e embute como data URL (em vez de uma URL assinada) porque o
 // relatório abre numa janela separada (window.open + document.write), e essa
 // janela não consegue buscar uma URL assinada do Supabase de forma
@@ -198,6 +223,8 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
     { data: acoes },
     { data: avaliacoes },
     logoClienteUrl,
+    fotoDiretorUrl,
+    fotoGerenteUrl,
   ] = await Promise.all([
     supabase
       .from('notas')
@@ -230,22 +257,29 @@ export async function emitirRelatorioProjeto(projeto: Projeto) {
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: null as { nota: string; diagnostico: string | null; created_at: string }[] | null }),
     urlLogoCliente(supabase, projeto.logo_cliente_storage),
+    dataUrlFotoPessoa(supabase, projeto.diretor),
+    dataUrlFotoPessoa(supabase, projeto.gerente),
   ])
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
 
-  const linhasInfo = [
-    ['Etapa', corEtapa.label],
-    ['Status', corStatus.label],
-    ['Data de entrega', formatarData(projeto.entrega)],
-    ['Diretor', projeto.diretor || '—'],
-    ['Gerente', projeto.gerente || '—'],
-    ['Projetista acústico', projeto.projetista || '—'],
-    ...(vinculado?.data?.nome ? [['Projeto vinculado', vinculado.data.nome]] : []),
-  ]
-    .map(([label, valor]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(valor)}</td></tr>`)
-    .join('')
+  const linhasInfo =
+    [
+      ['Etapa', corEtapa.label],
+      ['Status', corStatus.label],
+      ['Data de entrega', formatarData(projeto.entrega)],
+    ]
+      .map(([label, valor]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(valor)}</td></tr>`)
+      .join('') +
+    linhaInfoPessoa('Diretor', projeto.diretor, fotoDiretorUrl) +
+    linhaInfoPessoa('Gerente', projeto.gerente, fotoGerenteUrl) +
+    [
+      ['Projetista acústico', projeto.projetista || '—'],
+      ...(vinculado?.data?.nome ? [['Projeto vinculado', vinculado.data.nome]] : []),
+    ]
+      .map(([label, valor]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(valor)}</td></tr>`)
+      .join('')
 
   const listaNotas = (notas ?? []).length
     ? (notas ?? [])

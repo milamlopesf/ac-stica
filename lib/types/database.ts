@@ -128,6 +128,13 @@ export type TarefaReuniaoConsultores = {
   created_at: string
 }
 
+export type PessoaEquipe = {
+  id: string
+  nome: string
+  foto_storage: string | null
+  created_at: string
+}
+
 export type Profile = {
   id: string
   email: string | null
@@ -417,6 +424,17 @@ export type Database = {
           created_at?: string
         }
         Update: Partial<Omit<TarefaReuniaoConsultores, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      pessoas_equipe: {
+        Row: PessoaEquipe
+        Insert: {
+          id?: string
+          nome: string
+          foto_storage?: string | null
+          created_at?: string
+        }
+        Update: Partial<Omit<PessoaEquipe, 'id' | 'created_at'>>
         Relationships: []
       }
       profiles: {

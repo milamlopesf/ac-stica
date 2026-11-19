@@ -8,6 +8,7 @@ import type { Etapa, Projeto, StatusProjeto } from '@/lib/types/database'
 import { CORES_STATUS, ETAPAS, STATUS_PROJETO } from '@/lib/utils/cores'
 import { hojeISO } from '@/lib/utils/data'
 import { estaAtrasado } from '@/lib/utils/projetos'
+import { buscarFotosEquipe } from '@/lib/utils/pessoas'
 import { ProjetoCard } from './ProjetoCard'
 import { ProjetoListItem, ProjetosListaHeader, type ColunaOrdenavel, type OrdenarPor } from './ProjetoListItem'
 import { ProjetoDetalhePanel } from './ProjetoDetalhePanel'
@@ -47,6 +48,18 @@ export function ProjetosClient({
   const [filtroProjetista, setFiltroProjetista] = useState('')
   const [filtroVinculado, setFiltroVinculado] = useState(false)
   const [ordenarPor, setOrdenarPor] = useState<OrdenarPor>(null)
+  const [fotosEquipe, setFotosEquipe] = useState<Map<string, string>>(new Map())
+
+  useEffect(() => {
+    let ativo = true
+    const supabase = createClient()
+    buscarFotosEquipe(supabase).then((mapa) => {
+      if (ativo) setFotosEquipe(mapa)
+    })
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   function alternarOrdenacao(campo: ColunaOrdenavel) {
     setOrdenarPor((atual) => {
@@ -375,6 +388,7 @@ export function ProjetosClient({
                     ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                     : undefined
                 }
+                fotosEquipe={fotosEquipe}
                 isEditor={isEditor}
                 onClick={() => setSelecionadoId(projeto.id)}
                 onAtualizarCampo={(campo, valor) => atualizarCampoRapido(projeto.id, campo, valor)}
@@ -393,6 +407,7 @@ export function ProjetosClient({
                   ? projetosPorId.get(projeto.projeto_vinculado_id)?.nome
                   : undefined
               }
+              fotosEquipe={fotosEquipe}
               isEditor={isEditor}
               onClick={() => setSelecionadoId(projeto.id)}
               onAtualizarCampo={(campo, valor) => atualizarCampoRapido(projeto.id, campo, valor)}
@@ -406,6 +421,7 @@ export function ProjetosClient({
           key={selecionado.id}
           projeto={selecionado}
           isEditor={isEditor}
+          fotosEquipe={fotosEquipe}
           gerentesExistentes={gerentes}
           outrosProjetos={projetos.filter((p) => p.id !== selecionado.id)}
           projetoVinculado={

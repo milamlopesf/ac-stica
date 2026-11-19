@@ -12,6 +12,8 @@ import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 import { LogoClienteProjeto } from './LogoClienteProjeto'
 import { LogoClienteThumb } from './LogoClienteThumb'
+import { FotoPessoaThumb } from './FotoPessoaThumb'
+import { normalizarNomePessoa } from '@/lib/utils/pessoas'
 import { ProjetoFormModal } from './ProjetoFormModal'
 import { AnotacoesTab } from './tabs/AnotacoesTab'
 import { ReunioesTab } from './tabs/ReunioesTab'
@@ -35,6 +37,7 @@ type Aba =
 export function ProjetoDetalhePanel({
   projeto,
   isEditor,
+  fotosEquipe,
   gerentesExistentes = [],
   outrosProjetos = [],
   projetoVinculado,
@@ -45,6 +48,7 @@ export function ProjetoDetalhePanel({
 }: {
   projeto: Projeto
   isEditor: boolean
+  fotosEquipe?: Map<string, string>
   gerentesExistentes?: string[]
   outrosProjetos?: Projeto[]
   projetoVinculado?: Projeto
@@ -60,6 +64,8 @@ export function ProjetoDetalhePanel({
 
   const corEtapa = CORES_ETAPA[projeto.etapa]
   const corStatus = CORES_STATUS[projeto.status]
+  const fotoDiretor = projeto.diretor ? fotosEquipe?.get(normalizarNomePessoa(projeto.diretor)) ?? null : null
+  const fotoGerente = projeto.gerente ? fotosEquipe?.get(normalizarNomePessoa(projeto.gerente)) ?? null : null
 
   const mostrarAvaliacao = Boolean(projeto.projetista && projeto.projetista !== 'Interno')
 
@@ -128,11 +134,17 @@ export function ProjetoDetalhePanel({
               </div>
               <div>
                 <dt className="inline">Diretor: </dt>
-                <dd className="inline font-medium text-gray-700">{projeto.diretor || '—'}</dd>
+                <dd className="inline-flex items-center gap-1.5 align-middle font-medium text-gray-700">
+                  <FotoPessoaThumb caminho={fotoDiretor} nome={projeto.diretor ?? undefined} />
+                  {projeto.diretor || '—'}
+                </dd>
               </div>
               <div>
                 <dt className="inline">Gerente: </dt>
-                <dd className="inline font-medium text-gray-700">{projeto.gerente || '—'}</dd>
+                <dd className="inline-flex items-center gap-1.5 align-middle font-medium text-gray-700">
+                  <FotoPessoaThumb caminho={fotoGerente} nome={projeto.gerente ?? undefined} />
+                  {projeto.gerente || '—'}
+                </dd>
               </div>
               <div>
                 <dt className="inline">Projetista: </dt>

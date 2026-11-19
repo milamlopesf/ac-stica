@@ -3,6 +3,7 @@ import { requireLogin } from '@/lib/supabase/require-login'
 import { PaineisClient } from '@/components/paineis/PaineisClient'
 import { BackupSection } from '@/components/paineis/BackupSection'
 import { FluxoModeloSection } from '@/components/paineis/FluxoModeloSection'
+import { EquipeFotosSection } from '@/components/paineis/EquipeFotosSection'
 
 export default async function PaineisPage() {
   const supabase = await createClient()
@@ -18,6 +19,11 @@ export default async function PaineisPage() {
   }
 
   const lista = projetos ?? []
+  const nomesEquipe = Array.from(
+    new Set(
+      lista.flatMap((p) => [p.diretor, p.gerente]).filter((n): n is string => Boolean(n && n.trim()))
+    )
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,6 +32,7 @@ export default async function PaineisPage() {
       <PaineisClient projetos={lista} />
 
       {session.isEditor && <FluxoModeloSection />}
+      {session.isEditor && <EquipeFotosSection nomesExistentes={nomesEquipe} />}
       {session.isEditor && <BackupSection />}
     </div>
   )

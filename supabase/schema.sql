@@ -154,6 +154,16 @@ create table reunioes_consultores_tarefas (
 
 create index idx_reunioes_consultores_tarefas_reuniao on reunioes_consultores_tarefas(reuniao_id);
 
+-- Cadastro de equipe: foto de cada diretor/gerente, casada pelo nome com os
+-- campos livres projetos.diretor / projetos.gerente (mostrada no card e na
+-- lista de projetos, no painel de detalhe e no relatório em PDF).
+create table pessoas_equipe (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null unique,
+  foto_storage text,
+  created_at timestamptz default now()
+);
+
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -366,6 +376,7 @@ alter table projeto_historico enable row level security;
 alter table cronograma_etapas enable row level security;
 alter table reunioes_consultores enable row level security;
 alter table reunioes_consultores_tarefas enable row level security;
+alter table pessoas_equipe enable row level security;
 alter table profiles enable row level security;
 alter table biblioteca enable row level security;
 alter table tr_materiais enable row level security;
@@ -476,6 +487,16 @@ create policy "editor insere" on reunioes_consultores_tarefas for insert
 create policy "editor atualiza" on reunioes_consultores_tarefas for update
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 create policy "editor apaga" on reunioes_consultores_tarefas for delete
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+
+-- pessoas_equipe
+create policy "leitura autenticada" on pessoas_equipe for select
+  using (exists (select 1 from profiles where id = auth.uid()));
+create policy "editor insere" on pessoas_equipe for insert
+  with check (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor atualiza" on pessoas_equipe for update
+  using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
+create policy "editor apaga" on pessoas_equipe for delete
   using (exists (select 1 from profiles where id = auth.uid() and role = 'editor'));
 
 -- biblioteca
@@ -640,6 +661,25 @@ using (
 )
 with check (
   bucket_id = 'logos-clientes'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+);
+
+-- Bucket "fotos-equipe": foto de cada diretor/gerente cadastrado (ver
+-- tabela pessoas_equipe).
+insert into storage.buckets (id, name, public) values ('fotos-equipe', 'fotos-equipe', false);
+
+create policy "Leitura autenticada fotos-equipe"
+on storage.objects for select
+using (bucket_id = 'fotos-equipe' and exists (select 1 from profiles where id = auth.uid()));
+
+create policy "Editores gerenciam fotos-equipe"
+on storage.objects for all
+using (
+  bucket_id = 'fotos-equipe'
+  and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
+)
+with check (
+  bucket_id = 'fotos-equipe'
   and exists (select 1 from profiles where id = auth.uid() and role = 'editor')
 );
 

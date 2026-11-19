@@ -8,6 +8,8 @@ import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 import { LogoClienteThumb } from './LogoClienteThumb'
+import { FotoPessoaThumb } from './FotoPessoaThumb'
+import { normalizarNomePessoa } from '@/lib/utils/pessoas'
 
 // Mesma definição de colunas usada no cabeçalho e em cada linha, pra ficar
 // tudo alinhado. Colunas com largura fixa em px, "Projeto" ocupa o resto.
@@ -117,16 +119,20 @@ export function ProjetoListItem({
   nomeVinculado,
   isEditor = false,
   onClick,
+  fotosEquipe,
   onAtualizarCampo,
 }: {
   projeto: Projeto
   nomeVinculado?: string
+  fotosEquipe?: Map<string, string>
   isEditor?: boolean
   onClick: () => void
   onAtualizarCampo?: (campo: 'etapa' | 'status', valor: string) => void
 }) {
   const corStatus = CORES_STATUS[projeto.status]
   const atrasado = estaAtrasado(projeto, hojeISO())
+  const fotoDiretor = projeto.diretor ? fotosEquipe?.get(normalizarNomePessoa(projeto.diretor)) ?? null : null
+  const fotoGerente = projeto.gerente ? fotosEquipe?.get(normalizarNomePessoa(projeto.gerente)) ?? null : null
 
   return (
     <div
@@ -187,11 +193,19 @@ export function ProjetoListItem({
       </span>
 
       <span className="truncate text-xs text-gray-600">{formatarData(projeto.entrega)}</span>
-      <span className="hidden truncate text-xs text-gray-600 md:inline" title={projeto.diretor || undefined}>
-        {projeto.diretor || '—'}
+      <span
+        className="hidden min-w-0 items-center gap-1 truncate text-xs text-gray-600 md:flex"
+        title={projeto.diretor || undefined}
+      >
+        <FotoPessoaThumb caminho={fotoDiretor} nome={projeto.diretor ?? undefined} className="h-4 w-4 shrink-0 rounded-full object-cover" />
+        <span className="truncate">{projeto.diretor || '—'}</span>
       </span>
-      <span className="hidden truncate text-xs text-gray-600 md:inline" title={projeto.gerente || undefined}>
-        {projeto.gerente || '—'}
+      <span
+        className="hidden min-w-0 items-center gap-1 truncate text-xs text-gray-600 md:flex"
+        title={projeto.gerente || undefined}
+      >
+        <FotoPessoaThumb caminho={fotoGerente} nome={projeto.gerente ?? undefined} className="h-4 w-4 shrink-0 rounded-full object-cover" />
+        <span className="truncate">{projeto.gerente || '—'}</span>
       </span>
       <span className="hidden truncate text-xs text-gray-600 lg:inline" title={projeto.projetista || undefined}>
         {projeto.projetista || '—'}

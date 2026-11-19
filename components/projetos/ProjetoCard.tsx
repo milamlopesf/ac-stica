@@ -8,21 +8,27 @@ import { BadgeSelecionavel } from '@/components/ui/BadgeSelecionavel'
 import { IconVinculo } from '@/components/ui/IconVinculo'
 import { IconRelatorio } from '@/components/ui/IconRelatorio'
 import { LogoClienteThumb } from './LogoClienteThumb'
+import { FotoPessoaThumb } from './FotoPessoaThumb'
+import { normalizarNomePessoa } from '@/lib/utils/pessoas'
 
 export function ProjetoCard({
   projeto,
   nomeVinculado,
+  fotosEquipe,
   isEditor = false,
   onClick,
   onAtualizarCampo,
 }: {
   projeto: Projeto
   nomeVinculado?: string
+  fotosEquipe?: Map<string, string>
   isEditor?: boolean
   onClick: () => void
   onAtualizarCampo?: (campo: 'etapa' | 'status', valor: string) => void
 }) {
   const atrasado = estaAtrasado(projeto, hojeISO())
+  const fotoDiretor = projeto.diretor ? fotosEquipe?.get(normalizarNomePessoa(projeto.diretor)) ?? null : null
+  const fotoGerente = projeto.gerente ? fotosEquipe?.get(normalizarNomePessoa(projeto.gerente)) ?? null : null
 
   return (
     <div
@@ -97,11 +103,17 @@ export function ProjetoCard({
         </div>
         <div className="flex justify-between">
           <dt>Diretor</dt>
-          <dd className="font-medium text-gray-700">{projeto.diretor || '—'}</dd>
+          <dd className="flex items-center gap-1.5 font-medium text-gray-700">
+            <FotoPessoaThumb caminho={fotoDiretor} nome={projeto.diretor ?? undefined} />
+            {projeto.diretor || '—'}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt>Gerente</dt>
-          <dd className="font-medium text-gray-700">{projeto.gerente || '—'}</dd>
+          <dd className="flex items-center gap-1.5 font-medium text-gray-700">
+            <FotoPessoaThumb caminho={fotoGerente} nome={projeto.gerente ?? undefined} />
+            {projeto.gerente || '—'}
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt>Projetista acústico</dt>
