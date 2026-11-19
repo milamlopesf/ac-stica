@@ -139,7 +139,7 @@ const ESTILO_RELATORIO = `
     margin-bottom: 10px;
   }
   ul { list-style: none; margin: 0; padding: 0; }
-  li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+  li { padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; break-inside: avoid; page-break-inside: avoid; }
   li p { margin: 0 0 2px; }
   .texto-conteudo { line-height: 1.6; }
   .item-titulo { font-weight: 600; }
@@ -634,8 +634,8 @@ export async function emitirRelatorioVistoria(params: {
 
         return `
         <li>
-          <p class="item-titulo">${escapeHtml(it.ambiente)}${it.andar ? ` <span class="item-data">— ${escapeHtml(it.andar)}</span>` : ''}</p>
-          <p class="meta"><span class="tag" style="background:#0f766e">${escapeHtml(it.item)}</span></p>
+          <p class="item-titulo">${escapeHtml(it.ambiente)}${it.andar ? ` <span style="color:#b0b7bf;font-weight:400;">— ${escapeHtml(it.andar)}</span>` : ''}</p>
+          <p class="meta"><span style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;padding:2px 10px;border-radius:999px;border:1.5px solid #0f766e;color:#0f766e;">${escapeHtml(it.item)}</span></p>
           ${it.descricao ? `<p class="texto-conteudo">${paraHtmlComQuebras(it.descricao)}</p>` : ''}
           ${fotosHtml ? `<div style="margin-top:8px;">${fotosHtml}</div>` : ''}
         </li>`
