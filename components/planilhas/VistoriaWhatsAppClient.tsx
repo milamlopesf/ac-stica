@@ -9,7 +9,7 @@ import type { ItemVistoria, TipoItemVistoria } from '@/lib/utils/vistoria'
 import { ordenarItensVistoria, parseWhatsAppVistoria } from '@/lib/utils/vistoria'
 import { extrairArquivosVistoria } from '@/lib/utils/vistoriaArquivos'
 import { gerarExcelVistoria } from '@/lib/utils/vistoriaExcel'
-import { emitirRelatorioVistoria } from '@/lib/utils/relatorio'
+import { emitirRelatorioVistoria, gerarPdfVistoriaBlob } from '@/lib/utils/relatorio'
 import { sanitizarNomeArquivo } from '@/lib/utils/storage'
 import { ProjetoPickerTR } from './ProjetoPickerTR'
 
@@ -209,37 +209,49 @@ export function VistoriaWhatsAppClient({ projetosIniciais }: { projetosIniciais:
     })
   }
 
-  async function salvarNoProjeto() {
-    if (!resultado || !projetoId) return
-    setSalvando(true)
-    setErro('')
-    const blob = await gerarExcelVistoria({
-      itens: resultado.itens,
-      data: resultado.data,
-      fotosPorNome: resultado.fotos,
-    })
-    const nomeArquivo = nomeArquivoVistoria(projetoSelecionado?.nome ?? 'vistoria', resultado.data, 'xlsx')
+  async function enviarAnexo(nomeArquivo: string, blob: Blob) {
+    if (!projetoId) return
     const caminho = `${projetoId}/${Date.now()}-${sanitizarNomeArquivo(nomeArquivo)}`
-
     const { error: erroUpload } = await supabase.storage.from(BUCKET_ANEXOS).upload(caminho, blob)
-    if (erroUpload) {
-      setSalvando(false)
-      setErro(`Erro ao enviar arquivo: ${erroUpload.message}`)
-      return
-    }
-
+    if (erroUpload) throw new Error(`Erro ao enviar ${nomeArquivo}: ${erroUpload.message}`)
     const { error: erroInsert } = await supabase.from('anexos').insert({
       projeto_id: projetoId,
       nome_arquivo: nomeArquivo,
       caminho_storage: caminho,
       tamanho_bytes: blob.size,
     })
-    setSalvando(false)
-    if (erroInsert) {
-      setErro(`Erro ao registrar anexo: ${erroInsert.message}`)
-      return
+    if (erroInsert) throw new Error(`Erro ao registrar ${nomeArquivo}: ${erroInsert.message}`)
+  }
+
+  async function salvarNoProjeto() {
+    // já salvo (ou salvando) — não deixa registrar o mesmo arquivo de novo
+    if (!resultado || !projetoId || salvando || salvo) return
+    setSalvando(true)
+    setErro('')
+
+    try {
+      const blobExcel = await gerarExcelVistoria({
+        itens: resultado.itens,
+        data: resultado.data,
+        fotosPorNome: resultado.fotos,
+      })
+      await enviarAnexo(nomeArquivoVistoria(projetoSelecionado?.nome ?? 'vistoria', resultado.data, 'xlsx'), blobExcel)
+
+      const blobPdf = await gerarPdfVistoriaBlob({
+        nomeProjeto: projetoSelecionado?.nome ?? 'Vistoria',
+        data: resultado.data,
+        itens: resultado.itens,
+        fotosPorNome: resultado.fotos,
+        logoClienteStorage: projetoSelecionado?.logo_cliente_storage ?? null,
+      })
+      await enviarAnexo(nomeArquivoVistoria(projetoSelecionado?.nome ?? 'vistoria', resultado.data, 'pdf'), blobPdf)
+
+      setSalvo(true)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar no projeto.')
+    } finally {
+      setSalvando(false)
     }
-    setSalvo(true)
   }
 
   const totalAlertas = resultado?.itens.reduce((soma, it) => soma + it.alertas.length, 0) ?? 0
@@ -462,7 +474,11 @@ export function VistoriaWhatsAppClient({ projetosIniciais }: { projetosIniciais:
           </div>
 
           <div className="sticky bottom-4 mt-2 flex flex-wrap items-center justify-end gap-2 rounded-lg border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
-            {salvo && <span className="mr-auto text-sm font-medium text-green-700">✓ Salvo no projeto</span>}
+            {salvo && (
+              <span className="mr-auto text-sm font-medium text-green-700">
+                ✓ Excel e PDF salvos no projeto
+              </span>
+            )}
             <button
               onClick={baixarPdf}
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -478,10 +494,11 @@ export function VistoriaWhatsAppClient({ projetosIniciais }: { projetosIniciais:
             </button>
             <button
               onClick={salvarNoProjeto}
-              disabled={salvando}
-              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+              disabled={salvando || salvo}
+              title={salvo ? 'Edite algo na revisão para poder salvar de novo' : undefined}
+              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {salvando ? 'Salvando...' : 'Salvar no projeto'}
+              {salvando ? 'Salvando Excel e PDF...' : salvo ? '✓ Salvo' : 'Salvar no projeto'}
             </button>
           </div>
         </div>

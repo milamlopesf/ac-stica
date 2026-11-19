@@ -99,14 +99,16 @@ const ESTILO_RELATORIO = `
   }
   header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    row-gap: 2px;
     border-bottom: 2px solid #0f766e;
     padding-bottom: 12px;
     margin-bottom: 24px;
   }
   header .marca { font-size: 13px; color: #0f766e; font-weight: 700; letter-spacing: 0.02em; }
-  .cabecalho-titulo { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .cabecalho-titulo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
   .cabecalho-titulo .logo-cliente { height: 38px; max-width: 170px; object-fit: contain; }
   h1 { font-size: 22px; margin: 4px 0 0; }
   .subtitulo { color: #6b7280; font-size: 13px; margin: 4px 0 0; }
@@ -597,23 +599,16 @@ export function emitirRelatorioGeral(
   janela.document.close()
 }
 
-export async function emitirRelatorioVistoria(params: {
+type ParametrosRelatorioVistoria = {
   nomeProjeto: string
   data: string
   itens: ItemVistoria[]
   fotosPorNome: Map<string, Blob>
   logoClienteStorage?: string | null
-}) {
-  const { nomeProjeto, data, itens, fotosPorNome, logoClienteStorage = null } = params
-  const janela = window.open('', '_blank')
-  if (!janela) {
-    alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
-    return
-  }
-  janela.document.write(
-    '<p style="font-family: sans-serif; padding: 24px; color: #6b7280;">Gerando relatório...</p>'
-  )
+}
 
+async function construirHtmlVistoria(params: ParametrosRelatorioVistoria): Promise<string> {
+  const { nomeProjeto, data, itens, fotosPorNome, logoClienteStorage = null } = params
   const supabase = createClient()
   const logoClienteUrl = await urlLogoCliente(supabase, logoClienteStorage)
 
@@ -669,7 +664,169 @@ export async function emitirRelatorioVistoria(params: {
 </body>
 </html>`
 
+  return html
+}
+
+export async function emitirRelatorioVistoria(params: ParametrosRelatorioVistoria) {
+  const janela = window.open('', '_blank')
+  if (!janela) {
+    alert('Não foi possível abrir o relatório. Verifique se o navegador está bloqueando pop-ups.')
+    return
+  }
+  janela.document.write(
+    '<p style="font-family: sans-serif; padding: 24px; color: #6b7280;">Gerando relatório...</p>'
+  )
+
+  const html = await construirHtmlVistoria(params)
+
   janela.document.open()
   janela.document.write(html)
   janela.document.close()
+}
+
+// Gera o mesmo relatório como um arquivo PDF de verdade (em vez de abrir a
+// janela de impressão), pra poder salvar como anexo do projeto sem
+// depender do usuário imprimir/salvar manualmente. Renderiza o mesmo HTML
+// num iframe escondido, tira um "print" único (um canvas alto com tudo) via
+// html2canvas-pro e monta as páginas do PDF manualmente, cortando o canvas
+// sempre ENTRE dois elementos (nunca no meio de um item/badge/descrição) —
+// o modo autoPaging:'slice' do jsPDF corta por altura de pixel pura, sem
+// noção de limite de elemento, e por isso partia item ao meio na virada de
+// página.
+export async function gerarPdfVistoriaBlob(params: ParametrosRelatorioVistoria): Promise<Blob> {
+  const html = await construirHtmlVistoria(params)
+
+  const { jsPDF } = await import('jspdf')
+  // jsPDF (e nosso uso direto abaixo) procuram por window.html2canvas antes
+  // de tentar importar o pacote "html2canvas" puro, que não reconhece cores
+  // modernas (lab/oklch) que o Chrome às vezes usa em estilos computados e
+  // quebra a geração do PDF.
+  const html2canvasPro = (await import('html2canvas-pro')).default
+
+  const pdf = new jsPDF({ unit: 'px', format: 'a4' })
+  // Dimensões reais da página (unit:'px' já converte o preset 'a4' pra
+  // pixels a 96dpi) — renderiza o conteúdo com essa largura exata pra não
+  // sobrar nem faltar nada na borda direita.
+  const larguraPagina = pdf.internal.pageSize.getWidth()
+  const alturaPagina = pdf.internal.pageSize.getHeight()
+
+  const iframe = document.createElement('iframe')
+  iframe.style.position = 'fixed'
+  iframe.style.left = '-99999px'
+  iframe.style.top = '0'
+  iframe.style.width = `${larguraPagina}px`
+  iframe.style.height = '1200px'
+  iframe.style.border = '0'
+  document.body.appendChild(iframe)
+
+  try {
+    const doc = iframe.contentDocument
+    if (!doc) throw new Error('Não foi possível preparar o PDF.')
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    await new Promise<void>((resolve) => {
+      if (doc.readyState === 'complete') resolve()
+      else iframe.addEventListener('load', () => resolve(), { once: true })
+    })
+
+    const imagens = Array.from(doc.images)
+    await Promise.all(
+      imagens.map(
+        (img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener('load', () => resolve(), { once: true })
+                img.addEventListener('error', () => resolve(), { once: true })
+              })
+      )
+    )
+
+    doc.querySelector('.acoes')?.remove()
+
+    // Altura real do conteúdo: não dá pra usar scrollHeight aqui, porque
+    // com o iframe ainda na altura inicial (1200px) um relatório curto (sem
+    // barra de rolagem) faz scrollHeight devolver a altura do iframe em vez
+    // da altura real do conteúdo — sobra espaço em branco "fantasma" que
+    // depois vira uma página extra quase vazia no PDF.
+    const alturaConteudo = Math.ceil(
+      Math.max(...Array.from(doc.body.children).map((el) => el.getBoundingClientRect().bottom))
+    )
+
+    // Redimensiona o iframe pra caber todo o conteúdo sem precisar de barra
+    // de rolagem — senão ela "rouba" uns pixels de largura da página e o
+    // texto sai cortado na borda direita.
+    iframe.style.height = `${alturaConteudo}px`
+
+    // Pontos de corte "seguros": topo/base de cada bloco que não pode ser
+    // partido ao meio (cabeçalho, título, cada item da lista, rodapé).
+    const elementosAtomicos = Array.from(
+      doc.querySelectorAll<HTMLElement>('header, .cabecalho-titulo, .subtitulo, section > ul > li, footer')
+    )
+    const limites = new Set<number>([0, alturaConteudo])
+    for (const el of elementosAtomicos) {
+      const rect = el.getBoundingClientRect()
+      limites.add(Math.round(rect.top))
+      limites.add(Math.round(rect.bottom))
+    }
+    const cortes = Array.from(limites).sort((a, b) => a - b)
+
+    // Renderiza o documento inteiro como um único canvas alto.
+    const canvasCompleto = await html2canvasPro(doc.body, {
+      width: larguraPagina,
+      windowWidth: larguraPagina,
+      height: alturaConteudo,
+      windowHeight: alturaConteudo,
+      scale: 2,
+    })
+    const escala = canvasCompleto.width / larguraPagina
+
+    // Decide as quebras de página: avança o cursor pela altura máxima da
+    // página, mas sempre recuando até o último ponto de corte seguro que
+    // caiba — nunca corta dentro de um item.
+    const paginas: Array<{ inicio: number; fim: number }> = []
+    let cursor = 0
+    while (cursor < alturaConteudo - 0.5) {
+      const limiteIdeal = cursor + alturaPagina
+      let fim = cortes.filter((c) => c > cursor && c <= limiteIdeal).pop()
+      if (fim === undefined) {
+        // Nenhum corte seguro cabe inteiro (item maior que uma página) —
+        // usa o próximo corte disponível mesmo que estoure a página, pra
+        // não entrar em loop infinito.
+        fim = cortes.find((c) => c > cursor) ?? alturaConteudo
+      }
+      paginas.push({ inicio: cursor, fim })
+      cursor = fim
+    }
+
+    paginas.forEach((pagina, indice) => {
+      if (indice > 0) pdf.addPage()
+      const alturaFatiaPx = Math.round((pagina.fim - pagina.inicio) * escala)
+      if (alturaFatiaPx <= 0) return
+      const fatia = document.createElement('canvas')
+      fatia.width = canvasCompleto.width
+      fatia.height = alturaFatiaPx
+      const ctx = fatia.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(
+        canvasCompleto,
+        0,
+        Math.round(pagina.inicio * escala),
+        canvasCompleto.width,
+        alturaFatiaPx,
+        0,
+        0,
+        canvasCompleto.width,
+        alturaFatiaPx
+      )
+      const alturaFatiaPdf = alturaFatiaPx / escala
+      pdf.addImage(fatia.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, larguraPagina, alturaFatiaPdf)
+    })
+
+    return pdf.output('blob')
+  } finally {
+    document.body.removeChild(iframe)
+  }
 }

@@ -3,11 +3,20 @@
 // linha por ocorrência com as fotos empilhadas na coluna H. Layout e
 // unidades (EMU, pontos) espelham o script build_vistoria.py usado
 // manualmente, para o arquivo sair idêntico ao que já é gerado hoje.
-import type { ItemVistoria } from '@/lib/utils/vistoria'
+import type { ItemVistoria, TipoItemVistoria } from '@/lib/utils/vistoria'
 import { prepararFotoVistoria } from '@/lib/utils/vistoriaArquivos'
 
 const GAP_EMU = 38160
 const EMU_POR_PIXEL = 9525
+
+const COR_TEAL = 'FF0F766E'
+const COR_ZEBRA = 'FFF3F4F6'
+
+const CORES_TIPO: Record<TipoItemVistoria, { fundo: string; texto: string }> = {
+  DIVISÓRIAS: { fundo: 'FFCCFBF1', texto: 'FF0F766E' },
+  DRYWALL: { fundo: 'FFFEF3C7', texto: 'FF92400E' },
+  INSTALAÇÃO: { fundo: 'FFDBEAFE', texto: 'FF1E40AF' },
+}
 
 function parseDataBR(data: string): Date | null {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(data.trim())
@@ -31,8 +40,9 @@ export async function gerarExcelVistoria(params: {
   ws.mergeCells('A1:H1')
   const titulo = ws.getCell('A1')
   titulo.value = 'Relatorio De inspeção acústica'
-  titulo.font = { name: 'Calibri', size: 18, bold: true }
+  titulo.font = { name: 'Calibri', size: 18, bold: true, color: { argb: 'FFFFFFFF' } }
   titulo.alignment = { horizontal: 'center', vertical: 'top', wrapText: true }
+  titulo.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_TEAL } }
 
   ws.getRow(1).height = 30.75
   ws.getRow(3).height = 3.75
@@ -59,9 +69,10 @@ export async function gerarExcelVistoria(params: {
   cabecalho.forEach((texto, i) => {
     const cell = ws.getCell(4, i + 1)
     cell.value = texto
-    cell.font = { name: 'Calibri', size: i === 7 ? 10 : 8, bold: true }
+    cell.font = { name: 'Calibri', size: i === 7 ? 10 : 8, bold: true, color: { argb: 'FFFFFFFF' } }
     cell.alignment = { horizontal: i === 0 ? 'left' : undefined, vertical: 'top', wrapText: true }
     cell.border = borda
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_TEAL } }
   })
 
   const dataObj = data ? parseDataBR(data) : null
@@ -79,12 +90,21 @@ export async function gerarExcelVistoria(params: {
       dataObj,
       null,
     ]
+    const corTipo = CORES_TIPO[it.item]
+    const zebra = (r - 5) % 2 === 1
+
     valores.forEach((valor, i) => {
       const cell = ws.getCell(r, i + 1)
       cell.value = valor
       cell.border = borda
-      cell.font = { name: 'Calibri', size: 8, bold: i === 4, color: { argb: 'FF333333' } }
       cell.alignment = { horizontal: i === 6 ? 'right' : undefined, vertical: 'top', wrapText: true }
+      if (i === 4) {
+        cell.font = { name: 'Calibri', size: 8, bold: true, color: { argb: corTipo.texto } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corTipo.fundo } }
+      } else {
+        cell.font = { name: 'Calibri', size: 8, color: { argb: 'FF333333' } }
+        if (zebra) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COR_ZEBRA } }
+      }
     })
     ws.getCell(r, 7).numFmt = '[$-416]dd/mm/yyyy'
 
