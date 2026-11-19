@@ -18,6 +18,14 @@ function ordenarPorData(lista: Reuniao[]): Reuniao[] {
   return [...lista].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0))
 }
 
+function ajustarAlturaTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return
+  el.style.height = 'auto'
+  // +2px cobre a borda (top+bottom) que o scrollHeight não inclui no box-sizing
+  // border-box, pra nunca cortar a última linha.
+  el.style.height = `${el.scrollHeight + 2}px`
+}
+
 function lerRascunho(projetoId: string): RascunhoAta {
   if (typeof window === 'undefined') return { titulo: '', data: '', participantes: '', conteudo: '' }
   try {
@@ -199,8 +207,8 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
           {reunioes.map((reuniao) => (
             <li key={reuniao.id} className="pb-3">
               <div className="flex items-start gap-2 border-b border-gray-100 pb-1.5">
-                <div className="min-w-0 flex-1 rounded-md bg-teal-700 px-3 py-2">
-                  <p className="truncate font-semibold text-white">{reuniao.titulo}</p>
+                <div className="min-w-0 flex-1 rounded-md bg-blue-100 px-3 py-2">
+                  <p className="truncate font-semibold text-blue-900">{reuniao.titulo}</p>
                 </div>
                 {isEditor && (
                   <button
@@ -226,11 +234,13 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
                         {isEditor ? (
                           <textarea
                             key={reuniao.id}
+                            ref={ajustarAlturaTextarea}
                             defaultValue={reuniao.participantes ?? ''}
                             onBlur={(e) => atualizarParticipantes(reuniao.id, e.target.value)}
+                            onInput={(e) => ajustarAlturaTextarea(e.currentTarget)}
                             placeholder="Nomes e empresas..."
-                            rows={2}
-                            className="w-full resize-none rounded-md border border-transparent px-1.5 py-1 text-sm text-gray-700 transition-colors hover:border-gray-200 focus:border-gray-300 focus:outline-none"
+                            rows={1}
+                            className="w-full resize-none overflow-hidden rounded-md border border-transparent px-1.5 py-1 text-sm text-gray-700 transition-colors hover:border-gray-200 focus:border-gray-300 focus:outline-none"
                           />
                         ) : (
                           <p className="whitespace-pre-wrap px-1.5 text-sm text-gray-700">{reuniao.participantes}</p>
