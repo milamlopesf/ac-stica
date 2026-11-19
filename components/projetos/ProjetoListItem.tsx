@@ -161,7 +161,7 @@ export function ProjetoListItem({
       <span className="flex min-w-0 items-center gap-1.5">
         <LogoClienteThumb
           caminho={projeto.logo_cliente_storage}
-          className="h-5 w-5 shrink-0 rounded border border-gray-100 object-contain"
+          className="h-7 w-7 shrink-0 rounded border border-gray-100 object-contain"
         />
         <h3 className="min-w-0 truncate font-medium text-gray-900" title={projeto.nome}>
           {projeto.nome}
