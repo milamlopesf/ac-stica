@@ -198,21 +198,21 @@ export function ReunioesTab({ projetoId, isEditor }: { projetoId: string; isEdit
         <ul className="flex flex-col gap-3">
           {reunioes.map((reuniao) => (
             <li key={reuniao.id} className="pb-3">
-              <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-1.5">
-                <div>
-                  <p className="font-medium text-gray-900">{reuniao.titulo}</p>
-                  <p className="text-xs text-gray-400">{formatarData(reuniao.data)}</p>
+              <div className="flex items-start gap-2 border-b border-gray-100 pb-1.5">
+                <div className="min-w-0 flex-1 rounded-md bg-teal-700 px-3 py-2">
+                  <p className="truncate font-semibold text-white">{reuniao.titulo}</p>
                 </div>
                 {isEditor && (
                   <button
                     onClick={() => excluir(reuniao.id)}
-                    className="shrink-0 text-gray-400 hover:text-red-600"
+                    className="shrink-0 self-center text-gray-400 hover:text-red-600"
                     aria-label="Excluir ata"
                   >
                     ✕
                   </button>
                 )}
               </div>
+              <p className="mt-1.5 text-xs text-gray-400">{formatarData(reuniao.data)}</p>
               {(() => {
                 const mostrarParticipantes = isEditor || Boolean(reuniao.participantes && reuniao.participantes.trim())
                 const mostrarConteudo = isEditor || Boolean(reuniao.conteudo && !htmlEstaVazio(reuniao.conteudo))
